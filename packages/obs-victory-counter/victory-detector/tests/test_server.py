@@ -62,7 +62,7 @@ def running_server(tmp_path):
     thread.join(timeout=1)
 
 
-def _request_json(address: Tuple[str, int], method: str, path: str, body: dict | None = None) -> tuple[int, dict]:
+def _request_json(address: Tuple[str, int], method: str, path: str, body: dict | None = None) -> tuple[int, dict, dict]:
     connection = http.client.HTTPConnection(address[0], address[1], timeout=2)
     try:
         payload = json.dumps(body).encode("utf-8") if body is not None else None
@@ -71,24 +71,25 @@ def _request_json(address: Tuple[str, int], method: str, path: str, body: dict |
         response = connection.getresponse()
         body = response.read()
         payload = json.loads(body.decode("utf-8")) if body else {}
-        return response.status, payload
+        return response.status, payload, {key: value for key, value in response.getheaders()}
     finally:
         connection.close()
 
 
 def test_state_endpoint_returns_summary(running_server) -> None:
     httpd, _ = running_server
-    status, payload = _request_json(httpd.server_address, "GET", "/state")
+    status, payload, headers = _request_json(httpd.server_address, "GET", "/state")
     assert status == 200
     assert payload["victories"] == 1
     assert payload["defeats"] == 1
     assert payload["total"] == 2
     assert payload["adjustments"][0]["note"] == "manual"
+    assert headers["Access-Control-Allow-Origin"] == "*"
 
 
 def test_state_endpoint_handles_unknown_route(running_server) -> None:
     httpd, _ = running_server
-    status, payload = _request_json(httpd.server_address, "GET", "/unknown")
+    status, payload, _ = _request_json(httpd.server_address, "GET", "/unknown")
     assert status == 404
     assert payload["error"] == "not_found"
 
@@ -105,7 +106,7 @@ def test_state_endpoint_handles_internal_error() -> None:
     time.sleep(0.05)
 
     try:
-        status, payload = _request_json(httpd.server_address, "GET", "/state")
+        status, payload, _ = _request_json(httpd.server_address, "GET", "/state")
         assert status == 500
         assert payload["error"] == "internal_server_error"
     finally:
@@ -116,7 +117,7 @@ def test_state_endpoint_handles_internal_error() -> None:
 
 def test_history_endpoint_returns_recent_events(running_server) -> None:
     httpd, _ = running_server
-    status, payload = _request_json(httpd.server_address, "GET", "/history?limit=1")
+    status, payload, _ = _request_json(httpd.server_address, "GET", "/history?limit=1")
     assert status == 200
     assert len(payload["events"]) == 1
     assert payload["events"][0]["type"] in {"adjustment", "result"}
@@ -124,14 +125,14 @@ def test_history_endpoint_returns_recent_events(running_server) -> None:
 
 def test_history_endpoint_rejects_invalid_limit(running_server) -> None:
     httpd, _ = running_server
-    status, payload = _request_json(httpd.server_address, "GET", "/history?limit=abc")
+    status, payload, _ = _request_json(httpd.server_address, "GET", "/history?limit=abc")
     assert status == 400
     assert payload["error"] == "invalid_limit"
 
 
 def test_adjust_endpoint_records_event(running_server) -> None:
     httpd, manager = running_server
-    status, payload = _request_json(
+    status, payload, headers = _request_json(
         httpd.server_address,
         "POST",
         "/adjust",
@@ -140,11 +141,12 @@ def test_adjust_endpoint_records_event(running_server) -> None:
     assert status == 202
     assert payload["event"]["value"] == "victory"
     assert manager.summary.victories == 3  # 1 initial + 2 delta
+    assert headers["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
 
 
 def test_adjust_endpoint_rejects_invalid_payload(running_server) -> None:
     httpd, _ = running_server
-    status, payload = _request_json(
+    status, payload, _ = _request_json(
         httpd.server_address,
         "POST",
         "/adjust",
@@ -152,3 +154,17 @@ def test_adjust_endpoint_rejects_invalid_payload(running_server) -> None:
     )
     assert status == 400
     assert payload["error"] == "invalid_payload"
+
+
+def test_options_preflight_returns_cors_headers(running_server) -> None:
+    httpd, _ = running_server
+    connection = http.client.HTTPConnection(httpd.server_address[0], httpd.server_address[1], timeout=2)
+    try:
+        connection.request("OPTIONS", "/adjust")
+        response = connection.getresponse()
+        assert response.status == 204
+        headers = {key: value for key, value in response.getheaders()}
+        assert headers["Access-Control-Allow-Origin"] == "*"
+        assert "POST" in headers["Access-Control-Allow-Methods"]
+    finally:
+        connection.close()

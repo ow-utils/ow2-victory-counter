@@ -43,6 +43,16 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
         self._send_json(404, {"error": "not_found"})
 
+    def do_OPTIONS(self) -> None:  # noqa: N802 - preflight support
+        parsed = urlparse(self.path)
+        if parsed.path in {"/state", "/history"}:
+            self._send_empty(204, allow_methods="GET, OPTIONS")
+            return
+        if parsed.path == "/adjust":
+            self._send_empty(204, allow_methods="POST, OPTIONS")
+            return
+        self._send_empty(404, allow_methods="OPTIONS")
+
     def do_POST(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         if parsed.path == "/adjust":
@@ -111,8 +121,18 @@ class StateRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_empty(self, status: int, allow_methods: str) -> None:
+        self.send_response(status)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", allow_methods)
+        self.end_headers()
 
 
 class StateServer(ThreadingHTTPServer):

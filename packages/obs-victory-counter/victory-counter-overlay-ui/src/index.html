@@ -17,6 +17,13 @@
         background: rgba(15, 23, 42, 0.75);
       }
 
+      .layout {
+        max-width: 480px;
+        margin: 0 auto;
+        display: grid;
+        gap: 1rem;
+      }
+
       .overlay {
         max-width: 420px;
         margin: 0 auto;
@@ -44,6 +51,14 @@
         background: linear-gradient(135deg, rgba(148, 163, 184, 0.25), rgba(30, 41, 59, 0.6));
         backdrop-filter: blur(6px);
         box-shadow: 0 8px 16px rgba(15, 23, 42, 0.35);
+      }
+
+      .status {
+        border-radius: 0.75rem;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.85rem;
+        background: rgba(30, 41, 59, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
       }
 
       .total .label {
@@ -130,10 +145,82 @@
         font-size: 0.75rem;
         opacity: 0.7;
       }
+
+      .adjust-form {
+        display: grid;
+        gap: 0.75rem;
+        padding: 0.9rem;
+        border-radius: 0.75rem;
+        background: rgba(15, 23, 42, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.7);
+      }
+
+      .adjust-form h2 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.75;
+      }
+
+      .adjust-form label {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+      }
+
+      .adjust-form input,
+      .adjust-form select {
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.85);
+        color: inherit;
+      }
+
+      .adjust-form button {
+        margin-top: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(129, 140, 248, 0.9));
+        color: #f8fafc;
+        cursor: pointer;
+      }
+
+      .adjust-form button:hover {
+        opacity: 0.9;
+      }
     </style>
   </head>
-  <body>
-    <div id="app">読み込み中...</div>
+  <body data-poll-interval="5000">
+    <div class="layout">
+      <div id="status" class="status">Connecting…</div>
+      <div id="app">読み込み中...</div>
+      <form id="adjust-form" class="adjust-form">
+        <h2>Manual Adjustment</h2>
+        <label>
+          Outcome
+          <select id="adjust-outcome">
+            <option value="victory">Victory</option>
+            <option value="defeat">Defeat</option>
+          </select>
+        </label>
+        <label>
+          Delta
+          <input id="adjust-delta" type="number" value="1" step="1" />
+        </label>
+        <label>
+          Note
+          <input id="adjust-note" type="text" placeholder="Optional" />
+        </label>
+        <button type="submit">Apply</button>
+      </form>
+    </div>
     <script type="module" src="./index.js"></script>
   </body>
 </html>
