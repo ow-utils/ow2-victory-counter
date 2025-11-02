@@ -24,9 +24,9 @@
 - [x] `uv run python -m win_detector.cli ...` を用意し、CLI 経由でデバッグ出力を確認する（`PYTHONPATH=src` で実行）
 ## フェーズ3: HTTPサーバ層の追加
 
-- [ ] `win_detector/server.py` に `ThreadingHTTPServer` での `/state` 提供機能を実装する
+- [x] `win_detector/server.py` に `ThreadingHTTPServer` での `/state` 提供機能を実装する
 - [ ] `curl 127.0.0.1:8912/state` で最新カウントが取得できることを確認する
-- [ ] API シリアライズの単体テストと異常系（サーバ停止時など）のログ確認を行う
+- [x] API シリアライズの単体テストと異常系（サーバ停止時など）のログ確認を行う（pytest 経由で実施）
 
 ## フェーズ3.5: 履歴APIと手動補正準備
 
