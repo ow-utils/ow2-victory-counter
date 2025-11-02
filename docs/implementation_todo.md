@@ -22,7 +22,6 @@
 - [x] `tests/fixtures/` にサンプルフレームを追加し、`pytest` で判定精度を検証する（テスト実行は要ネットワーク）
 - [x] JSON Lines 形式のイベントログ追記と再起動時の復元処理を実装・テストする
 - [x] `uv run python -m win_detector.cli ...` を用意し、CLI 経由でデバッグ出力を確認する（`PYTHONPATH=src` で実行）
-
 ## フェーズ3: HTTPサーバ層の追加
 
 - [ ] `win_detector/server.py` に `ThreadingHTTPServer` での `/state` 提供機能を実装する
@@ -61,3 +60,7 @@
 - [ ] GitHub Actions（`ci.yml`）で `uv run pytest` と `npm test` を並列実行するワークフローを構築する
 - [ ] `docs/usage.md` や 親 `README.md` にセットアップ手順・トラブルシュートを記載する
 - [ ] リリース手順（バージョニング、配布方法）を整理し、必要であれば `CHANGELOG.md` を準備する
+
+## バックログ
+
+- [ ] バナー検出の本実装でユーザー設定による色味変化に耐えられるよう、テンプレートや特徴量抽出を再設計する
