@@ -55,17 +55,19 @@ def running_server(tmp_path):
     # Wait briefly for server to bind
     time.sleep(0.05)
 
-    yield httpd
+    yield httpd, manager
 
     httpd.shutdown()
     httpd.server_close()
     thread.join(timeout=1)
 
 
-def _read_json_response(address: Tuple[str, int], path: str) -> tuple[int, dict]:
+def _request_json(address: Tuple[str, int], method: str, path: str, body: dict | None = None) -> tuple[int, dict]:
     connection = http.client.HTTPConnection(address[0], address[1], timeout=2)
     try:
-        connection.request("GET", path)
+        payload = json.dumps(body).encode("utf-8") if body is not None else None
+        headers = {"Content-Type": "application/json"} if body is not None else {}
+        connection.request(method, path, body=payload, headers=headers)
         response = connection.getresponse()
         body = response.read()
         payload = json.loads(body.decode("utf-8")) if body else {}
@@ -74,8 +76,9 @@ def _read_json_response(address: Tuple[str, int], path: str) -> tuple[int, dict]
         connection.close()
 
 
-def test_state_endpoint_returns_summary(running_server: server.StateServer) -> None:
-    status, payload = _read_json_response(running_server.server_address, "/state")
+def test_state_endpoint_returns_summary(running_server) -> None:
+    httpd, _ = running_server
+    status, payload = _request_json(httpd.server_address, "GET", "/state")
     assert status == 200
     assert payload["victories"] == 1
     assert payload["defeats"] == 1
@@ -83,8 +86,9 @@ def test_state_endpoint_returns_summary(running_server: server.StateServer) -> N
     assert payload["adjustments"][0]["note"] == "manual"
 
 
-def test_state_endpoint_handles_unknown_route(running_server: server.StateServer) -> None:
-    status, payload = _read_json_response(running_server.server_address, "/unknown")
+def test_state_endpoint_handles_unknown_route(running_server) -> None:
+    httpd, _ = running_server
+    status, payload = _request_json(httpd.server_address, "GET", "/unknown")
     assert status == 404
     assert payload["error"] == "not_found"
 
@@ -101,10 +105,50 @@ def test_state_endpoint_handles_internal_error() -> None:
     time.sleep(0.05)
 
     try:
-        status, payload = _read_json_response(httpd.server_address, "/state")
+        status, payload = _request_json(httpd.server_address, "GET", "/state")
         assert status == 500
         assert payload["error"] == "internal_server_error"
     finally:
         httpd.shutdown()
         httpd.server_close()
         thread.join(timeout=1)
+
+
+def test_history_endpoint_returns_recent_events(running_server) -> None:
+    httpd, _ = running_server
+    status, payload = _request_json(httpd.server_address, "GET", "/history?limit=1")
+    assert status == 200
+    assert len(payload["events"]) == 1
+    assert payload["events"][0]["type"] in {"adjustment", "result"}
+
+
+def test_history_endpoint_rejects_invalid_limit(running_server) -> None:
+    httpd, _ = running_server
+    status, payload = _request_json(httpd.server_address, "GET", "/history?limit=abc")
+    assert status == 400
+    assert payload["error"] == "invalid_limit"
+
+
+def test_adjust_endpoint_records_event(running_server) -> None:
+    httpd, manager = running_server
+    status, payload = _request_json(
+        httpd.server_address,
+        "POST",
+        "/adjust",
+        {"value": "victory", "delta": 2, "note": "manual bump"},
+    )
+    assert status == 202
+    assert payload["event"]["value"] == "victory"
+    assert manager.summary.victories == 3  # 1 initial + 2 delta
+
+
+def test_adjust_endpoint_rejects_invalid_payload(running_server) -> None:
+    httpd, _ = running_server
+    status, payload = _request_json(
+        httpd.server_address,
+        "POST",
+        "/adjust",
+        {"value": "oops"},
+    )
+    assert status == 400
+    assert payload["error"] == "invalid_payload"

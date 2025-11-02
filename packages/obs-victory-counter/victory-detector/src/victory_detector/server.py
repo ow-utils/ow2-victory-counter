@@ -8,7 +8,7 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Tuple, cast
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from .core import state
 
@@ -34,10 +34,23 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 (BaseHTTPRequestHandler 命名準拠)
         parsed = urlparse(self.path)
-        if parsed.path != "/state":
-            self._send_json(404, {"error": "not_found"})
+        if parsed.path == "/state":
+            self._handle_state()
+            return
+        if parsed.path == "/history":
+            self._handle_history(parsed)
             return
 
+        self._send_json(404, {"error": "not_found"})
+
+    def do_POST(self) -> None:  # noqa: N802
+        parsed = urlparse(self.path)
+        if parsed.path == "/adjust":
+            self._handle_adjust()
+            return
+        self._send_json(404, {"error": "not_found"})
+
+    def _handle_state(self) -> None:
         try:
             summary = self.server.manager.summary
             payload = serialize_summary(summary)
@@ -47,6 +60,48 @@ class StateRequestHandler(BaseHTTPRequestHandler):
             return
 
         self._send_json(200, payload)
+
+    def _handle_history(self, parsed_url) -> None:
+        try:
+            query = parse_qs(parsed_url.query)
+            limit = int(query.get("limit", ["10"])[0])
+        except (ValueError, TypeError):
+            self._send_json(400, {"error": "invalid_limit"})
+            return
+
+        try:
+            events = self.server.manager.history(limit)
+            payload = [event.to_dict() for event in events]
+        except Exception:  # pragma: no cover
+            logger.exception("Failed to read history response")
+            self._send_json(500, {"error": "internal_server_error"})
+            return
+
+        self._send_json(200, {"events": payload})
+
+    def _handle_adjust(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+            value = payload.get("value")
+            if value not in ("victory", "defeat"):
+                raise ValueError("invalid value")
+            delta = int(payload.get("delta", 1))
+            note = payload.get("note", "")
+        except (json.JSONDecodeError, ValueError, TypeError) as exc:
+            logger.warning("Invalid adjust payload: %s", exc)
+            self._send_json(400, {"error": "invalid_payload"})
+            return
+
+        try:
+            event = self.server.manager.record_adjustment(value, delta, note=note)
+        except Exception:  # pragma: no cover
+            logger.exception("Failed to record adjustment")
+            self._send_json(500, {"error": "internal_server_error"})
+            return
+
+        self._send_json(202, {"event": event.to_dict()})
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003 - ベースクラス準拠
         logger.info("%s - %s", self.address_string(), format % args)

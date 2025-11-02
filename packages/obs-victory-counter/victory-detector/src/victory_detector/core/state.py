@@ -175,6 +175,13 @@ class StateManager:
         self._log.append(event)
         self._state.apply(event)
 
+    def history(self, limit: int) -> list[Event]:
+        """直近のイベントを取得する。"""
+
+        if limit <= 0:
+            return []
+        return self._log.tail(limit)
+
     def reload(self) -> CounterState:
         self._state = CounterState()
         for event in self._log.read_events():
