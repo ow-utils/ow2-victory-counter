@@ -1,0 +1,3 @@
+{"type": "result", "value": "victory", "delta": 1, "timestamp": "2025-11-02T13:23:42.960669+00:00", "confidence": 0.9}
+{"type": "result", "value": "defeat", "delta": 1, "timestamp": "2025-11-02T13:23:42.960871+00:00", "confidence": 0.8}
+{"type": "adjustment", "value": "victory", "delta": 2, "timestamp": "2025-11-02T13:25:11.572569+00:00", "note": "manual check"}
