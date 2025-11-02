@@ -1,7 +1,7 @@
 [project]
-name = "win-detector"
+name = "victory-detector"
 version = "0.0.0"
-description = "Overwatch 2 OBS win detector prototype"
+description = "Overwatch 2 OBS victory detector prototype"
 requires-python = ">=3.11"
 dependencies = []
 

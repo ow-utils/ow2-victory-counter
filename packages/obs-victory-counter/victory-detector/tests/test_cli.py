@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from win_detector import cli
+from victory_detector import cli
 
 
 def test_cli_run(tmp_path: Path) -> None:

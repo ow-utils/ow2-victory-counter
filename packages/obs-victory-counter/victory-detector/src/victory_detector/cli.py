@@ -50,7 +50,7 @@ def run(snapshot_file: Path, event_log: Path | None = None) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run win-detector against snapshot data.")
+    parser = argparse.ArgumentParser(description="Run victory-detector against snapshot data.")
     parser.add_argument("snapshot_file", type=Path, help="Path to a JSON file containing snapshot data.")
     parser.add_argument("--event-log", type=Path, help="Path to output event log (defaults next to snapshot file).")
     args = parser.parse_args()

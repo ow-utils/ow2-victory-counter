@@ -6,9 +6,9 @@ from typing import Tuple
 
 import pytest
 
-from win_detector.core import state
-from win_detector.core.vision import DetectionResult
-from win_detector import server
+from victory_detector.core import state
+from victory_detector.core.vision import DetectionResult
+from victory_detector import server
 
 
 def test_serialize_summary_includes_events() -> None:

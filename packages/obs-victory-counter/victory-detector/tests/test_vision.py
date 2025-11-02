@@ -1,4 +1,4 @@
-from win_detector.core import vision
+from victory_detector.core import vision
 
 
 def test_evaluate_snapshot_win():

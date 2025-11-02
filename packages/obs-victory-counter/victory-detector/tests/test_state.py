@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from win_detector.core import state
-from win_detector.core.vision import DetectionResult
+from victory_detector.core import state
+from victory_detector.core.vision import DetectionResult
 
 
 @pytest.fixture()

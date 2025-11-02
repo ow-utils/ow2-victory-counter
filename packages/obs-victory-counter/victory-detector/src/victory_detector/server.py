@@ -93,7 +93,7 @@ def serve(manager: state.StateManager, host: str = "127.0.0.1", port: int = 8912
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve win-detector state over HTTP.")
+    parser = argparse.ArgumentParser(description="Serve victory-detector state over HTTP.")
     parser.add_argument("--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8912, help="Port to listen on (default: 8912)")
     parser.add_argument(
