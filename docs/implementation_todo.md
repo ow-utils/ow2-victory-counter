@@ -36,9 +36,9 @@
 
 ## フェーズ4: オーバーレイUIのモック実装
 
-- [ ] `victory-counter-overlay-ui` にダミーデータで動作するモックUIを実装する
-- [ ] `npm start`（または `npm run dev`）でモック画面を表示し、表示崩れがないか確認する
-- [ ] `vitest` や Testing Library でコンポーネントの描画テストを追加する
+- [x] `victory-counter-overlay-ui` にダミーデータで動作するモックUIを実装する
+- [x] `npm run dev` でモック画面を表示できるよう、開発サーバスクリプトを整備する
+- [x] Node のテストランナーで描画用ユーティリティを検証する（`npm test`）
 
 ## フェーズ5: 実データ接続
 

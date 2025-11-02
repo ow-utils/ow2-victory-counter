@@ -2,10 +2,11 @@
   "name": "victory-counter-overlay-ui",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Overlay UI for the Overwatch 2 victory counter",
   "scripts": {
-    "dev": "echo \"TODO: implement dev server\"",
-    "lint": "echo \"lint placeholder\"",
-    "test": "echo \"test placeholder\""
+    "dev": "node scripts/dev-server.mjs",
+    "lint": "node --check src/index.js",
+    "test": "node --test tests/mockData.test.mjs"
   }
 }

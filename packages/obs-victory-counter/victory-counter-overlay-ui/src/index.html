@@ -2,10 +2,138 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <title>Win Counter Overlay UI</title>
+    <title>Victory Counter Overlay UI</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: transparent;
+      }
+
+      body {
+        margin: 0;
+        padding: 1rem;
+        color: #f8fafc;
+        background: rgba(15, 23, 42, 0.75);
+      }
+
+      .overlay {
+        max-width: 420px;
+        margin: 0 auto;
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .scoreboard h1 {
+        font-size: 1.4rem;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .totals {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      .total {
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(148, 163, 184, 0.25), rgba(30, 41, 59, 0.6));
+        backdrop-filter: blur(6px);
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.35);
+      }
+
+      .total .label {
+        display: block;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.75;
+      }
+
+      .total .value {
+        display: block;
+        font-size: 1.85rem;
+        font-weight: 700;
+        margin-top: 0.2rem;
+      }
+
+      .total.victory {
+        border: 1px solid rgba(59, 130, 246, 0.4);
+      }
+
+      .total.defeat {
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+
+      .history {
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: rgba(30, 41, 59, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+      }
+
+      .history h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.75;
+      }
+
+      .history ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .history li {
+        display: grid;
+        grid-template-columns: 3.5rem 1fr auto;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.45rem 0.6rem;
+        border-radius: 0.5rem;
+        background: rgba(15, 23, 42, 0.35);
+        font-size: 0.85rem;
+      }
+
+      .history li.victory {
+        border-left: 4px solid #38bdf8;
+      }
+
+      .history li.defeat {
+        border-left: 4px solid #f87171;
+      }
+
+      .history .timestamp {
+        font-variant-numeric: tabular-nums;
+        opacity: 0.6;
+      }
+
+      .history .value {
+        letter-spacing: 0.06em;
+      }
+
+      .history .delta {
+        font-weight: 600;
+      }
+
+      .history .note {
+        display: block;
+        grid-column: 2 / span 2;
+        font-size: 0.75rem;
+        opacity: 0.7;
+      }
+    </style>
   </head>
   <body>
     <div id="app">読み込み中...</div>
-    <script type="module" src="./index.ts"></script>
+    <script type="module" src="./index.js"></script>
   </body>
 </html>
