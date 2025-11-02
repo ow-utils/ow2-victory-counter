@@ -2,18 +2,18 @@
 
 ## フェーズ1: 骨組み整備
 
-- [ ] `packages/obs-win-counter/` ディレクトリーを作成し、親 `README.md` を配置する
-- [ ] `packages/obs-win-counter/README.md` にモノレポ構造と各プロジェクトの役割をまとめる
-- [ ] `packages/obs-win-counter/win-detector/` を作成し、以下の雛形を追加する
-  - [ ] `pyproject.toml`（`uv` ワークスペース設定、依存プレースホルダー）
-  - [ ] `src/win_detector/__init__.py`
-  - [ ] `tests/__init__.py` と `tests/conftest.py`
-- [ ] `uv lock` を生成し、`uv run python -V` が成功することを確認する
-- [ ] `packages/obs-win-counter/win-counter-overlay-ui/` を作成し、以下の雛形を追加する
-  - [ ] `package.json`（`lint`・`test` スクリプトのプレースホルダー）
-  - [ ] `src/index.tsx` もしくは `src/index.ts`／`index.html` の最小構成
-- [ ] 選定したパッケージマネージャで依存を初期化し、`npm run lint` が成功することを確認する
-- [ ] ルート `.gitignore` を更新し、`uv.lock`・`node_modules/` 等を除外する
+- [x] `packages/obs-win-counter/` ディレクトリーを作成し、親 `README.md` を配置する
+- [x] `packages/obs-win-counter/README.md` にモノレポ構造と各プロジェクトの役割をまとめる
+- [x] `packages/obs-win-counter/win-detector/` を作成し、以下の雛形を追加する
+  - [x] `pyproject.toml`（`uv` ワークスペース設定、依存プレースホルダー）
+  - [x] `src/win_detector/__init__.py`
+  - [x] `tests/__init__.py` と `tests/conftest.py`
+- [x] `uv lock` を生成し、`uv run python -V` が成功することを確認する
+- [x] `packages/obs-win-counter/win-counter-overlay-ui/` を作成し、以下の雛形を追加する
+  - [x] `package.json`（`lint`・`test` スクリプトのプレースホルダー）
+  - [x] `src/index.tsx` もしくは `src/index.ts`／`index.html` の最小構成
+- [x] 選定したパッケージマネージャで依存を初期化し、`npm run lint` が成功することを確認する
+- [x] ルート `.gitignore` を更新し、`uv.lock`・`node_modules/` 等を除外する
 
 ## フェーズ2: 判定ロジックのスタンドアロン実装
 

@@ -1,0 +1,15 @@
+# Node.js
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# uv lockfile (generated per環境)
+uv.lock
+.uv-cache/
+.venv/
+
+# Env files
+.env
