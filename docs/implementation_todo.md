@@ -17,11 +17,11 @@
 
 ## フェーズ2: 判定ロジックのスタンドアロン実装
 
-- [ ] `win-detector/src/win_detector/core/vision.py` にテンプレートマッチング処理を実装する
-- [ ] `win-detector/src/win_detector/core/state.py` に勝敗集計とイベントログ管理を実装する
-- [ ] `tests/fixtures/` にサンプルフレームを追加し、`pytest` で判定精度を検証する
-- [ ] JSON Lines 形式のイベントログ追記と再起動時の復元処理を実装・テストする
-- [ ] `uv run python -m win_detector.cli ...` を用意し、CLI 経由でデバッグ出力を確認する
+- [x] `win-detector/src/win_detector/core/vision.py` にテンプレートマッチング処理を実装する
+- [x] `win-detector/src/win_detector/core/state.py` に勝敗集計とイベントログ管理を実装する
+- [x] `tests/fixtures/` にサンプルフレームを追加し、`pytest` で判定精度を検証する（テスト実行は要ネットワーク）
+- [x] JSON Lines 形式のイベントログ追記と再起動時の復元処理を実装・テストする
+- [x] `uv run python -m win_detector.cli ...` を用意し、CLI 経由でデバッグ出力を確認する（`PYTHONPATH=src` で実行）
 
 ## フェーズ3: HTTPサーバ層の追加
 
