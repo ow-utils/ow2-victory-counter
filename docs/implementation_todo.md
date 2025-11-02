@@ -32,7 +32,7 @@
 
 - [x] `/history` エンドポイントを追加し、直近N件のイベントログを返す
 - [x] `POST /adjust` のスケルトンを実装し、補正イベントをログに追記できるようにする
-- [ ] `docs/api.md` に `/state`・`/history`・`/adjust` の仕様と認証方針を記述する
+- [x] `docs/api.md` に `/state`・`/history`・`/adjust` の仕様と認証方針を記述する
 
 ## フェーズ4: オーバーレイUIのモック実装
 
