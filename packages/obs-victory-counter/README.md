@@ -5,7 +5,7 @@
 ## プロジェクト構成
 
 - `victory-detector/`  
-  OBS Studio の Python スクリプトとして動作する勝敗判定ロジックと、HTTP API を提供するバックエンドコンポーネント。
+  OBS Studio の Python スクリプトとして動作する勝敗判定ロジックと、HTTP API を提供するバックエンドコンポーネント。`scripts/obs_victory_detector.py` を OBS Scripts Manager に追加すると、配信中に HTTP API が自動起動します（手順は `docs/obs_integration.md` を参照）。
 
 - `victory-counter-overlay-ui/`  
   ブラウザソースで勝敗カウントや履歴を表示するためのフロントエンド資産。開発中はローカルサーバで動作確認します。
