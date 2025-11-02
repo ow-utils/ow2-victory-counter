@@ -113,7 +113,9 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
         self._send_json(202, {"event": event.to_dict()})
 
-    def log_message(self, format: str, *args: Any) -> None:  # noqa: A003 - ベースクラス準拠
+    def log_message(
+        self, format: str, *args: Any
+    ) -> None:  # noqa: A003 - ベースクラス準拠
         logger.info("%s - %s", self.address_string(), format % args)
 
     def _send_json(self, status: int, payload: dict[str, Any]) -> None:
@@ -141,7 +143,9 @@ class StateServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-    def __init__(self, server_address: Tuple[str, int], manager: state.StateManager) -> None:
+    def __init__(
+        self, server_address: Tuple[str, int], manager: state.StateManager
+    ) -> None:
         super().__init__(server_address, StateRequestHandler)
         self.manager = manager
 
@@ -152,7 +156,9 @@ def create_server(host: str, port: int, manager: state.StateManager) -> StateSer
     return StateServer((host, port), manager)
 
 
-def serve(manager: state.StateManager, host: str = "127.0.0.1", port: int = 8912) -> None:
+def serve(
+    manager: state.StateManager, host: str = "127.0.0.1", port: int = 8912
+) -> None:
     """StateServer を起動し、Ctrl+C まで待機する。"""
 
     httpd = create_server(host, port, manager)
@@ -168,9 +174,15 @@ def serve(manager: state.StateManager, host: str = "127.0.0.1", port: int = 8912
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve victory-detector state over HTTP.")
-    parser.add_argument("--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8912, help="Port to listen on (default: 8912)")
+    parser = argparse.ArgumentParser(
+        description="Serve victory-detector state over HTTP."
+    )
+    parser.add_argument(
+        "--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=8912, help="Port to listen on (default: 8912)"
+    )
     parser.add_argument(
         "--event-log",
         type=Path,

@@ -142,7 +142,9 @@ class StateManager:
     def summary(self) -> CounterState:
         return self._state
 
-    def record_detection(self, detection: DetectionResult, note: str = "") -> Optional[Event]:
+    def record_detection(
+        self, detection: DetectionResult, note: str = ""
+    ) -> Optional[Event]:
         """判定結果をイベントとして保存する。"""
 
         if detection.outcome not in ("victory", "defeat"):

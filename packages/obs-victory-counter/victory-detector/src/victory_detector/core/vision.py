@@ -72,16 +72,23 @@ def evaluate_snapshot(snapshot: VisionSnapshot) -> DetectionResult:
         return DetectionResult(outcome="defeat", confidence=float(defeat))
 
     if snapshot.payload_advantage >= 0.1:
-        return DetectionResult(outcome="victory", confidence=clamp(0.5 + snapshot.payload_advantage / 2))
+        return DetectionResult(
+            outcome="victory", confidence=clamp(0.5 + snapshot.payload_advantage / 2)
+        )
 
     if snapshot.payload_advantage <= -0.1:
-        return DetectionResult(outcome="defeat", confidence=clamp(0.5 + abs(snapshot.payload_advantage) / 2))
+        return DetectionResult(
+            outcome="defeat",
+            confidence=clamp(0.5 + abs(snapshot.payload_advantage) / 2),
+        )
 
     return DetectionResult(outcome="unknown", confidence=abs(banner_gap))
 
 
 def choose_outcome(
-    primary: DetectionResult, secondary: Optional[DetectionResult] = None, threshold: float = 0.7
+    primary: DetectionResult,
+    secondary: Optional[DetectionResult] = None,
+    threshold: float = 0.7,
 ) -> DetectionResult:
     """複数の判定結果から最も信頼できる結果を選ぶ。
 

@@ -62,7 +62,9 @@ def running_server(tmp_path):
     thread.join(timeout=1)
 
 
-def _request_json(address: Tuple[str, int], method: str, path: str, body: dict | None = None) -> tuple[int, dict, dict]:
+def _request_json(
+    address: Tuple[str, int], method: str, path: str, body: dict | None = None
+) -> tuple[int, dict, dict]:
     connection = http.client.HTTPConnection(address[0], address[1], timeout=2)
     try:
         payload = json.dumps(body).encode("utf-8") if body is not None else None
@@ -71,7 +73,11 @@ def _request_json(address: Tuple[str, int], method: str, path: str, body: dict |
         response = connection.getresponse()
         body = response.read()
         payload = json.loads(body.decode("utf-8")) if body else {}
-        return response.status, payload, {key: value for key, value in response.getheaders()}
+        return (
+            response.status,
+            payload,
+            {key: value for key, value in response.getheaders()},
+        )
     finally:
         connection.close()
 
@@ -97,7 +103,9 @@ def test_state_endpoint_handles_unknown_route(running_server) -> None:
 def test_state_endpoint_handles_internal_error() -> None:
     class BrokenManager:
         @property
-        def summary(self) -> state.CounterState:  # pragma: no cover - エラー経路テスト用
+        def summary(
+            self,
+        ) -> state.CounterState:  # pragma: no cover - エラー経路テスト用
             raise RuntimeError("boom")
 
     httpd = server.create_server("127.0.0.1", 0, BrokenManager())  # type: ignore[arg-type]
@@ -125,7 +133,9 @@ def test_history_endpoint_returns_recent_events(running_server) -> None:
 
 def test_history_endpoint_rejects_invalid_limit(running_server) -> None:
     httpd, _ = running_server
-    status, payload, _ = _request_json(httpd.server_address, "GET", "/history?limit=abc")
+    status, payload, _ = _request_json(
+        httpd.server_address, "GET", "/history?limit=abc"
+    )
     assert status == 400
     assert payload["error"] == "invalid_limit"
 
@@ -158,7 +168,9 @@ def test_adjust_endpoint_rejects_invalid_payload(running_server) -> None:
 
 def test_options_preflight_returns_cors_headers(running_server) -> None:
     httpd, _ = running_server
-    connection = http.client.HTTPConnection(httpd.server_address[0], httpd.server_address[1], timeout=2)
+    connection = http.client.HTTPConnection(
+        httpd.server_address[0], httpd.server_address[1], timeout=2
+    )
     try:
         connection.request("OPTIONS", "/adjust")
         response = connection.getresponse()

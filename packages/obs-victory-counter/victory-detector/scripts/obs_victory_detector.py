@@ -66,7 +66,9 @@ def script_properties() -> obs.obs_properties_t:
 
     obs.obs_properties_add_text(props, "host", "Bind Host", obs.OBS_TEXT_DEFAULT)
     obs.obs_properties_add_int(props, "port", "Port", 1024, 65535, 1)
-    obs.obs_properties_add_int(props, "poll_interval", "Reload Interval (sec)", 1, 60, 1)
+    obs.obs_properties_add_int(
+        props, "poll_interval", "Reload Interval (sec)", 1, 60, 1
+    )
 
     return props
 
@@ -110,7 +112,9 @@ def _start_server(settings: obs.obs_data_t) -> None:
         # すでにサーバが起動中
         return
 
-    event_log_path = Path(obs.obs_data_get_string(settings, "event_log") or str(DEFAULT_EVENT_LOG))
+    event_log_path = Path(
+        obs.obs_data_get_string(settings, "event_log") or str(DEFAULT_EVENT_LOG)
+    )
     host = obs.obs_data_get_string(settings, "host") or DEFAULT_HOST
     port = obs.obs_data_get_int(settings, "port") or DEFAULT_PORT
 
@@ -119,7 +123,9 @@ def _start_server(settings: obs.obs_data_t) -> None:
     try:
         _server_manager = state.StateManager(state.EventLog(event_log_path))
     except Exception as exc:  # pragma: no cover - OBS 環境専用処理
-        obs.script_log(obs.LOG_ERROR, f"Failed to initialise Victory Detector state: {exc}")
+        obs.script_log(
+            obs.LOG_ERROR, f"Failed to initialise Victory Detector state: {exc}"
+        )
         return
 
     try:
@@ -129,18 +135,24 @@ def _start_server(settings: obs.obs_data_t) -> None:
         _server_manager = None
         return
 
-    obs.script_log(obs.LOG_INFO, f"Victory Detector server started on http://{host}:{port}")
+    obs.script_log(
+        obs.LOG_INFO, f"Victory Detector server started on http://{host}:{port}"
+    )
 
     def run_server() -> None:  # pragma: no cover - OBS 環境専用処理
         assert _server_instance is not None
         try:
             _server_instance.serve_forever(poll_interval=0.5)
         except Exception as exc:  # noqa: BLE001
-            obs.script_log(obs.LOG_ERROR, f"Victory Detector server stopped unexpectedly: {exc}")
+            obs.script_log(
+                obs.LOG_ERROR, f"Victory Detector server stopped unexpectedly: {exc}"
+            )
         finally:
             obs.script_log(obs.LOG_INFO, "Victory Detector server thread exiting")
 
-    _server_thread = threading.Thread(target=run_server, name="victory-detector-server", daemon=True)
+    _server_thread = threading.Thread(
+        target=run_server, name="victory-detector-server", daemon=True
+    )
     _server_thread.start()
 
 

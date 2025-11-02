@@ -17,8 +17,12 @@ def _load_snapshots(path: Path) -> list[vision.VisionSnapshot]:
         snapshots.append(
             vision.VisionSnapshot(
                 match_complete=bool(item.get("match_complete", False)),
-                victory_banner_confidence=float(item.get("victory_banner_confidence", 0.0)),
-                defeat_banner_confidence=float(item.get("defeat_banner_confidence", 0.0)),
+                victory_banner_confidence=float(
+                    item.get("victory_banner_confidence", 0.0)
+                ),
+                defeat_banner_confidence=float(
+                    item.get("defeat_banner_confidence", 0.0)
+                ),
                 payload_advantage=float(item.get("payload_advantage", 0.0)),
             )
         )
@@ -50,9 +54,17 @@ def run(snapshot_file: Path, event_log: Path | None = None) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run victory-detector against snapshot data.")
-    parser.add_argument("snapshot_file", type=Path, help="Path to a JSON file containing snapshot data.")
-    parser.add_argument("--event-log", type=Path, help="Path to output event log (defaults next to snapshot file).")
+    parser = argparse.ArgumentParser(
+        description="Run victory-detector against snapshot data."
+    )
+    parser.add_argument(
+        "snapshot_file", type=Path, help="Path to a JSON file containing snapshot data."
+    )
+    parser.add_argument(
+        "--event-log",
+        type=Path,
+        help="Path to output event log (defaults next to snapshot file).",
+    )
     args = parser.parse_args()
 
     result = run(args.snapshot_file, args.event_log)
