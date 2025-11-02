@@ -43,7 +43,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
         self._send_json(404, {"error": "not_found"})
 
-    def do_OPTIONS(self) -> None:  # noqa: N802 - preflight support
+    def do_OPTIONS(self) -> None:  # noqa: N802 - プリフライト要求への対応
         parsed = urlparse(self.path)
         if parsed.path in {"/state", "/history"}:
             self._send_empty(204, allow_methods="GET, OPTIONS")

@@ -21,7 +21,7 @@ from typing import Optional
 
 import obspython as obs
 
-# Ensure victory_detector package is importable when OBS loads this script.
+# OBS 読み込み時に victory_detector パッケージへパスが通るように調整する。
 HERE = Path(__file__).resolve()
 SRC_DIR = HERE.parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
@@ -40,7 +40,7 @@ _server_manager: Optional[state.StateManager] = None
 
 
 # ---------------------------------------------------------------------------
-# OBS script lifecycle hooks
+# OBS スクリプトのライフサイクルフック
 # ---------------------------------------------------------------------------
 
 
@@ -107,7 +107,7 @@ def _start_server(settings: obs.obs_data_t) -> None:
     global _server_instance, _server_thread, _server_manager
 
     if _server_thread and _server_thread.is_alive():
-        # already running
+        # すでにサーバが起動中
         return
 
     event_log_path = Path(obs.obs_data_get_string(settings, "event_log") or str(DEFAULT_EVENT_LOG))
@@ -118,20 +118,20 @@ def _start_server(settings: obs.obs_data_t) -> None:
 
     try:
         _server_manager = state.StateManager(state.EventLog(event_log_path))
-    except Exception as exc:  # pragma: no cover - OBS environment
+    except Exception as exc:  # pragma: no cover - OBS 環境専用処理
         obs.script_log(obs.LOG_ERROR, f"Failed to initialise Victory Detector state: {exc}")
         return
 
     try:
         _server_instance = server.create_server(host, port, _server_manager)
-    except OSError as exc:  # pragma: no cover - OBS environment
+    except OSError as exc:  # pragma: no cover - OBS 環境専用処理
         obs.script_log(obs.LOG_ERROR, f"Failed to bind Victory Detector server: {exc}")
         _server_manager = None
         return
 
     obs.script_log(obs.LOG_INFO, f"Victory Detector server started on http://{host}:{port}")
 
-    def run_server() -> None:  # pragma: no cover - OBS environment
+    def run_server() -> None:  # pragma: no cover - OBS 環境専用処理
         assert _server_instance is not None
         try:
             _server_instance.serve_forever(poll_interval=0.5)
@@ -152,7 +152,7 @@ def _stop_server() -> None:
         try:
             _server_instance.shutdown()
             _server_instance.server_close()
-        except Exception as exc:  # pragma: no cover - OBS environment
+        except Exception as exc:  # pragma: no cover - OBS 環境専用処理
             obs.script_log(obs.LOG_WARNING, f"Error while stopping server: {exc}")
         _server_instance = None
 
@@ -164,7 +164,7 @@ def _stop_server() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Optional timer to keep state fresh
+# 状態を定期的に同期させるためのタイマー
 # ---------------------------------------------------------------------------
 
 
@@ -176,7 +176,6 @@ def _start_refresh_timer(settings: obs.obs_data_t) -> None:
 
 
 def _refresh_state() -> None:
-    # Reload state from event log to keep manager in sync with manual edits.
+    # イベントログを読み直し、手動編集後も StateManager の内容を整合させる。
     if _server_manager:
         _server_manager.reload()
-

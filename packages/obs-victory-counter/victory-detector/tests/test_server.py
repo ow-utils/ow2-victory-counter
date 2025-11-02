@@ -52,7 +52,7 @@ def running_server(tmp_path):
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
-    # Wait briefly for server to bind
+    # サーバがポートを確保するまで短時間待機
     time.sleep(0.05)
 
     yield httpd, manager
@@ -140,7 +140,7 @@ def test_adjust_endpoint_records_event(running_server) -> None:
     )
     assert status == 202
     assert payload["event"]["value"] == "victory"
-    assert manager.summary.victories == 3  # 1 initial + 2 delta
+    assert manager.summary.victories == 3  # 初期値1に補正+2が加算される
     assert headers["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
 
 

@@ -9,7 +9,7 @@ const ensureOk = async (response) => {
         message += `: ${payload.error}`;
       }
     } catch {
-      // ignore parse errors
+      // パースに失敗した場合は詳細メッセージなしで扱う
     }
     throw new Error(message);
   }
