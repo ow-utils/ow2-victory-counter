@@ -1,0 +1,110 @@
+import http.client
+import json
+import threading
+import time
+from typing import Tuple
+
+import pytest
+
+from win_detector.core import state
+from win_detector.core.vision import DetectionResult
+from win_detector import server
+
+
+def test_serialize_summary_includes_events() -> None:
+    counter = state.CounterState()
+    result_event = state.Event(
+        type="result",
+        value="victory",
+        delta=1,
+        timestamp="2024-01-01T00:00:00Z",
+        confidence=0.9,
+        note="auto",
+    )
+    adjust_event = state.Event(
+        type="adjustment",
+        value="defeat",
+        delta=2,
+        timestamp="2024-01-02T00:00:00Z",
+        note="manual fix",
+    )
+    counter.apply(result_event)
+    counter.apply(adjust_event)
+
+    payload = server.serialize_summary(counter)
+    assert payload["victories"] == 1
+    assert payload["defeats"] == 2
+    assert payload["total"] == 3
+    assert payload["results"][0]["note"] == "auto"
+    assert payload["adjustments"][0]["note"] == "manual fix"
+
+
+@pytest.fixture()
+def running_server(tmp_path):
+    log_dir = tmp_path / "log"
+    log_dir.mkdir()
+    event_log = state.EventLog(log_dir / "events.log")
+    manager = state.StateManager(event_log)
+    manager.record_detection(DetectionResult("victory", 0.8))
+    manager.record_adjustment("defeat", 1, note="manual")
+
+    httpd = server.create_server("127.0.0.1", 0, manager)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+
+    # Wait briefly for server to bind
+    time.sleep(0.05)
+
+    yield httpd
+
+    httpd.shutdown()
+    httpd.server_close()
+    thread.join(timeout=1)
+
+
+def _read_json_response(address: Tuple[str, int], path: str) -> tuple[int, dict]:
+    connection = http.client.HTTPConnection(address[0], address[1], timeout=2)
+    try:
+        connection.request("GET", path)
+        response = connection.getresponse()
+        body = response.read()
+        payload = json.loads(body.decode("utf-8")) if body else {}
+        return response.status, payload
+    finally:
+        connection.close()
+
+
+def test_state_endpoint_returns_summary(running_server: server.StateServer) -> None:
+    status, payload = _read_json_response(running_server.server_address, "/state")
+    assert status == 200
+    assert payload["victories"] == 1
+    assert payload["defeats"] == 1
+    assert payload["total"] == 2
+    assert payload["adjustments"][0]["note"] == "manual"
+
+
+def test_state_endpoint_handles_unknown_route(running_server: server.StateServer) -> None:
+    status, payload = _read_json_response(running_server.server_address, "/unknown")
+    assert status == 404
+    assert payload["error"] == "not_found"
+
+
+def test_state_endpoint_handles_internal_error() -> None:
+    class BrokenManager:
+        @property
+        def summary(self) -> state.CounterState:  # pragma: no cover - エラー経路テスト用
+            raise RuntimeError("boom")
+
+    httpd = server.create_server("127.0.0.1", 0, BrokenManager())  # type: ignore[arg-type]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.05)
+
+    try:
+        status, payload = _read_json_response(httpd.server_address, "/state")
+        assert status == 500
+        assert payload["error"] == "internal_server_error"
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        thread.join(timeout=1)

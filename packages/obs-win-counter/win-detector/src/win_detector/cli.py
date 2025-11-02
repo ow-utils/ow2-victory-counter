@@ -42,8 +42,8 @@ def run(snapshot_file: Path, event_log: Path | None = None) -> dict[str, Any]:
 
     summary = manager.summary
     return {
-        "wins": summary.wins,
-        "losses": summary.losses,
+        "victories": summary.victories,
+        "defeats": summary.defeats,
         "total": summary.total,
         "log": str(log_path),
     }

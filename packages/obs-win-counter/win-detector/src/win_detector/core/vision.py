@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-Outcome = Literal["win", "loss", "unknown"]
+Outcome = Literal["victory", "defeat", "unknown"]
 
 
 @dataclass(slots=True)
@@ -53,8 +53,8 @@ def evaluate_snapshot(snapshot: VisionSnapshot) -> DetectionResult:
 
     現段階では以下の簡易ルールで推定する。
         1. 試合が未終了なら`unknown`
-        2. 勝利バナーの信頼度が敗北バナーより0.2以上高い場合は`win`
-        3. 逆の場合は`loss`
+        2. 勝利バナーの信頼度が敗北バナーより0.2以上高い場合は`victory`
+        3. 逆の場合は`defeat`
         4. 信頼度が拮抗している場合はpayload_advantageを元に勝敗を推定
     """
 
@@ -66,16 +66,16 @@ def evaluate_snapshot(snapshot: VisionSnapshot) -> DetectionResult:
     banner_gap = victory - defeat
 
     if banner_gap >= 0.2:
-        return DetectionResult(outcome="win", confidence=float(victory))
+        return DetectionResult(outcome="victory", confidence=float(victory))
 
     if banner_gap <= -0.2:
-        return DetectionResult(outcome="loss", confidence=float(defeat))
+        return DetectionResult(outcome="defeat", confidence=float(defeat))
 
     if snapshot.payload_advantage >= 0.1:
-        return DetectionResult(outcome="win", confidence=clamp(0.5 + snapshot.payload_advantage / 2))
+        return DetectionResult(outcome="victory", confidence=clamp(0.5 + snapshot.payload_advantage / 2))
 
     if snapshot.payload_advantage <= -0.1:
-        return DetectionResult(outcome="loss", confidence=clamp(0.5 + abs(snapshot.payload_advantage) / 2))
+        return DetectionResult(outcome="defeat", confidence=clamp(0.5 + abs(snapshot.payload_advantage) / 2))
 
     return DetectionResult(outcome="unknown", confidence=abs(banner_gap))
 

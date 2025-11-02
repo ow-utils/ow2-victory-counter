@@ -16,8 +16,8 @@ def test_cli_run(tmp_path: Path) -> None:
     )
 
     result = cli.run(snapshots)
-    assert result["wins"] == 1
-    assert result["losses"] == 1
+    assert result["victories"] == 1
+    assert result["defeats"] == 1
 
     log_path = Path(result["log"])
     assert log_path.exists()

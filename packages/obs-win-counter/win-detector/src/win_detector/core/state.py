@@ -11,7 +11,7 @@ from typing import Iterable, Iterator, Literal, Optional, Sequence, TypedDict
 from .vision import DetectionResult
 
 EventType = Literal["result", "adjustment"]
-Outcome = Literal["win", "loss"]
+Outcome = Literal["victory", "defeat"]
 
 
 def utcnow_iso() -> str:
@@ -73,20 +73,20 @@ class Event:
 class CounterState:
     """勝敗カウンタの集計結果。"""
 
-    wins: int = 0
-    losses: int = 0
+    victories: int = 0
+    defeats: int = 0
     adjustments: list[Event] = field(default_factory=list)
     results: list[Event] = field(default_factory=list)
 
     @property
     def total(self) -> int:
-        return self.wins + self.losses
+        return self.victories + self.defeats
 
     def apply(self, event: Event) -> None:
-        if event.value == "win":
-            self.wins += event.delta
+        if event.value == "victory":
+            self.victories += event.delta
         else:
-            self.losses += event.delta
+            self.defeats += event.delta
 
         if event.type == "result":
             self.results.append(event)
@@ -145,7 +145,7 @@ class StateManager:
     def record_detection(self, detection: DetectionResult, note: str = "") -> Optional[Event]:
         """判定結果をイベントとして保存する。"""
 
-        if detection.outcome not in ("win", "loss"):
+        if detection.outcome not in ("victory", "defeat"):
             return None
 
         event = Event(
