@@ -57,6 +57,7 @@ npm run dev
 - Draw の表示を省きたい場合は `showDraw=false` を指定してください。
 - 更新間隔を調整したい場合は `poll=3` のように指定すると 3 秒ごとに自動更新されます。
 - さらにデザインを細かく調整したい場合は、OBS の「カスタム CSS」で `overlay-card` や `overlay-history__item` などのクラスを上書きできます。
+- 静的ファイルで利用したい場合は `victory-counter-overlay-ui` で `npm run build` を実行し、生成された `dist/overlay.html` を OBS ブラウザソースで `file:///.../dist/overlay.html` として読み込むことも可能です。
 
 ## 5. 手動補正とリアルタイム更新の確認
 

@@ -1,8 +1,17 @@
+export type TimelineEvent = {
+  type: "result" | "adjustment";
+  value: "victory" | "defeat" | "draw";
+  delta: number;
+  timestamp: string;
+  confidence?: number;
+  note?: string;
+};
+
 const baseTime = new Date("2025-01-01T12:00:00Z").getTime();
 
-const minutes = (offset) => baseTime + offset * 60_000;
+const minutes = (offset: number) => baseTime + offset * 60_000;
 
-export const mockTimeline = [
+export const mockTimeline: TimelineEvent[] = [
   {
     type: "result",
     value: "victory",
@@ -68,7 +77,7 @@ export const mockTimeline = [
   },
 ];
 
-export const summarizeEvents = (events) =>
+export const summarizeEvents = (events: TimelineEvent[]) =>
   events.reduce(
     (acc, event) => {
       if (event.value === "victory") {
