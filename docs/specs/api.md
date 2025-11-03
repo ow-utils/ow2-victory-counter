@@ -21,11 +21,23 @@
   "defeats": 8,
   "total": 20,
   "results": [
-    { "type": "result", "value": "victory", "delta": 1, "confidence": 0.92, "timestamp": "2025-01-01T12:34:56Z" }
+    {
+      "type": "result",
+      "value": "victory",
+      "delta": 1,
+      "confidence": 0.92,
+      "timestamp": "2025-01-01T12:34:56Z",
+    },
   ],
   "adjustments": [
-    { "type": "adjustment", "value": "defeat", "delta": 1, "timestamp": "2025-01-01T13:00:00Z", "note": "manual fix" }
-  ]
+    {
+      "type": "adjustment",
+      "value": "defeat",
+      "delta": 1,
+      "timestamp": "2025-01-01T13:00:00Z",
+      "note": "manual fix",
+    },
+  ],
 }
 ```
 
@@ -47,9 +59,21 @@ GET /history?limit=5
 ```jsonc
 {
   "events": [
-    { "type": "result", "value": "victory", "delta": 1, "timestamp": "2025-01-01T12:30:00Z", "confidence": 0.88 },
-    { "type": "adjustment", "value": "defeat", "delta": 1, "timestamp": "2025-01-01T12:35:00Z", "note": "manual correction" }
-  ]
+    {
+      "type": "result",
+      "value": "victory",
+      "delta": 1,
+      "timestamp": "2025-01-01T12:30:00Z",
+      "confidence": 0.88,
+    },
+    {
+      "type": "adjustment",
+      "value": "defeat",
+      "delta": 1,
+      "timestamp": "2025-01-01T12:35:00Z",
+      "note": "manual correction",
+    },
+  ],
 }
 ```
 
@@ -65,8 +89,8 @@ GET /history?limit=5
 
 ```json
 {
-  "value": "victory",  // "victory" または "defeat"
-  "delta": 2,          // 省略時は 1
+  "value": "victory", // "victory" または "defeat"
+  "delta": 2, // 省略時は 1
   "note": "manual fix" // 任意
 }
 ```
@@ -82,8 +106,8 @@ GET /history?limit=5
     "value": "victory",
     "delta": 2,
     "timestamp": "2025-01-01T14:00:00Z",
-    "note": "manual fix"
-  }
+    "note": "manual fix",
+  },
 }
 ```
 
