@@ -16,6 +16,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from dataclasses import dataclass
+from statistics import mean
 from typing import Iterable, Literal, Optional
 
 try:
@@ -45,12 +47,22 @@ def match_template(image: "np.ndarray", template: "np.ndarray") -> float:
     return float(max_val)
 
 
+@dataclass
+class DetectionResult:
+    file: str
+    variant: str
+    expected: Label
+    detected: str
+    score: float
+
+
 def run_detection(
     samples: Iterable[dict[str, object]],
     sample_root: Path,
     template_root: Path,
     variant: str,
     threshold: float,
+    results: list[DetectionResult],
 ) -> None:
     if cv2 is None or np is None:
         raise RuntimeError("OpenCV(cv2) がインストールされていません。PoC 実行には cv2 をインストールしてください。")
@@ -98,6 +110,15 @@ def run_detection(
         best_score = max(template_scores)
         detected = label if best_score >= threshold else "unknown"
         print(f"{file_name}: expected={label}, detected={detected}, score={best_score:.3f}")
+        results.append(
+            DetectionResult(
+                file=file_name,
+                variant=variant,
+                expected=label,
+                detected=detected,
+                score=best_score,
+            )
+        )
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
@@ -120,6 +141,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=0.85,
         help="類似度がこの値以上であれば一致とみなす (default: 0.85)",
     )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="検出結果のサマリを JSON で出力するパス",
+    )
     return parser.parse_args(argv)
 
 
@@ -133,6 +159,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not json_files:
         print("[ERROR] サンプルディレクトリに JSON メタデータが見つかりませんでした。", file=sys.stderr)
         return 1
+
+    all_results: list[DetectionResult] = []
 
     for json_path in json_files:
         metadata = json.loads(json_path.read_text())
@@ -150,7 +178,36 @@ def main(argv: Optional[list[str]] = None) -> int:
         variant_slug = "_".join(filter(None, variant_parts)) or "default"
 
         print(f"=== {json_path.name} (variant={variant_slug}) ===")
-        run_detection(samples, args.samples, args.templates, variant_slug, args.threshold)
+        run_detection(samples, args.samples, args.templates, variant_slug, args.threshold, all_results)
+
+    if args.report and all_results:
+        by_variant: dict[str, list[DetectionResult]] = {}
+        for result in all_results:
+            by_variant.setdefault(result.variant, []).append(result)
+
+        report_data = {
+            "threshold": args.threshold,
+            "variants": [],
+            "total": len(all_results),
+            "unknown": sum(1 for r in all_results if r.detected == "unknown"),
+        }
+        for variant, items in sorted(by_variant.items()):
+            scores = [item.score for item in items]
+            unknown = sum(1 for item in items if item.detected == "unknown")
+            report_data["variants"].append(
+                {
+                    "variant": variant,
+                    "samples": len(items),
+                    "min_score": min(scores),
+                    "max_score": max(scores),
+                    "avg_score": mean(scores),
+                    "unknown": unknown,
+                }
+            )
+
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(json.dumps(report_data, indent=2, ensure_ascii=False) + "\n")
+
     return 0
 
 
