@@ -28,6 +28,10 @@ except ImportError:  # pragma: no cover - 開発環境でのみ利用
 Label = Literal["victory", "defeat", "draw"]
 
 
+def slugify(value: str) -> str:
+    return value.lower().replace(" ", "_")
+
+
 def preprocess(image: "np.ndarray") -> "np.ndarray":
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -136,10 +140,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         if not isinstance(samples, list):
             continue
 
-        variant = metadata.get("accessibility", "default")
-        if not isinstance(variant, str):
-            variant = "default"
-        variant_slug = variant.lower().replace(" ", "_")
+        accessibility = metadata.get("accessibility", "default")
+        if not isinstance(accessibility, str) or not accessibility.strip():
+            accessibility = "default"
+        mode = metadata.get("mode")
+        variant_parts = [slugify(accessibility)]
+        if isinstance(mode, str) and mode.strip():
+            variant_parts.append(slugify(mode))
+        variant_slug = "_".join(filter(None, variant_parts)) or "default"
 
         print(f"=== {json_path.name} (variant={variant_slug}) ===")
         run_detection(samples, args.samples, args.templates, variant_slug, args.threshold)

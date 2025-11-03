@@ -53,6 +53,11 @@ def main() -> int:
             metadata = json.load(fh)
 
         accessibility = slugify(metadata.get("accessibility", "default"))
+        mode = metadata.get("mode")
+        variant_parts = [accessibility or "default"]
+        if isinstance(mode, str) and mode.strip():
+            variant_parts.append(slugify(mode))
+        variant = "_".join(filter(None, variant_parts)) or "default"
 
         for sample in metadata.get("samples", []):
             bbox = sample.get("template_bbox")
@@ -65,7 +70,6 @@ def main() -> int:
                 continue
 
             label = slugify(sample.get("label", "unknown"))
-            variant = accessibility
             dest_dir = OUTPUT_ROOT / label / variant
             dest_path = dest_dir / f"{source_path.stem}.png"
             export_template(source_path, dest_path, bbox)
