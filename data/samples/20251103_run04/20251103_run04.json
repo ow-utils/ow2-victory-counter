@@ -3,6 +3,7 @@
   "resolution": "1920x1080",
   "ui_language": "ja-JP",
   "accessibility": "umiinu",
+  "mode": "competitive",
   "samples": [
     {
       "file": "20251103_run04_victory_umiinu.png",

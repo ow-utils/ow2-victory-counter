@@ -3,6 +3,7 @@
   "resolution": "1920x1080",
   "ui_language": "ja-JP",
   "accessibility": "default",
+  "mode": "unranked",
   "samples": [
     {
       "file": "20251103_run01_draw_default.png",

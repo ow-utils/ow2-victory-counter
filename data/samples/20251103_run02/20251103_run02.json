@@ -3,6 +3,7 @@
   "resolution": "1920x1080",
   "ui_language": "ja-JP",
   "accessibility": "umiinu",
+  "mode": "unranked",
   "samples": [
     {
       "file": "20251103_run02_draw_umiinu.png",
