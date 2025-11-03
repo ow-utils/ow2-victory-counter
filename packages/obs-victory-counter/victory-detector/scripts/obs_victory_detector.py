@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import sys
 import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -33,10 +34,13 @@ from victory_detector.core import state  # noqa: E402
 DEFAULT_EVENT_LOG = HERE.parent / "events_cli.log"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8912
+DEFAULT_CAPTURE_DIR = HERE.parent / "captures"
 
 _server_instance: Optional[server.StateServer] = None
 _server_thread: Optional[threading.Thread] = None
 _server_manager: Optional[state.StateManager] = None
+_capture_enabled: bool = False
+_capture_dir: Path = DEFAULT_CAPTURE_DIR
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +74,19 @@ def script_properties() -> obs.obs_properties_t:
         props, "poll_interval", "Reload Interval (sec)", 1, 60, 1
     )
 
+    obs.obs_properties_add_bool(props, "capture_enabled", "Enable Screenshot Capture")
+    obs.obs_properties_add_path(
+        props,
+        "capture_dir",
+        "Screenshot Directory",
+        obs.OBS_PATH_DIRECTORY,
+        None,
+        str(DEFAULT_CAPTURE_DIR),
+    )
+    obs.obs_properties_add_int(
+        props, "capture_interval", "Screenshot Interval (sec)", 1, 60, 1
+    )
+
     return props
 
 
@@ -78,20 +95,26 @@ def script_defaults(settings: obs.obs_data_t) -> None:
     obs.obs_data_set_default_string(settings, "host", DEFAULT_HOST)
     obs.obs_data_set_default_int(settings, "port", DEFAULT_PORT)
     obs.obs_data_set_default_int(settings, "poll_interval", 5)
+    obs.obs_data_set_default_bool(settings, "capture_enabled", False)
+    obs.obs_data_set_default_string(settings, "capture_dir", str(DEFAULT_CAPTURE_DIR))
+    obs.obs_data_set_default_int(settings, "capture_interval", 10)
 
 
 def script_load(settings: obs.obs_data_t) -> None:
     _start_server(settings)
     _start_refresh_timer(settings)
+    _start_capture_timer(settings)
 
 
 def script_update(settings: obs.obs_data_t) -> None:
     _restart_server(settings)
     _start_refresh_timer(settings)
+    _start_capture_timer(settings)
 
 
 def script_unload() -> None:
     obs.timer_remove(_refresh_state)
+    obs.timer_remove(_capture_frame)
     _stop_server()
 
 
@@ -191,3 +214,43 @@ def _refresh_state() -> None:
     # イベントログを読み直し、手動編集後も StateManager の内容を整合させる。
     if _server_manager:
         _server_manager.reload()
+
+
+def _start_capture_timer(settings: obs.obs_data_t) -> None:
+    global _capture_enabled, _capture_dir
+
+    obs.timer_remove(_capture_frame)
+
+    enabled = obs.obs_data_get_bool(settings, "capture_enabled")
+    if not enabled:
+        _capture_enabled = False
+        return
+
+    path_str = obs.obs_data_get_string(settings, "capture_dir") or str(DEFAULT_CAPTURE_DIR)
+    interval = obs.obs_data_get_int(settings, "capture_interval") or 10
+
+    _capture_enabled = True
+    _capture_dir = Path(path_str)
+    _capture_dir.mkdir(parents=True, exist_ok=True)
+
+    interval_ms = max(1, interval) * 1000
+    obs.timer_add(_capture_frame, interval_ms)
+
+
+def _capture_frame() -> None:  # pragma: no cover - OBS runtime
+    if not _capture_enabled:
+        return
+
+    scene = obs.obs_frontend_get_current_scene()
+    if scene is None:
+        return
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    file_path = _capture_dir / f"capture-{timestamp}.png"
+
+    try:
+        obs.obs_source_save_screenshot(scene, "png", str(file_path))
+    except Exception as exc:  # noqa: BLE001
+        obs.script_log(obs.LOG_WARNING, f"Failed to capture screenshot: {exc}")
+    finally:
+        obs.obs_source_release(scene)
