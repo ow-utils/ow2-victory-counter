@@ -137,10 +137,11 @@ GET /history?limit=5
 | `scale`    | `1.0`  | フォント・レイアウトの拡大率（0.5〜2.0 の範囲にクランプ） |
 | `history`  | `3`    | 履歴表示件数（整数）                                      |
 | `showDraw` | `true` | `false` にすると Draw カードを非表示                      |
+| `poll`     | `5`    | `/state`・`/history` の再フェッチ間隔（秒）最小1、最大60  |
 
 ### レスポンス
 
-`Content-Type: text/html; charset=utf-8` の HTML ドキュメント。`/state` と同じカウント情報をもとに、Victory/Defeat/Draw の合計と直近イベントを表示する。
+`Content-Type: text/html; charset=utf-8` の HTML ドキュメント。`/state` と同じカウント情報をもとに、Victory/Defeat/Draw の合計と直近イベントを表示する。埋め込み JavaScript が `poll` 秒間隔で `/state` と `/history` を再取得し、表示を自動更新する。
 
 ### 利用例
 

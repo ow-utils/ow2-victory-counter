@@ -55,6 +55,7 @@ npm run dev
 - 配信用には `victory-detector` の `http://127.0.0.1:8912/overlay` をブラウザソースに設定することで、コンパクトな UI を直接表示できます。
 - クエリパラメータ例: `http://127.0.0.1:8912/overlay?theme=transparent&scale=1.1&history=5`
 - Draw の表示を省きたい場合は `showDraw=false` を指定してください。
+- 更新間隔を調整したい場合は `poll=3` のように指定すると 3 秒ごとに自動更新されます。
 - さらにデザインを細かく調整したい場合は、OBS の「カスタム CSS」で `overlay-card` や `overlay-history__item` などのクラスを上書きできます。
 
 ## 5. 手動補正とリアルタイム更新の確認

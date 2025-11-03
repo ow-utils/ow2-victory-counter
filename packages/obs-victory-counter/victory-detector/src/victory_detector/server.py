@@ -6,7 +6,6 @@ import argparse
 import html
 import json
 import logging
-from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Tuple, cast
@@ -142,10 +141,33 @@ class StateRequestHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "internal_server_error"})
             return
 
-        html_body = self._render_overlay(summary, events, theme, scale, show_draw)
+        try:
+            poll_seconds = int(query.get("poll", ["5"])[0])
+        except ValueError:
+            poll_seconds = 5
+        poll_seconds = max(1, min(poll_seconds, 60))
+
+        html_body = self._render_overlay(
+            summary,
+            events,
+            theme,
+            scale,
+            show_draw,
+            max(1, history_limit),
+            poll_seconds,
+        )
         self._send_html(200, html_body)
 
-    def _render_overlay(self, summary, events, theme, scale, show_draw):
+    def _render_overlay(
+        self,
+        summary,
+        events,
+        theme,
+        scale,
+        show_draw,
+        history_limit,
+        poll_seconds,
+    ):
         palette = {
             "dark": {
                 "bg": "rgba(15,23,42,0.7)",
@@ -173,41 +195,29 @@ class StateRequestHandler(BaseHTTPRequestHandler):
             },
         }[theme]
 
-        history_items = []
-        for event in reversed(events):
-            raw_value = event.value
-            value_class = f"overlay-history__item overlay-history__item--{raw_value}"
-            value_label = html.escape(raw_value.upper())
-            delta = f"+{event.delta}" if event.delta > 0 else str(event.delta)
-            note = html.escape(event.note)
-            timestamp_raw = event.timestamp.replace("Z", "+00:00")
-            try:
-                parsed_time = datetime.fromisoformat(timestamp_raw)
-                display_time = parsed_time.astimezone().strftime("%H:%M:%S")
-            except ValueError:
-                display_time = event.timestamp[-8:]
-            display_time = html.escape(display_time)
-            history_items.append(
-                f"<li class='{value_class}'>"
-                f"<span class='overlay-history__time'>{display_time}</span>"
-                f"<span class='overlay-history__value'>{value_label}</span>"
-                f"<span class='overlay-history__delta'>{delta}</span>"
-                + (f"<span class='overlay-history__note'>{note}</span>" if note else "")
-                + "</li>"
-            )
-
         draws_card = (
-            f"<div class='overlay-card overlay-card--draw'><span class='overlay-card__label'>Draw</span><span class='overlay-card__value'>{summary['draws']}</span></div>"
+            "<div class='overlay-card overlay-card--draw'>"
+            "<span class='overlay-card__label'>Draw</span>"
+            "<span id='overlay-count-draw' class='overlay-card__value'>0</span>"
+            "</div>"
             if show_draw
             else ""
         )
 
+        initial_payload = {
+            "summary": summary,
+            "events": [event.to_dict() for event in events],
+            "config": {
+                "history": history_limit,
+                "showDraw": show_draw,
+                "pollInterval": poll_seconds,
+            },
+        }
+        initial_json = json.dumps(initial_payload, ensure_ascii=False).replace(
+            "</", "<\\/"
+        )
         scale_clamped = max(0.5, min(scale, 2.0))
         cols = 3 if show_draw else 2
-
-        history_html = "".join(history_items)
-        if not history_html:
-            history_html = "<li class='overlay-history__item overlay-history__item--draw'><span class='overlay-history__value'>NO DATA</span></li>"
 
         return f"""
 <!DOCTYPE html>
@@ -287,14 +297,109 @@ class StateRequestHandler(BaseHTTPRequestHandler):
   <body class=\"overlay-body overlay-theme--{theme}\">
     <div class=\"overlay-root\">
       <div class=\"overlay-summary\">
-        <div class='overlay-card overlay-card--victory'><span class='overlay-card__label'>Victory</span><span class='overlay-card__value'>{summary['victories']}</span></div>
-        <div class='overlay-card overlay-card--defeat'><span class='overlay-card__label'>Defeat</span><span class='overlay-card__value'>{summary['defeats']}</span></div>
+        <div class='overlay-card overlay-card--victory'><span class='overlay-card__label'>Victory</span><span id='overlay-count-victory' class='overlay-card__value'>0</span></div>
+        <div class='overlay-card overlay-card--defeat'><span class='overlay-card__label'>Defeat</span><span id='overlay-count-defeat' class='overlay-card__value'>0</span></div>
         {draws_card}
       </div>
-      <ul class=\"overlay-history\">
-        {history_html}
+      <ul id=\"overlay-history\" class=\"overlay-history\">
+        <li class='overlay-history__item overlay-history__item--draw'><span class='overlay-history__value'>Loading...</span></li>
       </ul>
     </div>
+    <script type=\"application/json\" id=\"overlay-data\">{initial_json}</script>
+    <script>
+      (function() {{
+        const dataElem = document.getElementById('overlay-data');
+        if (!dataElem) {{ return; }}
+        const initialData = JSON.parse(dataElem.textContent);
+        const config = initialData.config || {{}};
+        const historyLimit = Math.max(1, config.history || 3);
+        const pollMs = Math.max(1000, (config.pollInterval || 5) * 1000);
+
+        const elements = {{
+          victory: document.getElementById('overlay-count-victory'),
+          defeat: document.getElementById('overlay-count-defeat'),
+          draw: document.getElementById('overlay-count-draw'),
+          history: document.getElementById('overlay-history'),
+        }};
+
+        const formatTime = (timestamp) => {{
+          const date = new Date(timestamp);
+          if (Number.isNaN(date.getTime())) {{
+            return timestamp;
+          }}
+          return date.toLocaleTimeString([], {{ hour12: false }});
+        }};
+
+        const renderSummary = (summary) => {{
+          if (elements.victory) {{ elements.victory.textContent = summary.victories ?? 0; }}
+          if (elements.defeat) {{ elements.defeat.textContent = summary.defeats ?? 0; }}
+          if (elements.draw) {{ elements.draw.textContent = summary.draws ?? 0; }}
+        }};
+
+        const renderHistory = (events) => {{
+          if (!elements.history) {{ return; }}
+          elements.history.innerHTML = '';
+          const items = Array.isArray(events) ? events.slice(-historyLimit).reverse() : [];
+          if (!items.length) {{
+            elements.history.innerHTML = "<li class='overlay-history__item overlay-history__item--draw'><span class='overlay-history__value'>NO DATA</span></li>";
+            return;
+          }}
+          for (const event of items) {{
+            const value = (event.value || 'draw').toLowerCase();
+            const li = document.createElement('li');
+            li.className = 'overlay-history__item overlay-history__item--' + value;
+
+            const timeEl = document.createElement('span');
+            timeEl.className = 'overlay-history__time';
+            timeEl.textContent = formatTime(event.timestamp);
+            li.appendChild(timeEl);
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'overlay-history__value';
+            valueEl.textContent = ((event.value || '') + '').toUpperCase();
+            li.appendChild(valueEl);
+
+            const deltaEl = document.createElement('span');
+            deltaEl.className = 'overlay-history__delta';
+            const delta = Number(event.delta || 0);
+            deltaEl.textContent = delta > 0 ? '+' + delta : String(delta);
+            li.appendChild(deltaEl);
+
+            if (event.note) {{
+              const noteEl = document.createElement('span');
+              noteEl.className = 'overlay-history__note';
+              noteEl.textContent = event.note;
+              li.appendChild(noteEl);
+            }}
+
+            elements.history.appendChild(li);
+          }}
+        }};
+
+        const applyData = (payload) => {{
+          renderSummary(payload.summary || {{}});
+          renderHistory(payload.events || []);
+        }};
+
+        applyData(initialData);
+
+        const refresh = async () => {{
+          try {{
+            const [summaryRes, historyRes] = await Promise.all([
+              fetch('/state'),
+              fetch('/history?limit=' + historyLimit),
+            ]);
+            const summaryPayload = await summaryRes.json();
+            const historyPayload = await historyRes.json();
+            applyData({{ summary: summaryPayload, events: historyPayload.events || [] }});
+          }} catch (error) {{
+            console.error('overlay refresh failed', error);
+          }}
+        }};
+
+        setInterval(refresh, pollMs);
+      }})();
+    </script>
   </body>
 </html>
 """

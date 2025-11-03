@@ -222,15 +222,17 @@ def test_overlay_endpoint_returns_html(running_server) -> None:
     status, headers, body = _get_raw(httpd.server_address, "/overlay")
     assert status == 200
     assert headers["Content-Type"].startswith("text/html")
+    assert "overlay-data" in body
     assert "Victory" in body
 
 
 def test_overlay_endpoint_respects_query(running_server) -> None:
     httpd, _ = running_server
     status, headers, body = _get_raw(
-        httpd.server_address, "/overlay?theme=transparent&history=2&scale=1.5"
+        httpd.server_address, "/overlay?theme=transparent&history=2&scale=1.5&poll=3"
     )
     assert status == 200
     assert "scale(1.5)" in body
-    assert "rgba(15,23,42,0.7)" not in body  # transparent テーマで背景が変わる
+    assert "overlay-theme--transparent" in body
+    assert '"pollInterval": 3' in body
     assert headers["Content-Type"].startswith("text/html")
