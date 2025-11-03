@@ -8,13 +8,13 @@
       "file": "20251103_run01_draw_default.png",
       "label": "draw",
       "notes": "standard draw banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [653, 471, 619, 156]
     },
     {
       "file": "20251103_run01_draw_default2.png",
       "label": "draw",
       "notes": "standard draw banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [653, 471, 619, 156]
     }
   ]
 }

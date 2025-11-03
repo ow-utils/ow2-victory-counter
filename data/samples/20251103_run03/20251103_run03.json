@@ -8,43 +8,43 @@
       "file": "20251103_run03_victory_default.png",
       "label": "victory",
       "notes": "default color victory banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [488, 477, 952, 141]
     },
     {
       "file": "20251103_run03_victory_default3.png",
       "label": "victory",
       "notes": "default color victory banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [488, 477, 952, 141]
     },
     {
       "file": "20251103_run03_victory_default2.png",
       "label": "victory",
       "notes": "default color victory banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [488, 477, 952, 141]
     },
     {
       "file": "20251103_run03_defeat_default.png",
       "label": "defeat",
       "notes": "default color defeat banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [552, 462, 827, 164]
     },
     {
       "file": "20251103_run03_defeat_default2.png",
       "label": "defeat",
       "notes": "default color defeat banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [552, 462, 827, 164]
     },
     {
       "file": "20251103_run03_defeat_default3.png",
       "label": "defeat",
       "notes": "default color defeat banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [552, 462, 827, 164]
     },
     {
       "file": "20251103_run03_defeat_default4.png",
       "label": "defeat",
       "notes": "default color defeat banner",
-      "template_bbox": [648, 470, 638, 153]
+      "template_bbox": [552, 462, 827, 164]
     }
   ]
 }
