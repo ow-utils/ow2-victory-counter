@@ -150,25 +150,25 @@ class StateRequestHandler(BaseHTTPRequestHandler):
                 "bg": "rgba(15,23,42,0.7)",
                 "text": "#f8fafc",
                 "card": "rgba(30,41,59,0.7)",
-                "victory": "#38bdf8",
-                "defeat": "#f87171",
-                "draw": "#94a3b8",
+                "accent_victory": "#38bdf8",
+                "accent_defeat": "#f87171",
+                "accent_draw": "#94a3b8",
             },
             "light": {
                 "bg": "rgba(255,255,255,0.85)",
                 "text": "#1f2937",
                 "card": "rgba(241,245,249,0.9)",
-                "victory": "#3b82f6",
-                "defeat": "#ef4444",
-                "draw": "#64748b",
+                "accent_victory": "#3b82f6",
+                "accent_defeat": "#ef4444",
+                "accent_draw": "#64748b",
             },
             "transparent": {
                 "bg": "transparent",
                 "text": "#f8fafc",
                 "card": "rgba(15,23,42,0.45)",
-                "victory": "#38bdf8",
-                "defeat": "#f87171",
-                "draw": "#94a3b8",
+                "accent_victory": "#38bdf8",
+                "accent_defeat": "#f87171",
+                "accent_draw": "#94a3b8",
             },
         }[theme]
 
@@ -190,7 +190,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
             )
 
         draws_card = (
-            f"<div class='card draw'><span class='label'>Draw</span><span class='value'>{summary['draws']}</span></div>"
+            f"<div class='overlay-card overlay-card--draw'><span class='overlay-card__label'>Draw</span><span class='overlay-card__value'>{summary['draws']}</span></div>"
             if show_draw
             else ""
         )
@@ -200,7 +200,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
         history_html = "".join(history_items)
         if not history_html:
-            history_html = "<li class='draw'><span class='value'>NO DATA</span></li>"
+            history_html = "<li class='overlay-history__item overlay-history__item--draw'><span class='overlay-history__value'>NO DATA</span></li>"
 
         return f"""
 <!DOCTYPE html>
@@ -213,7 +213,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
         color-scheme: { 'dark' if theme != 'light' else 'light' };
         font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }}
-      body {{
+      body.overlay-body {{
         margin: 0;
         padding: 12px;
         color: {palette['text']};
@@ -221,45 +221,45 @@ class StateRequestHandler(BaseHTTPRequestHandler):
         transform: scale({scale_clamped});
         transform-origin: top left;
       }}
-      .container {{
+      .overlay-root {{
         display: grid;
         gap: 12px;
         min-width: 240px;
       }}
-      .cards {{
+      .overlay-summary {{
         display: grid;
         grid-template-columns: repeat({cols}, minmax(0, 1fr));
         gap: 8px;
       }}
-      .card {{
+      .overlay-card {{
         padding: 10px;
         border-radius: 10px;
         background: {palette['card']};
         text-align: center;
       }}
-      .card .label {{
+      .overlay-card__label {{
         display: block;
         font-size: 0.7rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         opacity: 0.75;
       }}
-      .card .value {{
+      .overlay-card__value {{
         display: block;
         font-size: 1.6rem;
         font-weight: 700;
       }}
-      .card.victory {{ border-left: 4px solid {palette['victory']}; }}
-      .card.defeat {{ border-left: 4px solid {palette['defeat']}; }}
-      .card.draw {{ border-left: 4px solid {palette['draw']}; }}
-      .history {{
+      .overlay-card--victory {{ border-left: 4px solid {palette['accent_victory']}; }}
+      .overlay-card--defeat {{ border-left: 4px solid {palette['accent_defeat']}; }}
+      .overlay-card--draw {{ border-left: 4px solid {palette['accent_draw']}; }}
+      .overlay-history {{
         list-style: none;
         margin: 0;
         padding: 0;
         display: grid;
         gap: 6px;
       }}
-      .history li {{
+      .overlay-history__item {{
         display: grid;
         grid-template-columns: 60px 1fr auto;
         gap: 8px;
@@ -268,23 +268,23 @@ class StateRequestHandler(BaseHTTPRequestHandler):
         border-radius: 8px;
         background: {palette['card']};
       }}
-      .history li.victory {{ border-left: 4px solid {palette['victory']}; }}
-      .history li.defeat {{ border-left: 4px solid {palette['defeat']}; }}
-      .history li.draw {{ border-left: 4px solid {palette['draw']}; }}
-      .history .time {{ font-variant-numeric: tabular-nums; opacity: 0.6; }}
-      .history .value {{ letter-spacing: 0.04em; }}
-      .history .delta {{ font-weight: 600; }}
-      .history .note {{ grid-column: 2 / span 2; font-size: 0.7rem; opacity: 0.65; }}
+      .overlay-history__item--victory {{ border-left: 4px solid {palette['accent_victory']}; }}
+      .overlay-history__item--defeat {{ border-left: 4px solid {palette['accent_defeat']}; }}
+      .overlay-history__item--draw {{ border-left: 4px solid {palette['accent_draw']}; }}
+      .overlay-history__time {{ font-variant-numeric: tabular-nums; opacity: 0.6; }}
+      .overlay-history__value {{ letter-spacing: 0.04em; }}
+      .overlay-history__delta {{ font-weight: 600; }}
+      .overlay-history__note {{ grid-column: 2 / span 2; font-size: 0.7rem; opacity: 0.65; }}
     </style>
   </head>
-  <body>
-    <div class=\"container\">
-      <div class=\"cards\">
-        <div class='card victory'><span class='label'>Victory</span><span class='value'>{summary['victories']}</span></div>
-        <div class='card defeat'><span class='label'>Defeat</span><span class='value'>{summary['defeats']}</span></div>
+  <body class=\"overlay-body overlay-theme--{theme}\">
+    <div class=\"overlay-root\">
+      <div class=\"overlay-summary\">
+        <div class='overlay-card overlay-card--victory'><span class='overlay-card__label'>Victory</span><span class='overlay-card__value'>{summary['victories']}</span></div>
+        <div class='overlay-card overlay-card--defeat'><span class='overlay-card__label'>Defeat</span><span class='overlay-card__value'>{summary['defeats']}</span></div>
         {draws_card}
       </div>
-      <ul class=\"history\">
+      <ul class=\"overlay-history\">
         {history_html}
       </ul>
     </div>
