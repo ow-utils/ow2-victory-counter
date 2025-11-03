@@ -7,12 +7,24 @@
     {
       "file": "20251103_run02_draw_umiinu.png",
       "label": "draw",
-      "notes": "umiinu color draw banner"
+      "notes": "umiinu color draw banner",
+      "template_bbox": [
+        674,
+        8,
+        276,
+        304
+      ]
     },
     {
       "file": "20251103_run02_draw_umiinu2.png",
       "label": "draw",
-      "notes": "umiinu color draw banner"
+      "notes": "umiinu color draw banner",
+      "template_bbox": [
+        674,
+        8,
+        276,
+        304
+      ]
     }
   ]
 }

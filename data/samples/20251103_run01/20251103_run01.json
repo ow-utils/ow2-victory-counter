@@ -18,7 +18,13 @@
     {
       "file": "20251103_run01_draw_default2.png",
       "label": "draw",
-      "notes": "standard draw banner"
+      "notes": "standard draw banner",
+      "template_bbox": [
+        674,
+        8,
+        276,
+        304
+      ]
     }
   ]
 }
