@@ -35,12 +35,14 @@ DEFAULT_EVENT_LOG = HERE.parent / "events_cli.log"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8912
 DEFAULT_CAPTURE_DIR = HERE.parent / "captures"
+DEFAULT_CAPTURE_SOURCE = ""
 
 _server_instance: Optional[server.StateServer] = None
 _server_thread: Optional[threading.Thread] = None
 _server_manager: Optional[state.StateManager] = None
 _capture_enabled: bool = False
 _capture_dir: Path = DEFAULT_CAPTURE_DIR
+_capture_source_name: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +89,15 @@ def script_properties() -> obs.obs_properties_t:
         props, "capture_interval", "Screenshot Interval (sec)", 1, 60, 1
     )
 
+    source_list = obs.obs_properties_add_list(
+        props,
+        "capture_source",
+        "Screenshot Source",
+        obs.OBS_COMBO_TYPE_EDITABLE,
+        obs.OBS_COMBO_FORMAT_STRING,
+    )
+    _populate_source_list(source_list)
+
     return props
 
 
@@ -98,6 +109,7 @@ def script_defaults(settings: obs.obs_data_t) -> None:
     obs.obs_data_set_default_bool(settings, "capture_enabled", False)
     obs.obs_data_set_default_string(settings, "capture_dir", str(DEFAULT_CAPTURE_DIR))
     obs.obs_data_set_default_int(settings, "capture_interval", 10)
+    obs.obs_data_set_default_string(settings, "capture_source", DEFAULT_CAPTURE_SOURCE)
 
 
 def script_load(settings: obs.obs_data_t) -> None:
@@ -217,7 +229,7 @@ def _refresh_state() -> None:
 
 
 def _start_capture_timer(settings: obs.obs_data_t) -> None:
-    global _capture_enabled, _capture_dir
+    global _capture_enabled, _capture_dir, _capture_source_name
 
     obs.timer_remove(_capture_frame)
 
@@ -228,9 +240,15 @@ def _start_capture_timer(settings: obs.obs_data_t) -> None:
 
     path_str = obs.obs_data_get_string(settings, "capture_dir") or str(DEFAULT_CAPTURE_DIR)
     interval = obs.obs_data_get_int(settings, "capture_interval") or 10
+    source_name = obs.obs_data_get_string(settings, "capture_source") or DEFAULT_CAPTURE_SOURCE
+    if not source_name:
+        obs.script_log(obs.LOG_WARNING, "Screenshot capture is enabled but no source is specified.")
+        _capture_enabled = False
+        return
 
     _capture_enabled = True
     _capture_dir = Path(path_str)
+    _capture_source_name = source_name
     _capture_dir.mkdir(parents=True, exist_ok=True)
 
     interval_ms = max(1, interval) * 1000
@@ -238,19 +256,37 @@ def _start_capture_timer(settings: obs.obs_data_t) -> None:
 
 
 def _capture_frame() -> None:  # pragma: no cover - OBS runtime
+    global _capture_enabled
+
     if not _capture_enabled:
         return
 
-    scene = obs.obs_frontend_get_current_scene()
-    if scene is None:
+    source = obs.obs_get_source_by_name(_capture_source_name)
+    if source is None:
+        obs.script_log(
+            obs.LOG_WARNING,
+            f"Screenshot source '{_capture_source_name}' not found.",
+        )
+        _capture_enabled = False
         return
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     file_path = _capture_dir / f"capture-{timestamp}.png"
 
     try:
-        obs.obs_source_save_screenshot(scene, "png", str(file_path))
+        obs.obs_source_save_screenshot(source, "png", str(file_path))
     except Exception as exc:  # noqa: BLE001
         obs.script_log(obs.LOG_WARNING, f"Failed to capture screenshot: {exc}")
     finally:
-        obs.obs_source_release(scene)
+        obs.obs_source_release(source)
+
+
+def _populate_source_list(prop: obs.obs_property_t) -> None:
+    sources = obs.obs_enum_sources()
+    try:
+        for source in sources or []:
+            name = obs.obs_source_get_name(source)
+            if name:
+                obs.obs_property_list_add_string(prop, name, name)
+    finally:
+        obs.source_list_release(sources)

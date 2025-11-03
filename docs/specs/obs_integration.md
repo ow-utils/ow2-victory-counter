@@ -34,6 +34,7 @@ CLI を実行すると `events_cli.log` に初期イベントが保存されま�
    - **Capture Enabled**: スクリーンショット保存を有効化するか。PoC 用に勝敗画面を PNG 出力したい場合にオンにする。
    - **Screenshot Directory**: 画像の保存先ディレクトリ。既定は `packages/obs-victory-counter/victory-detector/captures/`。
    - **Screenshot Interval (sec)**: キャプチャ間隔（秒）。
+   - **Screenshot Source**: 保存対象のソース名（例: ゲームキャプチャ）。対象ソースが存在しない場合はキャプチャが停止する。
 4. スクリプトを有効にすると、バックグラウンドで HTTP サーバが起動し `/state` `/history` `/adjust` が利用可能になります。
 5. スクリプトを無効化／削除するとサーバは自動で停止します。
 
