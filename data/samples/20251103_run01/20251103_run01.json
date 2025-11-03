@@ -1,0 +1,18 @@
+{
+  "run": "20251103_run01",
+  "resolution": "1920x1080",
+  "ui_language": "ja-JP",
+  "accessibility": "default",
+  "samples": [
+    {
+      "file": "20251103_run01_draw_default.png",
+      "label": "draw",
+      "notes": "standard draw banner"
+    },
+    {
+      "file": "20251103_run01_draw_default2.png",
+      "label": "draw",
+      "notes": "standard draw banner"
+    }
+  ]
+}

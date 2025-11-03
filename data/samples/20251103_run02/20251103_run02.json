@@ -1,0 +1,18 @@
+{
+  "run": "20251103_run02",
+  "resolution": "1920x1080",
+  "ui_language": "ja-JP",
+  "accessibility": "umiinu",
+  "samples": [
+    {
+      "file": "20251103_run02_draw_umiinu.png",
+      "label": "draw",
+      "notes": "umiinu color draw banner"
+    },
+    {
+      "file": "20251103_run02_draw_umiinu2.png",
+      "label": "draw",
+      "notes": "umiinu color draw banner"
+    }
+  ]
+}
