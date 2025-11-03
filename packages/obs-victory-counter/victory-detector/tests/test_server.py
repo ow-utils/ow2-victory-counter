@@ -28,13 +28,21 @@ def test_serialize_summary_includes_events() -> None:
         timestamp="2024-01-02T00:00:00Z",
         note="manual fix",
     )
+    draw_event = state.Event(
+        type="result",
+        value="draw",
+        delta=1,
+        timestamp="2024-01-03T00:00:00Z",
+    )
     counter.apply(result_event)
     counter.apply(adjust_event)
+    counter.apply(draw_event)
 
     payload = server.serialize_summary(counter)
     assert payload["victories"] == 1
     assert payload["defeats"] == 2
-    assert payload["total"] == 3
+    assert payload["draws"] == 1
+    assert payload["total"] == 4
     assert payload["results"][0]["note"] == "auto"
     assert payload["adjustments"][0]["note"] == "manual fix"
 
@@ -47,6 +55,7 @@ def running_server(tmp_path):
     manager = state.StateManager(event_log)
     manager.record_detection(DetectionResult("victory", 0.8))
     manager.record_adjustment("defeat", 1, note="manual")
+    manager.record_adjustment("draw", 1, note="tie")
 
     httpd = server.create_server("127.0.0.1", 0, manager)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -88,7 +97,8 @@ def test_state_endpoint_returns_summary(running_server) -> None:
     assert status == 200
     assert payload["victories"] == 1
     assert payload["defeats"] == 1
-    assert payload["total"] == 2
+    assert payload["draws"] == 1
+    assert payload["total"] == 3
     assert payload["adjustments"][0]["note"] == "manual"
     assert headers["Access-Control-Allow-Origin"] == "*"
 

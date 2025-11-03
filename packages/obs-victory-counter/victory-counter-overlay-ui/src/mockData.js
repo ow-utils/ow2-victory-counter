@@ -47,6 +47,13 @@ export const mockTimeline = [
   },
   {
     type: "result",
+    value: "draw",
+    delta: 1,
+    timestamp: new Date(minutes(50)).toISOString(),
+    confidence: 0.95,
+  },
+  {
+    type: "result",
     value: "victory",
     delta: 1,
     timestamp: new Date(minutes(55)).toISOString(),
@@ -68,9 +75,11 @@ export const summarizeEvents = (events) =>
         acc.victories += event.delta;
       } else if (event.value === "defeat") {
         acc.defeats += event.delta;
+      } else if (event.value === "draw") {
+        acc.draws += event.delta;
       }
-      acc.total = acc.victories + acc.defeats;
+      acc.total = acc.victories + acc.defeats + acc.draws;
       return acc;
     },
-    { victories: 0, defeats: 0, total: 0 },
+    { victories: 0, defeats: 0, draws: 0, total: 0 },
   );

@@ -9,7 +9,8 @@ def test_cli_run(tmp_path: Path) -> None:
         """
 [
   {"match_complete": true, "victory_banner_confidence": 0.85, "defeat_banner_confidence": 0.1},
-  {"match_complete": true, "victory_banner_confidence": 0.2, "defeat_banner_confidence": 0.75}
+  {"match_complete": true, "victory_banner_confidence": 0.2, "defeat_banner_confidence": 0.75},
+  {"match_complete": true, "victory_banner_confidence": 0.51, "defeat_banner_confidence": 0.5, "payload_advantage": 0.0}
 ]
 """.strip(),
         encoding="utf-8",
@@ -18,8 +19,9 @@ def test_cli_run(tmp_path: Path) -> None:
     result = cli.run(snapshots)
     assert result["victories"] == 1
     assert result["defeats"] == 1
+    assert result["draws"] == 1
 
     log_path = Path(result["log"])
     assert log_path.exists()
     contents = log_path.read_text(encoding="utf-8").strip().splitlines()
-    assert len(contents) == 2
+    assert len(contents) == 3

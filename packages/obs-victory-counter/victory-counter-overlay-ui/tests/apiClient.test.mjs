@@ -12,7 +12,7 @@ test('fetchState issues GET request to /state', async () => {
       return {
         ok: true,
         status: 200,
-        json: async () => ({ victories: 1, defeats: 2, total: 3, results: [], adjustments: [] }),
+        json: async () => ({ victories: 1, defeats: 2, draws: 1, total: 4, results: [], adjustments: [] }),
       };
     },
   });
@@ -20,7 +20,8 @@ test('fetchState issues GET request to /state', async () => {
   const response = await client.fetchState();
   assert.strictEqual(requests[0].url, 'http://example.test/state');
   assert.strictEqual(requests[0].options?.method ?? 'GET', 'GET');
-  assert.strictEqual(response.total, 3);
+  assert.strictEqual(response.draws, 1);
+  assert.strictEqual(response.total, 4);
 });
 
 test('postAdjust sends payload as JSON', async () => {
@@ -56,4 +57,3 @@ test('fetchHistory propagates HTTP errors', async () => {
 
   await assert.rejects(client.fetchHistory(), /500/);
 });
-

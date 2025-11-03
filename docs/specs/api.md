@@ -19,6 +19,7 @@
 {
   "victories": 12,
   "defeats": 8,
+  "draws": 3,
   "total": 20,
   "results": [
     {
@@ -43,6 +44,7 @@
 
 - `results` と `adjustments` は最新イベントを時系列順に格納します。
 - 信頼度 (`confidence`) は自動判定イベントにのみ含まれます。
+- `victories` / `defeats` / `draws` は累計値であり、`total` はそれらの合計です。
 
 ## `GET /history`
 
@@ -89,7 +91,7 @@ GET /history?limit=5
 
 ```json
 {
-  "value": "victory", // "victory" または "defeat"
+  "value": "victory", // "victory" / "defeat" / "draw"
   "delta": 2, // 省略時は 1
   "note": "manual fix" // 任意
 }
@@ -113,7 +115,7 @@ GET /history?limit=5
 
 ### エラー
 
-- `value` が `"victory"` / `"defeat"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。
+- `value` が `"victory"` / `"defeat"` / `"draw"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。
 - 内部エラー時は `500 Internal Server Error` を返します（エラーログはサーバ側に記録されます）。
 
 ---

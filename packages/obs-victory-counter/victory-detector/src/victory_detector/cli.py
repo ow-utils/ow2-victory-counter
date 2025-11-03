@@ -48,6 +48,7 @@ def run(snapshot_file: Path, event_log: Path | None = None) -> dict[str, Any]:
     return {
         "victories": summary.victories,
         "defeats": summary.defeats,
+        "draws": summary.draws,
         "total": summary.total,
         "log": str(log_path),
     }

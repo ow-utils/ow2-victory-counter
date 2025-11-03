@@ -21,6 +21,7 @@ def serialize_summary(counter: state.CounterState) -> dict[str, Any]:
     return {
         "victories": counter.victories,
         "defeats": counter.defeats,
+        "draws": counter.draws,
         "total": counter.total,
         "results": [event.to_dict() for event in counter.results],
         "adjustments": [event.to_dict() for event in counter.adjustments],
@@ -95,7 +96,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(raw.decode("utf-8"))
             value = payload.get("value")
-            if value not in ("victory", "defeat"):
+            if value not in ("victory", "defeat", "draw"):
                 raise ValueError("invalid value")
             delta = int(payload.get("delta", 1))
             note = payload.get("note", "")

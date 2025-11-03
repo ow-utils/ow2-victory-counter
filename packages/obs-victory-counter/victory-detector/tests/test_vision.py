@@ -15,6 +15,13 @@ def test_evaluate_snapshot_uses_payload_advantage():
     assert result.confidence > 0.5
 
 
+def test_evaluate_snapshot_draw():
+    snapshot = vision.VisionSnapshot(True, 0.52, 0.5, 0.01)
+    result = vision.evaluate_snapshot(snapshot)
+    assert result.outcome == "draw"
+    assert result.confidence > 0.9
+
+
 def test_choose_outcome_prefers_confident_secondary():
     primary = vision.DetectionResult("unknown", 0.2)
     secondary = vision.DetectionResult("victory", 0.9)

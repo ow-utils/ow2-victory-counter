@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-Outcome = Literal["victory", "defeat", "unknown"]
+Outcome = Literal["victory", "defeat", "draw", "unknown"]
 
 
 @dataclass(slots=True)
@@ -56,6 +56,7 @@ def evaluate_snapshot(snapshot: VisionSnapshot) -> DetectionResult:
         2. 勝利バナーの信頼度が敗北バナーより0.2以上高い場合は`victory`
         3. 逆の場合は`defeat`
         4. 信頼度が拮抗している場合はpayload_advantageを元に勝敗を推定
+        5. バナーおよび優劣度の差が僅差であれば`draw`
     """
 
     if not snapshot.match_complete:
@@ -81,6 +82,9 @@ def evaluate_snapshot(snapshot: VisionSnapshot) -> DetectionResult:
             outcome="defeat",
             confidence=clamp(0.5 + abs(snapshot.payload_advantage) / 2),
         )
+
+    if abs(banner_gap) < 0.1 and abs(snapshot.payload_advantage) < 0.05:
+        return DetectionResult(outcome="draw", confidence=1.0 - abs(banner_gap))
 
     return DetectionResult(outcome="unknown", confidence=abs(banner_gap))
 

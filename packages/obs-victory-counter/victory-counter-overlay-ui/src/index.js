@@ -13,7 +13,10 @@ const formatDelta = (delta) => (delta > 0 ? `+${delta}` : `${delta}`);
 const flattenEvents = (payload) => {
   const events = [...(payload.results ?? []), ...(payload.adjustments ?? [])];
   return events
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
     .slice(-5);
 };
 
@@ -43,6 +46,10 @@ const render = () => {
           <span class="label">Defeat</span>
           <span class="value">${state.summary.defeats}</span>
         </div>
+        <div class="total draw">
+          <span class="label">Draw</span>
+          <span class="value">${state.summary.draws}</span>
+        </div>
         <div class="total total-matches">
           <span class="label">Total</span>
           <span class="value">${state.summary.total}</span>
@@ -58,7 +65,9 @@ const render = () => {
           .map(
             (event) => `
               <li class="${event.value}">
-                <span class="timestamp">${new Date(event.timestamp).toLocaleTimeString([], {
+                <span class="timestamp">${new Date(
+                  event.timestamp,
+                ).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}</span>
@@ -85,6 +94,7 @@ const updateFromServer = async () => {
     const summary = {
       victories: payload.victories ?? 0,
       defeats: payload.defeats ?? 0,
+      draws: payload.draws ?? 0,
       total: payload.total ?? 0,
     };
     const events = flattenEvents(payload);
@@ -107,7 +117,10 @@ const updateFromServer = async () => {
 
 const startPolling = () => {
   updateFromServer();
-  const interval = Number.parseInt(document.body.dataset.pollInterval ?? "5000", 10);
+  const interval = Number.parseInt(
+    document.body.dataset.pollInterval ?? "5000",
+    10,
+  );
   setInterval(updateFromServer, Number.isFinite(interval) ? interval : 5000);
 };
 
