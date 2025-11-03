@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "package-overlay": "npm run build && node tools/copy-overlay.mjs",
     "lint": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts"
   },

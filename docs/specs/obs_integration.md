@@ -38,6 +38,8 @@ CLI を実行すると `events_cli.log` に初期イベントが保存されま�
 
 ## 4. ブラウザソースの設定
 
+### 4.1 管理 UI（開発サーバ）を表示する場合
+
 1. 別ターミナルでオーバーレイ用開発サーバを起動します。
 
 ```bash
@@ -50,7 +52,7 @@ npm run dev
 
 > 本番運用では静的ビルド + 任意の HTTP サーバを利用する想定です。現状はモック段階のため、開発サーバを利用しています。
 
-### `/overlay` の活用
+### 4.2 Victory Detector `/overlay` を表示する場合
 
 - 配信用には `victory-detector` の `http://127.0.0.1:8912/overlay` をブラウザソースに設定することで、コンパクトな UI を直接表示できます。
 - クエリパラメータ例: `http://127.0.0.1:8912/overlay?theme=transparent&scale=1.1&history=5`
@@ -58,6 +60,22 @@ npm run dev
 - 更新間隔を調整したい場合は `poll=3` のように指定すると 3 秒ごとに自動更新されます。
 - さらにデザインを細かく調整したい場合は、OBS の「カスタム CSS」で `overlay-card` や `overlay-history__item` などのクラスを上書きできます。
 - 静的ファイルで利用したい場合は `victory-counter-overlay-ui` で `npm run build` を実行し、生成された `dist/overlay.html` を OBS ブラウザソースで `file:///.../dist/overlay.html` として読み込むことも可能です。
+
+### 4.3 静的ビルドの利用手順
+
+1. `victory-counter-overlay-ui` でビルドを実行します。
+
+   ```bash
+   cd packages/obs-victory-counter/victory-counter-overlay-ui
+   npm run build
+   ```
+
+2. 生成された `dist` ディレクトリを利用し、以下のいずれかの方法で OBS に読み込ませます。
+   - **ローカルファイルとして読み込む**: OBS ブラウザソースの URL を `file:///.../dist/overlay.html` に設定する。ファイル更新時は OBS のプロパティ画面で「リロード」ボタンを押して反映させる。
+   - **軽量サーバで配信する**: `dist` をルートとして簡易サーバを起動し、`http://127.0.0.1:4173/overlay.html` のような URL を指定する。例: `npm run preview`, `python -m http.server --directory dist 4173`。
+3. `dist` 以下には `assets/` ディレクトリも生成されるため、OBS の参照先がこれらのファイルを読み込めるパスであることを確認してください。
+4. Python パッケージ側から配布したい場合は `npm run package-overlay` を実行すると、`victory-detector/static/overlay/` にファイルをコピーできます（リポジトリにはコミットされません）。
+5. カスタム CSS を適用する際は、`.overlay-card`, `.overlay-history__item`, `.overlay-result__label` などのクラスを上書きすると配信者がレイアウトを調整しやすくなります。
 
 ## 5. 手動補正とリアルタイム更新の確認
 
