@@ -203,3 +203,34 @@ def test_options_preflight_returns_cors_headers(running_server) -> None:
         assert "POST" in headers["Access-Control-Allow-Methods"]
     finally:
         connection.close()
+
+
+def _get_raw(address: Tuple[str, int], path: str) -> tuple[int, dict, str]:
+    connection = http.client.HTTPConnection(address[0], address[1], timeout=2)
+    try:
+        connection.request("GET", path)
+        response = connection.getresponse()
+        headers = {key: value for key, value in response.getheaders()}
+        body = response.read().decode("utf-8")
+        return response.status, headers, body
+    finally:
+        connection.close()
+
+
+def test_overlay_endpoint_returns_html(running_server) -> None:
+    httpd, _ = running_server
+    status, headers, body = _get_raw(httpd.server_address, "/overlay")
+    assert status == 200
+    assert headers["Content-Type"].startswith("text/html")
+    assert "Victory" in body
+
+
+def test_overlay_endpoint_respects_query(running_server) -> None:
+    httpd, _ = running_server
+    status, headers, body = _get_raw(
+        httpd.server_address, "/overlay?theme=transparent&history=2&scale=1.5"
+    )
+    assert status == 200
+    assert "scale(1.5)" in body
+    assert "rgba(15,23,42,0.7)" not in body  # transparent テーマで背景が変わる
+    assert headers["Content-Type"].startswith("text/html")

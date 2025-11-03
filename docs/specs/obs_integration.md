@@ -50,6 +50,12 @@ npm run dev
 
 > 本番運用では静的ビルド + 任意の HTTP サーバを利用する想定です。現状はモック段階のため、開発サーバを利用しています。
 
+### `/overlay` の活用
+
+- 配信用には `victory-detector` の `http://127.0.0.1:8912/overlay` をブラウザソースに設定することで、コンパクトな UI を直接表示できます。
+- クエリパラメータ例: `http://127.0.0.1:8912/overlay?theme=transparent&scale=1.1&history=5`
+- Draw の表示を省きたい場合は `showDraw=false` を指定してください。
+
 ## 5. 手動補正とリアルタイム更新の確認
 
 1. ブラウザソース内の右下フォームから Outcome/Delta/Note を入力し「Apply」を押す。

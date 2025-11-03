@@ -121,3 +121,31 @@ GET /history?limit=5
 ---
 
 今後、履歴を範囲指定で取得する、あるいは UI の更新通知を WebSocket で配信するといった拡張を検討する場合、本ドキュメントを更新して周知してください。
+
+- `value` が `"victory"` / `"defeat"` / `"draw"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。
+- 内部エラー時は `500 Internal Server Error` を返します（エラーログはサーバ側に記録されます）。
+
+## `GET /overlay`
+
+勝敗サマリをコンパクトな HTML として返す。配信用ブラウザソース向けに設計されており、`/state` の上に薄いテンプレート層を載せた形となる。
+
+### クエリパラメータ
+
+| パラメータ | 既定値 | 説明                                                      |
+| ---------- | ------ | --------------------------------------------------------- |
+| `theme`    | `dark` | `dark` / `light` / `transparent` のテーマ切り替え         |
+| `scale`    | `1.0`  | フォント・レイアウトの拡大率（0.5〜2.0 の範囲にクランプ） |
+| `history`  | `3`    | 履歴表示件数（整数）                                      |
+| `showDraw` | `true` | `false` にすると Draw カードを非表示                      |
+
+### レスポンス
+
+`Content-Type: text/html; charset=utf-8` の HTML ドキュメント。`/state` と同じカウント情報をもとに、Victory/Defeat/Draw の合計と直近イベントを表示する。
+
+### 利用例
+
+```
+GET /overlay?theme=transparent&scale=1.2&history=5
+```
+
+OBS のブラウザソースに上記 URL を設定すると、透明背景・1.2倍スケール・履歴5件のオーバーレイが表示される。
