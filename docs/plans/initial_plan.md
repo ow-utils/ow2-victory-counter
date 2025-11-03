@@ -22,7 +22,7 @@ OBS StudioのHTMLブラウザー機能を利用して、画面に勝敗数を表
 
 ### モノレポのディレクトリ構成
 
-- ルート直下に`packages/obs-victory-counter/`を配置し、その配下を`victory-detector/`（OBS用Pythonスクリプト）と`victory-counter-overlay-ui/`（ブラウザ向けHTML/CSS/JS）に分ける。両者の関係や利用手順は親ディレクトリの`README.md`にまとめる。
+- ルート直下に`packages/obs-victory-counter/`を配置し、その配下を`victory-detector/`（OBS用Pythonスクリプト）と`victory-counter-overlay-ui/`（ブラウザ向けHTML/CSS/JS）に分ける。両者の関係や利用手順は親`README.md`にまとめる。
 - 共通の定義や型、静的アセットは将来的に`packages/obs-victory-counter/shared/`へ集約し、プロジェクト間の依存を明示化する。
 - プロジェクト固有のドキュメントは各ディレクトリ内の`README.md`に集約し、リポジトリ全体の仕様や設計メモは`docs/`配下に整理する。
 
@@ -37,7 +37,7 @@ OBS StudioのHTMLブラウザー機能を利用して、画面に勝敗数を表
 
 - Pythonプラグイン側で`127.0.0.1:8912`に`ThreadingHTTPServer`を立ち上げ、集計済みの勝敗カウンタを`/state`（JSON）で公開し、イベントログは`/history`（直近N件）から取得できるようにする。
 - HTMLオーバーレイは`fetch`を用いて1秒間隔で`/state`をポーリングし、再接続・タイムアウトを考慮したリトライ処理を実装する。
-- 手動補正用の`POST /adjust`エンドポイントを用意し、UIや管理ツールから補正イベントを追記できるようにする。将来的に双方向通信が必要になった場合は同サーバをWebSocket対応（`/ws`）へ拡張し、詳細仕様は`docs/api.md`で管理する。
+- 将来的に双方向通信が必要になった場合は同サーバをWebSocket対応（`/ws`）へ拡張し、手動補正用の`POST /adjust`エンドポイントも追加する。API仕様は`docs/api.md`で管理する。
 
 ### オーバーレイUIの拡張方針
 
@@ -55,7 +55,7 @@ OBS StudioのHTMLブラウザー機能を利用して、画面に勝敗数を表
 
 ### フェーズ1: 骨組み整備
 - `packages/obs-victory-counter/README.md`を作成し、全体のディレクトリ構造とワークスペース設定を明文化する。
-- `victory-detector/pyproject.toml`と`uv.lock`の雛形を用意し、`uv run python -V`が通ることを確認する。
+- `victory-detector/pyproject.toml`と`uv.lock`の雛形を用意し、`uv run python -V`が通ることを确认する。
 - `victory-counter-overlay-ui/package.json`と`package-lock.json`（またはpnpm/pnpm-lock）を用意し、`npm run lint`などの空コマンドが成功するかチェックする。
 
 ### フェーズ2: 判定ロジックのスタンドアロン実装
