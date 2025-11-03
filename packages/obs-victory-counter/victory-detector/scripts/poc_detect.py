@@ -3,14 +3,17 @@
 Victory / Defeat / Draw のバナー検出を試行するための雛形。
 
 利用方法:
-    python scripts/poc_detect.py data/samples victory
+    python scripts/poc_detect.py --samples data/samples/20251103_run03 --templates data/templates
 
-現時点ではテンプレートマッチングの骨組みのみで、OpenCV(cv2) を使用する想定。
+`data/samples` 配下の JSON に含まれる `template_bbox` を利用して、
+同じく `data/templates/<label>/<variant>/` に保存されたテンプレートとの
+類似度（正規化相関係数）を計算する。
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import Iterable, Literal, Optional
@@ -25,90 +28,121 @@ except ImportError:  # pragma: no cover - 開発環境でのみ利用
 Label = Literal["victory", "defeat", "draw"]
 
 
-def load_templates(template_dir: Path) -> dict[Label, Path]:
-    """テンプレート画像のパスを取得する。
-
-    現状は `templates/{label}.png` という命名を想定。
-    実際の PoC ではサブディレクトリや別名も考慮する必要がある。
-    """
-
-    mapping: dict[Label, Path] = {}
-    for label in ("victory", "defeat", "draw"):
-        candidate = template_dir / f"{label}.png"
-        if candidate.exists():
-            mapping[label] = candidate
-    return mapping
+def preprocess(image: "np.ndarray") -> "np.ndarray":
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return binary
 
 
 def match_template(image: "np.ndarray", template: "np.ndarray") -> float:
-    """テンプレートマッチングを行い、類似度を返す。
-
-    PoC では cv2.matchTemplate + minMaxLoc を利用する予定。
-    """
-
     result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, _ = cv2.minMaxLoc(result)
     return float(max_val)
 
 
-def run_detection(samples: Iterable[Path], templates: dict[Label, Path], threshold: float) -> None:
+def run_detection(
+    samples: Iterable[dict[str, object]],
+    sample_root: Path,
+    template_root: Path,
+    variant: str,
+    threshold: float,
+) -> None:
     if cv2 is None or np is None:
         raise RuntimeError("OpenCV(cv2) がインストールされていません。PoC 実行には cv2 をインストールしてください。")
 
-    loaded_templates = {
-        label: cv2.imread(str(path), cv2.IMREAD_COLOR)
-        for label, path in templates.items()
-    }
+    for entry in samples:
+        file_name = entry.get("file")
+        label = entry.get("label")
+        bbox = entry.get("template_bbox")
 
-    for sample_path in samples:
+        if not isinstance(file_name, str) or label not in ("victory", "defeat", "draw"):
+            continue
+        if not isinstance(bbox, list) or len(bbox) != 4:
+            continue
+
+        sample_path = sample_root / file_name
+        if not sample_path.exists():
+            print(f"[WARN] {sample_path} が見つかりません。")
+            continue
+
+        x, y, width, height = map(int, bbox)
         image = cv2.imread(str(sample_path), cv2.IMREAD_COLOR)
         if image is None:
             print(f"[WARN] {sample_path} を読み込めませんでした。")
             continue
 
-        scores: list[tuple[Label, float]] = []
-        for label, template_img in loaded_templates.items():
+        crop = image[y : y + height, x : x + width]
+        processed_crop = preprocess(crop)
+
+        template_dir = template_root / label / variant
+        template_scores: list[float] = []
+        for template_path in sorted(template_dir.glob("*.png")):
+            template_img = cv2.imread(str(template_path), cv2.IMREAD_COLOR)
             if template_img is None:
                 continue
-            score = match_template(image, template_img)
-            scores.append((label, score))
+            processed_template = preprocess(template_img)
+            if processed_template.shape != processed_crop.shape:
+                processed_template = cv2.resize(processed_template, (processed_crop.shape[1], processed_crop.shape[0]))
+            score = match_template(processed_crop, processed_template)
+            template_scores.append(score)
 
-        scores.sort(key=lambda item: item[1], reverse=True)
-        best = scores[0] if scores else ("victory", 0.0)
-        detected_label = best[0] if best[1] >= threshold else "unknown"
-        print(f"{sample_path.name}: {detected_label} (score={best[1]:.3f})")
+        if not template_scores:
+            print(f"[WARN] {template_dir} にテンプレートが存在しません。")
+            continue
+
+        best_score = max(template_scores)
+        detected = label if best_score >= threshold else "unknown"
+        print(f"{file_name}: expected={label}, detected={detected}, score={best_score:.3f}")
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Victory banner detection PoC")
-    parser.add_argument("sample_dir", type=Path, help="サンプル画像を格納したディレクトリ")
-    parser.add_argument("template_dir", type=Path, help="テンプレート画像を格納したディレクトリ")
+    parser = argparse.ArgumentParser(description="Victory/Defeat/Draw banner detection PoC (shape-based)")
+    parser.add_argument(
+        "--samples",
+        type=Path,
+        required=True,
+        help="サンプル画像と JSON メタデータを格納したディレクトリ",
+    )
+    parser.add_argument(
+        "--templates",
+        type=Path,
+        required=True,
+        help="切り出したテンプレート画像を格納したルートディレクトリ",
+    )
     parser.add_argument(
         "--threshold",
         type=float,
-        default=0.75,
-        help="テンプレートマッチングで勝敗を確定させる閾値 (default: 0.75)",
+        default=0.85,
+        help="類似度がこの値以上であれば一致とみなす (default: 0.85)",
     )
     return parser.parse_args(argv)
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
-    if not args.sample_dir.is_dir() or not args.template_dir.is_dir():
-        print("[ERROR] sample_dir と template_dir は存在するディレクトリである必要があります。", file=sys.stderr)
+    if not args.samples.is_dir() or not args.templates.is_dir():
+        print("[ERROR] samples と templates は存在するディレクトリである必要があります。", file=sys.stderr)
         return 1
 
-    templates = load_templates(args.template_dir)
-    if not templates:
-        print("[ERROR] テンプレート画像が見つかりませんでした。templates/{victory,defeat,draw}.png を追加してください。", file=sys.stderr)
+    json_files = sorted(args.samples.glob("*.json"))
+    if not json_files:
+        print("[ERROR] サンプルディレクトリに JSON メタデータが見つかりませんでした。", file=sys.stderr)
         return 1
 
-    samples = sorted(args.sample_dir.glob("*.png"))
-    if not samples:
-        print("[WARN] サンプル画像が見つかりませんでした。PNG 形式のファイルを追加してください。")
-        return 0
+    for json_path in json_files:
+        metadata = json.loads(json_path.read_text())
+        samples = metadata.get("samples", [])
+        if not isinstance(samples, list):
+            continue
 
-    run_detection(samples, templates, args.threshold)
+        variant = metadata.get("accessibility", "default")
+        if not isinstance(variant, str):
+            variant = "default"
+        variant_slug = variant.lower().replace(" ", "_")
+
+        print(f"=== {json_path.name} (variant={variant_slug}) ===")
+        run_detection(samples, args.samples, args.templates, variant_slug, args.threshold)
     return 0
 
 
