@@ -183,7 +183,7 @@ class StateRequestHandler(BaseHTTPRequestHandler):
             timestamp_raw = event.timestamp.replace("Z", "+00:00")
             try:
                 parsed_time = datetime.fromisoformat(timestamp_raw)
-                display_time = parsed_time.strftime("%H:%M:%S")
+                display_time = parsed_time.astimezone().strftime("%H:%M:%S")
             except ValueError:
                 display_time = event.timestamp[-8:]
             display_time = html.escape(display_time)
