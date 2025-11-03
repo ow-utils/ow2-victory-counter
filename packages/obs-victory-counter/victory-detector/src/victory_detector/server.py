@@ -6,6 +6,7 @@ import argparse
 import html
 import json
 import logging
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Tuple, cast
@@ -174,18 +175,24 @@ class StateRequestHandler(BaseHTTPRequestHandler):
 
         history_items = []
         for event in reversed(events):
-            value = html.escape(event.value)
+            raw_value = event.value
+            value_class = f"overlay-history__item overlay-history__item--{raw_value}"
+            value_label = html.escape(raw_value.upper())
             delta = f"+{event.delta}" if event.delta > 0 else str(event.delta)
             note = html.escape(event.note)
-            timestamp = html.escape(event.timestamp[-8:])
+            timestamp_raw = event.timestamp.replace("Z", "+00:00")
+            try:
+                parsed_time = datetime.fromisoformat(timestamp_raw)
+                display_time = parsed_time.strftime("%H:%M:%S")
+            except ValueError:
+                display_time = event.timestamp[-8:]
+            display_time = html.escape(display_time)
             history_items.append(
-                "<li class='"
-                + value
-                + "'>"
-                + f"<span class='time'>{timestamp}</span>"
-                + f"<span class='value'>{value.upper()}</span>"
-                + f"<span class='delta'>{delta}</span>"
-                + (f"<span class='note'>{note}</span>" if note else "")
+                f"<li class='{value_class}'>"
+                f"<span class='overlay-history__time'>{display_time}</span>"
+                f"<span class='overlay-history__value'>{value_label}</span>"
+                f"<span class='overlay-history__delta'>{delta}</span>"
+                + (f"<span class='overlay-history__note'>{note}</span>" if note else "")
                 + "</li>"
             )
 
