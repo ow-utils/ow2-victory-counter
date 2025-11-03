@@ -7,7 +7,13 @@
     {
       "file": "20251103_run04_victory_umiinu.png",
       "label": "victory",
-      "notes": "umiinu color victory banner"
+      "notes": "umiinu color victory banner",
+      "template_bbox": [
+        684,
+        401,
+        549,
+        129
+      ]
     },
     {
       "file": "20251103_run04_defeat_umiinu.png",

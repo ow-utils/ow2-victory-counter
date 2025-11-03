@@ -16,6 +16,17 @@
       ]
     },
     {
+      "file": "20251103_run03_victory_default3.png",
+      "label": "victory",
+      "notes": "default color victory banner",
+      "template_bbox": [
+        1411,
+        418,
+        492,
+        119
+      ]
+    },
+    {
       "file": "20251103_run03_victory_default2.png",
       "label": "victory",
       "notes": "default color victory banner"
@@ -30,11 +41,6 @@
         515,
         268
       ]
-    },
-    {
-      "file": "20251103_run03_victory_default3.png",
-      "label": "victory",
-      "notes": "default color victory banner"
     },
     {
       "file": "20251103_run03_defeat_default2.png",
