@@ -176,6 +176,19 @@ def test_adjust_endpoint_rejects_invalid_payload(running_server) -> None:
     assert payload["error"] == "invalid_payload"
 
 
+def test_adjust_endpoint_accepts_draw(running_server) -> None:
+    httpd, manager = running_server
+    status, payload, _ = _request_json(
+        httpd.server_address,
+        "POST",
+        "/adjust",
+        {"value": "draw", "delta": 1},
+    )
+    assert status == 202
+    assert payload["event"]["value"] == "draw"
+    assert manager.summary.draws >= 1
+
+
 def test_options_preflight_returns_cors_headers(running_server) -> None:
     httpd, _ = running_server
     connection = http.client.HTTPConnection(
