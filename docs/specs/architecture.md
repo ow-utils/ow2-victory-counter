@@ -38,7 +38,7 @@
 
 - 画像解析 PoC 用のスクリーンショットは `/data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
 - 例: `data/samples/20251103_run01/20251103_run01.json` には draw バナーの PNG とメタデータを格納している。
-- ラベリング手順や命名規則は `docs/plans/2025-11-03-07画像サンプル収集手順.md` を参照。データ追加時は同ドキュメントの TODO を更新し、必要に応じてテンプレート座標（`template_bbox`）などのメタ情報を追記する。
+- ラベリング手順や命名規則は `docs/plans/2025-11-03-08全体TODO.md` を参照。データ追加時は同ドキュメントの TODO／参考メモを更新し、必要に応じてテンプレート座標（`template_bbox`）などのメタ情報を追記する。
 - 明度しきい値を使って候補領域を抽出する補助ツールとして `scripts/list_overlay_components.py` を用意している。ImageMagick が必要で、テンプレート矩形を決める際のヒントにする。
 - `scripts/export_templates.py` を実行すると、`template_bbox` を基に `data/templates/<label>/<variant>/` に切り出されたテンプレート PNG が生成される。`variant` にはサンプルの `accessibility`・`mode` を小文字スラッグ化したものを連結して保存する（例: `umiinu_competitive`）。PoC やテンプレートマッチング実装ではここを参照する。
 - `scripts/check_templates.py` はサンプル JSON とテンプレートを突き合わせ、variant ごとに PNG が揃っているかを検証する。CI で実行することでテンプレート不足を早期検知できる。
