@@ -17,11 +17,15 @@ def main() -> int:
     args = parse_args()
     client = ReqClient(host=args.host, port=args.port, password=args.password)
     resp = client.get_input_list()
-    inputs = resp.inputs
+    inputs = resp.get("inputs", []) if isinstance(resp, dict) else getattr(resp, "inputs", [])
     print("Inputs:")
     for src in inputs:
-        name = src.input_name
-        kind = src.input_kind
+        if isinstance(src, dict):
+            name = src.get("inputName")
+            kind = src.get("inputKind")
+        else:
+            name = getattr(src, "input_name", None)
+            kind = getattr(src, "input_kind", None)
         print(f"  - {name} ({kind})")
     return 0
 

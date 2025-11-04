@@ -105,7 +105,10 @@ def main() -> int:
                 args.screenshot_height,
                 -1,
             )
-            image_data = getattr(resp, "image_data", None)
+            if isinstance(resp, dict):
+                image_data = resp.get("imageData") or resp.get("imageDataBase64")
+            else:
+                image_data = getattr(resp, "image_data", None)
             if not image_data:
                 print("[WARN] 画像データが取得できませんでした。")
             else:
