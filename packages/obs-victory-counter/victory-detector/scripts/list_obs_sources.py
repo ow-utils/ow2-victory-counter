@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-from obswebsocket import obsws, requests
+from obsws_python import ReqClient
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,21 +15,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    ws = obsws(args.host, args.port, args.password)
-    ws.connect()
-    try:
-        resp = ws.call(requests.GetSourceList())
-        if not resp.status:
-            print(f"[ERROR] GetSourceList failed: {resp.datain}")
-            return 1
-        sources = resp.datain.get("sources", [])
-        print("Sources:")
-        for src in sources:
-            name = src.get("name")
-            stype = src.get("type") or src.get("sourceKind")
-            print(f"  - {name} ({stype})")
-    finally:
-        ws.disconnect()
+    client = ReqClient(host=args.host, port=args.port, password=args.password)
+    resp = client.get_input_list()
+    inputs = resp.inputs
+    print("Inputs:")
+    for src in inputs:
+        name = src.input_name
+        kind = src.input_kind
+        print(f"  - {name} ({kind})")
     return 0
 
 

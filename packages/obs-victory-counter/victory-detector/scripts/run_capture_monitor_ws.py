@@ -1,7 +1,7 @@
 """obs-websocket を利用した勝敗判定 PoC モニター。
 
-指定ソースのスクリーンショットを一定間隔で取得し、テンプレートと照合して
-勝敗を判定する。結果は標準出力にログ出力する。
+OBS 5.x の websocket API を使用し、指定ソースのスクリーンショットを
+一定間隔で取得してテンプレートと照合、判定結果を標準出力へログ出力する。
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import cv2  # type: ignore
 import numpy as np  # type: ignore
-from obswebsocket import obsws, requests
+from obsws_python import ReqClient
 
 DEFAULT_THRESHOLD = 0.9
 DEFAULT_INTERVAL = 2.0
@@ -32,10 +32,10 @@ def load_templates(template_root: Path, variant: str) -> dict[str, list[np.ndarr
     for label_dir in template_root.iterdir():
         if not label_dir.is_dir():
             continue
-        templates: list[np.ndarray] = []
         variant_dir = label_dir / variant
         if not variant_dir.exists():
             continue
+        templates: list[np.ndarray] = []
         for path in variant_dir.glob("*.png"):
             img = cv2.imread(str(path), cv2.IMREAD_COLOR)
             if img is not None:
@@ -73,6 +73,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+
     if not args.templates.is_dir():
         print(f"[ERROR] テンプレートディレクトリが見つかりません: {args.templates}")
         return 1
@@ -92,28 +93,33 @@ def main() -> int:
             print("[ERROR] template-bbox は x,y,width,height 形式で指定してください。")
             return 1
 
-    ws = obsws(args.host, args.port, args.password)
-    ws.connect()
-    print("[INFO] obs-websocket に接続しました。Ctrl+C で終了します。")
+    client = ReqClient(host=args.host, port=args.port, password=args.password)
+    print("[INFO] obs-websocket (5.x) に接続しました。Ctrl+C で終了します。")
 
     try:
         while True:
-            req = requests.TakeSourceScreenshot(
-                sourceName=args.source,
-                embedPictureFormat="png",
-                width=args.screenshot_width,
-                height=args.screenshot_height,
+            resp = client.get_source_screenshot(
+                args.source,
+                "png",
+                args.screenshot_width,
+                args.screenshot_height,
+                -1,
             )
-            resp = ws.call(req)
-            if resp.status:  # 成功時は status = True
-                data = resp.datain
-                image_data = data.get("imageData")
-                if not image_data:
-                    print("[WARN] 画像データが空でした。")
+            image_data = getattr(resp, "image_data", None)
+            if not image_data:
+                print("[WARN] 画像データが取得できませんでした。")
+            else:
+                if image_data.startswith("data:"):
+                    _, base64_data = image_data.split(",", 1)
                 else:
-                    png_bytes = bytes(image_data, "utf-8")
-                    # base64 デコード
-                    png_bytes = base64.b64decode(png_bytes)
+                    base64_data = image_data
+                try:
+                    png_bytes = base64.b64decode(base64_data)
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[WARN] base64 デコードに失敗しました: {exc}")
+                    png_bytes = b""
+
+                if png_bytes:
                     np_data = np.frombuffer(png_bytes, np.uint8)
                     image = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
                     if image is not None:
@@ -140,14 +146,14 @@ def main() -> int:
                                 ensure_ascii=False,
                             )
                         )
-            else:
-                print(f"[WARN] スクリーンショット取得に失敗しました: {resp.datain}")
+                    else:
+                        print("[WARN] PNG データのデコードに失敗しました。")
 
             time.sleep(max(args.interval, 0.5))
     except KeyboardInterrupt:
         print("[INFO] 監視を終了します。")
     finally:
-        ws.disconnect()
+        client.disconnect()
     return 0
 
 
