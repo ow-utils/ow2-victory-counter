@@ -7,6 +7,8 @@ dependencies = [
     "numpy>=2.3.4",
     "obsws-python>=1.8.0",
     "opencv-python>=4.11.0.86",
+    "torch>=2.9.0",
+    "torchvision>=0.24.0",
 ]
 
 [build-system]
