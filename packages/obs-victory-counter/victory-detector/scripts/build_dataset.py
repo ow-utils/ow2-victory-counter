@@ -2,14 +2,16 @@
 
 以下の 2 通りの入力構成に対応する。
 
-1. 従来形式 (`data/samples/YYYYMMDD_runXX/*.json`)  
+1. 従来形式 (`data/samples/YYYYMMDD_runXX/*.json`)
    - JSON の `template_bbox` を利用してクロップ。
-2. 新形式 (`samples/<variant>/<label>/*.png`)  
-   - JSON が存在しない場合はこちらを想定。variant/label ごとに
+2. 新形式 (`samples/<label>/*.png`)
+   - JSON が存在しない場合はこちらを想定。label ごとに
      画像を配置するだけで処理できる。
 
 どちらの場合も `--crop x,y,width,height` を指定すると、共通の矩形を
 使ってクロップできる。値はピクセル、または 0〜1 の比率指定。
+
+出力は `dataset/<label>/` の構造で保存される。
 """
 
 from __future__ import annotations
@@ -72,10 +74,6 @@ def _process_metadata_samples(
 ) -> None:
     for json_path in json_paths:
         metadata = json.loads(json_path.read_text())
-        variant = metadata.get("accessibility", "default")
-        if isinstance(metadata.get("mode"), str):
-            variant += f"_{metadata['mode']}"
-        variant = variant.lower().replace(" ", "_")
 
         for sample in metadata.get("samples", []):
             label = sample.get("label")
@@ -128,7 +126,6 @@ def _process_metadata_samples(
                 image=image,
                 crop=(x, y, w, h),
                 output_root=output_root,
-                variant=variant,
                 label=label,
                 file_name=file_name,
                 size=size,
@@ -141,54 +138,48 @@ def _process_structured_samples(
     size: int,
     crop_rect: tuple[float, float, float, float] | None,
 ) -> None:
-    for variant_dir in sorted(samples_root.iterdir()):
-        if not variant_dir.is_dir():
+    for label_dir in sorted(samples_root.iterdir()):
+        if not label_dir.is_dir():
             continue
-        variant = variant_dir.name.lower().replace(" ", "_")
-        for label_dir in sorted(variant_dir.iterdir()):
-            if not label_dir.is_dir():
+        label = label_dir.name.lower()
+        if label not in ("victory", "defeat", "draw", "none"):
+            continue
+        for image_path in sorted(label_dir.glob("*.png")):
+            image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+            if image is None:
                 continue
-            label = label_dir.name.lower()
-            if label not in ("victory", "defeat", "draw", "none"):
-                continue
-            for image_path in sorted(label_dir.glob("*.png")):
-                image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
-                if image is None:
-                    continue
-                height, width = image.shape[:2]
-                if crop_rect:
-                    cx, cy, cw, ch = crop_rect
-                    x = int(round(cx * width)) if abs(cx) <= 1 else int(round(cx))
-                    y = int(round(cy * height)) if abs(cy) <= 1 else int(round(cy))
-                    w = int(round(cw * width)) if abs(cw) <= 1 else int(round(cw))
-                    h = int(round(ch * height)) if abs(ch) <= 1 else int(round(ch))
-                else:
-                    w = int(width * 0.5)
-                    h = int(height * 0.3)
-                    x = (width - w) // 2
-                    y = (height - h) // 2
+            height, width = image.shape[:2]
+            if crop_rect:
+                cx, cy, cw, ch = crop_rect
+                x = int(round(cx * width)) if abs(cx) <= 1 else int(round(cx))
+                y = int(round(cy * height)) if abs(cy) <= 1 else int(round(cy))
+                w = int(round(cw * width)) if abs(cw) <= 1 else int(round(cw))
+                h = int(round(ch * height)) if abs(ch) <= 1 else int(round(ch))
+            else:
+                w = int(width * 0.5)
+                h = int(height * 0.3)
+                x = (width - w) // 2
+                y = (height - h) // 2
 
-                x = max(0, min(x, width - 1))
-                y = max(0, min(y, height - 1))
-                w = max(1, min(w, width - x))
-                h = max(1, min(h, height - y))
+            x = max(0, min(x, width - 1))
+            y = max(0, min(y, height - 1))
+            w = max(1, min(w, width - x))
+            h = max(1, min(h, height - y))
 
-                _write_sample(
-                    image=image,
-                    crop=(x, y, w, h),
-                    output_root=output_root,
-                    variant=variant,
-                    label=label,
-                    file_name=image_path.name,
-                    size=size,
-                )
+            _write_sample(
+                image=image,
+                crop=(x, y, w, h),
+                output_root=output_root,
+                label=label,
+                file_name=image_path.name,
+                size=size,
+            )
 
 
 def _write_sample(
     image: cv2.typing.MatLike,
     crop: tuple[int, int, int, int],
     output_root: Path,
-    variant: str,
     label: str,
     file_name: str,
     size: int,
@@ -196,7 +187,7 @@ def _write_sample(
     x, y, w, h = crop
     cropped = image[y : y + h, x : x + w]
     resized = cv2.resize(cropped, (size, size))
-    output_dir = output_root / variant / label
+    output_dir = output_root / label
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / file_name
     cv2.imwrite(str(output_path), resized)

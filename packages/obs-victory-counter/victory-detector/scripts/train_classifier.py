@@ -18,7 +18,6 @@ from victory_detector.training.model import VictoryClassifier
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train victory classifier")
     parser.add_argument("--data", type=Path, default=Path("dataset"))
-    parser.add_argument("--variant", default="default_unranked")
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -30,12 +29,12 @@ def main() -> int:
     args = parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    variant_dir = args.data / args.variant
-    if not variant_dir.exists():
-        print(f"[ERROR] dataset {variant_dir} が見つかりません。先に build_dataset.py を実行してください。")
+    data_dir = args.data
+    if not data_dir.exists():
+        print(f"[ERROR] dataset {data_dir} が見つかりません。先に build_dataset.py を実行してください。")
         return 1
 
-    dataset = VictoryDataset(variant_dir)
+    dataset = VictoryDataset(data_dir)
     total = len(dataset)
     train_len = int(total * 0.7)
     val_len = total - train_len

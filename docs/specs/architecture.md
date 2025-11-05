@@ -42,8 +42,8 @@
 - 明度しきい値を使って候補領域を抽出する補助ツールとして `scripts/list_overlay_components.py` を用意している。ImageMagick が必要で、テンプレート矩形を決める際のヒントにする。
 - `scripts/export_templates.py` を実行すると、`template_bbox` を基に `data/templates/<label>/<variant>/` に切り出されたテンプレート PNG が生成される。`variant` にはサンプルの `accessibility`・`mode` を小文字スラッグ化したものを連結して保存する（例: `umiinu_competitive`）。PoC やテンプレートマッチング実装ではここを参照する。
 - `scripts/check_templates.py` はサンプル JSON とテンプレートを突き合わせ、variant ごとに PNG が揃っているかを検証する。CI で実行することでテンプレート不足を早期検知できる。
-- `scripts/build_dataset.py` は学習用データセット（128x128 PNG）を生成し、`dataset/<variant>/<label>/` に配置する。CNN 学習用の生データ扱いのため Git では無視する。
-- `scripts/train_classifier.py` を用いて軽量 CNN を訓練し、モデルを `artifacts/models/` に保存する。推論は `run_capture_monitor_ws.py` などから呼び出す予定。
+- `scripts/build_dataset.py` は学習用データセット（128x128 PNG）を生成し、`dataset/<label>/` に配置する。従来の JSON ベースのサンプルに加え、`samples/<label>/*.png` という簡易なフォルダ構造にも対応し、JSON なしで手軽にデータセットを構築できる。CNN 学習用の生データ扱いのため Git では無視する。
+- `scripts/train_classifier.py` を用いて軽量 CNN を訓練し、モデルを `artifacts/models/` に保存する。データセットのパスのみ指定すれば良く、variant パラメータは不要。推論は `run_capture_monitor_ws.py` などから呼び出す予定。
 - `scripts/poc_detect.py --report` によりスコア分布を JSON 出力できる。現状の最小スコアは 0.99999976 であり、実運用の推奨閾値は 0.90、警戒ライン（unknown 判定への切り替え）は 0.85 を目安とする。
 
 ## 今後の方針
