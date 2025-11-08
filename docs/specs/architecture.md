@@ -42,9 +42,23 @@
 - 明度しきい値を使って候補領域を抽出する補助ツールとして `scripts/list_overlay_components.py` を用意している。ImageMagick が必要で、テンプレート矩形を決める際のヒントにする。
 - `scripts/export_templates.py` を実行すると、`template_bbox` を基に `data/templates/<label>/<variant>/` に切り出されたテンプレート PNG が生成される。`variant` にはサンプルの `accessibility`・`mode` を小文字スラッグ化したものを連結して保存する（例: `umiinu_competitive`）。PoC やテンプレートマッチング実装ではここを参照する。
 - `scripts/check_templates.py` はサンプル JSON とテンプレートを突き合わせ、variant ごとに PNG が揃っているかを検証する。CI で実行することでテンプレート不足を早期検知できる。
-- `scripts/build_dataset.py` は学習用データセット（128x128 PNG）を生成し、`dataset/<label>/` に配置する。従来の JSON ベースのサンプルに加え、`samples/<label>/*.png` という簡易なフォルダ構造にも対応し、JSON なしで手軽にデータセットを構築できる。CNN 学習用の生データ扱いのため Git では無視する。
+- `scripts/build_dataset.py` は学習用データセットを生成し、`dataset/<label>/` に配置する。画像はアスペクト比を維持したまま長辺を指定サイズ（デフォルト128px）にリサイズされる。従来の JSON ベースのサンプルに加え、`samples/<label>/*.png` という簡易なフォルダ構造にも対応し、JSON なしで手軽にデータセットを構築できる。CNN 学習用の生データ扱いのため Git では無視する。
 - `scripts/train_classifier.py` を用いて軽量 CNN を訓練し、モデルを `artifacts/models/` に保存する。データセットのパスのみ指定すれば良く、variant パラメータは不要。推論は `run_capture_monitor_ws.py` などから呼び出す予定。
 - `scripts/poc_detect.py --report` によりスコア分布を JSON 出力できる。現状の最小スコアは 0.99999976 であり、実運用の推奨閾値は 0.90、警戒ライン（unknown 判定への切り替え）は 0.85 を目安とする。
+
+## CNN モデルアーキテクチャ
+
+- `VictoryClassifier` は可変サイズ入力に対応した軽量 CNN で、以下の特徴を持つ：
+  - **3層の畳み込み層**：Conv2d + BatchNorm + ReLU + MaxPool2d の組み合わせで特徴抽出
+  - **適応型プーリング**：`AdaptiveAvgPool2d(4, 4)` により、任意のサイズの入力を 4×4 の固定サイズに変換
+  - **全結合層**：128チャンネル × 4 × 4 = 2048次元のベクトルを分類ラベル数の出力に変換
+  - この設計により、アスペクト比や解像度の異なる入力画像でも学習・推論が可能
+
+- ラベルクラス数はデータセットから自動検出される：
+  - `dataset/` 配下のディレクトリ構造（`victory/`, `defeat/`, `draw/`, `none/` など）から自動認識
+  - 4クラス固定ではなく、任意のクラス数に対応（6クラス、8クラスなど）
+  - 学習スクリプト実行時に `VictoryDataset` が label_map を自動生成し、`num_classes` が自動設定される
+  - 例：`victory_text`, `victory_progress`, `defeat_text`, `defeat_progress`, `draw`, `none` の 6クラス分類にも対応
 
 ## 今後の方針
 

@@ -11,7 +11,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
 
-from victory_detector.training.dataset import VictoryDataset
+from victory_detector.training.dataset import VictoryDataset, collate_variable_size
 from victory_detector.training.model import VictoryClassifier
 
 
@@ -35,15 +35,21 @@ def main() -> int:
         return 1
 
     dataset = VictoryDataset(data_dir)
+    num_classes = len(dataset.label_map)
     total = len(dataset)
     train_len = int(total * 0.7)
     val_len = total - train_len
     train_set, val_set = random_split(dataset, [train_len, val_len])
 
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=args.batch_size)
+    print(f"[INFO] Dataset loaded: {total} samples, {num_classes} classes")
+    print(f"[INFO] Labels: {', '.join(sorted(dataset.label_map.keys()))}")
+    print(f"[INFO] Train: {train_len}, Val: {val_len}")
 
-    model = VictoryClassifier(num_classes=4).to(device)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_variable_size)
+    val_loader = DataLoader(val_set, batch_size=args.batch_size, collate_fn=collate_variable_size)
+
+    model = VictoryClassifier(num_classes=num_classes).to(device)
+    print(f"[INFO] Model initialized with {num_classes} classes on {device}")
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 

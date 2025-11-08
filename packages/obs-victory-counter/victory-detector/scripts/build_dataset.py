@@ -176,6 +176,25 @@ def _process_structured_samples(
             )
 
 
+def _resize_keep_aspect_ratio(image: cv2.typing.MatLike, max_size: int) -> cv2.typing.MatLike:
+    """画像のアスペクト比を維持しながらリサイズする。長辺がmax_sizeになるように縮小。"""
+    h, w = image.shape[:2]
+    if h == 0 or w == 0:
+        return image
+
+    # 長辺を基準にスケールを計算
+    scale = max_size / max(h, w)
+    new_w = int(w * scale)
+    new_h = int(h * scale)
+
+    # リサイズ（最低1pxは確保）
+    new_w = max(1, new_w)
+    new_h = max(1, new_h)
+
+    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+    return resized
+
+
 def _write_sample(
     image: cv2.typing.MatLike,
     crop: tuple[int, int, int, int],
@@ -186,12 +205,12 @@ def _write_sample(
 ) -> None:
     x, y, w, h = crop
     cropped = image[y : y + h, x : x + w]
-    resized = cv2.resize(cropped, (size, size))
+    resized = _resize_keep_aspect_ratio(cropped, size)
     output_dir = output_root / label
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / file_name
     cv2.imwrite(str(output_path), resized)
-    print(f"[INFO] {output_path} を出力しました。 (crop=({x},{y},{w},{h}))")
+    print(f"[INFO] {output_path} を出力しました。 (crop=({x},{y},{w},{h}), resized=({resized.shape[1]},{resized.shape[0]}))")
 
 
 if __name__ == "__main__":
