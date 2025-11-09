@@ -6,12 +6,18 @@
 ┌──────────────────────────────┐
 │  OBS + Victory Detector（Python） │
 │  ├─ victory_detector.core.*       │
+│  │   ├─ StateManager（状態管理・クールダウン） │
+│  │   └─ EventLog（イベント永続化）    │
+│  ├─ victory_detector.inference.*   │
+│  │   └─ VictoryPredictor（CNN推論）  │
 │  ├─ HTTP サーバ                  │
 │  │   ├─ GET /state               │
 │  │   ├─ GET /history             │
 │  │   ├─ POST /adjust             │
 │  │   └─ GET /overlay             │
-│  └─ OBS スクリプト (obs_victory_detector.py) │
+│  ├─ OBS スクリプト (obs_victory_detector.py) │
+│  └─ CNN推論プロセス (run_capture_monitor_ws.py) │
+│      └─ obs-websocket経由でリアルタイム判定 │
 └──────────────────────────────┘
                  ↑ JSON API
                  ↓
@@ -30,24 +36,36 @@
 
 ## データフロー
 
-1. OBS が `obs_victory_detector.py` を介して HTTP サーバを起動。
-2. 管理 UI (`5173`) が `/state`・`/history` の API を定期ポーリングし、勝敗カウントと履歴を表示。`POST /adjust` で補正を行う。
-3. `/overlay` エンドポイントは配信用。クエリでテーマやスケール、履歴数、更新間隔などを指定でき、埋め込みスクリプトが `/state` `/history` を一定間隔で再取得して画面を更新する。
+1. **OBS HTTP API サーバ**：OBS が `obs_victory_detector.py` を介して HTTP サーバを起動。
+2. **CNN 推論プロセス**：`run_capture_monitor_ws.py` を外部プロセスとして起動し、obs-websocket 経由でスクリーンショットを取得。VictoryPredictor で CNN 推論を行い、StateManager でイベントログに記録。
+3. **イベントログ共有**：OBS スクリプトと CNN 推論プロセスは同一の `logs/detections.jsonl` を参照し、状態を同期。
+4. **管理 UI**：`victory-counter-overlay-ui` (`5173`) が `/state`・`/history` の API を定期ポーリングし、勝敗カウントと履歴を表示。`POST /adjust` で補正を行う。
+5. **配信オーバーレイ**：`/overlay` エンドポイントは配信用。クエリでテーマやスケール、履歴数、更新間隔などを指定でき、埋め込みスクリプトが `/state` `/history` を一定間隔で再取得して画面を更新する。
 
 ## サンプルデータ保管
 
 ※以下のパスは victory-detector プロジェクト (`packages/obs-victory-counter/victory-detector/`) 内の相対パスです。
 
-- 画像解析 PoC 用のスクリーンショットは `data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
+### サンプル画像とラベリング
+
+- 画像解析用のスクリーンショットは `data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
 - 例: `data/samples/20251103_run01/20251103_run01.json` には draw バナーの PNG とメタデータを格納している。
-- ラベリング手順や命名規則は `docs/plans/2025-11-03-08全体TODO.md` を参照。データ追加時は同ドキュメントの TODO／参考メモを更新し、必要に応じてテンプレート座標（`template_bbox`）などのメタ情報を追記する。
-- 明度しきい値を使って候補領域を抽出する補助ツールとして `scripts/list_overlay_components.py` を用意している。ImageMagick が必要で、テンプレート矩形を決める際のヒントにする。
-- `scripts/export_templates.py` を実行すると、`template_bbox` を基に `data/templates/<label>/<variant>/` に切り出されたテンプレート PNG が生成される。`variant` にはサンプルの `accessibility`・`mode` を小文字スラッグ化したものを連結して保存する（例: `umiinu_competitive`）。PoC やテンプレートマッチング実装ではここを参照する。
-- `scripts/check_templates.py` はサンプル JSON とテンプレートを突き合わせ、variant ごとに PNG が揃っているかを検証する。CI で実行することでテンプレート不足を早期検知できる。
-- `scripts/build_dataset.py` は学習用データセットを生成し、`dataset/<label>/` に配置する。画像はアスペクト比を維持したまま長辺を指定サイズ（デフォルト128px）にリサイズされる。従来の JSON ベースのサンプルに加え、`samples/<label>/*.png` という簡易なフォルダ構造にも対応し、JSON なしで手軽にデータセットを構築できる。CNN 学習用の生データ扱いのため Git では無視する。
-- **推奨クロップ領域**: `460,378,995,550` (x, y, width, height)。この領域は画面中央の勝敗テキストバナーと画面下部のプログレスバーの両方を含む統一領域として設定されており、`victory_text`/`defeat_text` と `victory_progress`/`defeat_progress` の両方のクラスを一度の推論で判定できる。データセット構築時には `--crop 460,378,995,550` オプションで指定する。
-- `scripts/train_classifier.py` を用いて軽量 CNN を訓練し、モデルを `artifacts/models/` に保存する。データセットのパスのみ指定すれば良く、variant パラメータは不要。推論は `run_capture_monitor_ws.py` などから呼び出す予定。
-- `scripts/poc_detect.py --report` によりスコア分布を JSON 出力できる。現状の最小スコアは 0.99999976 であり、実運用の推奨閾値は 0.90、警戒ライン（unknown 判定への切り替え）は 0.85 を目安とする。
+- ラベリング手順や命名規則は `docs/plans/2025-11-03-08全体TODO.md` を参照。データ追加時は同ドキュメントの TODO／参考メモを更新する。
+
+### CNN 学習ワークフロー（現行）
+
+- **推奨クロップ領域**: `460,378,995,550` (x, y, width, height)。この領域は画面中央の勝敗テキストバナーと画面下部のプログレスバーの両方を含む統一領域として設定されており、`victory_text`/`defeat_text` と `victory_progress`/`defeat_progress` の両方のクラスを一度の推論で判定できる。
+- `scripts/build_dataset.py` は学習用データセットを生成し、`dataset/<label>/` に配置する。画像はアスペクト比を維持したまま長辺を指定サイズ（デフォルト128px）にリサイズされる。従来の JSON ベースのサンプルに加え、`samples/<label>/*.png` という簡易なフォルダ構造にも対応し、JSON なしで手軽にデータセットを構築できる。CNN 学習用の生データ扱いのため Git では無視する。データセット構築時には `--crop 460,378,995,550` オプションで指定する。
+- `scripts/train_classifier.py` を用いて軽量 CNN を訓練し、モデルを `artifacts/models/` に保存する。データセットのパスのみ指定すれば良い。学習時に label_map と idx_to_label がモデルファイル (.pth) に保存されるため、推論時は dataset ディレクトリ不要。
+
+### レガシーツール（テンプレートマッチング PoC）
+
+以下のツールは初期の PoC で使用したテンプレートマッチング方式のもので、現在は CNN 推論に置き換えられています。歴史的参考資料として保持しています。
+
+- `scripts/list_overlay_components.py` - 明度しきい値で候補領域を抽出（ImageMagick 必要）
+- `scripts/export_templates.py` - `template_bbox` から `data/templates/<label>/<variant>/` にテンプレート PNG を生成
+- `scripts/check_templates.py` - サンプル JSON とテンプレートの整合性検証
+- `scripts/poc_detect.py` - テンプレートマッチング PoC。`--report` でスコア分布を JSON 出力
 
 ## CNN モデルアーキテクチャ
 
@@ -63,8 +81,83 @@
   - 学習スクリプト実行時に `VictoryDataset` が label_map を自動生成し、`num_classes` が自動設定される
   - 例：`victory_text`, `victory_progress`, `defeat_text`, `defeat_progress`, `draw`, `none` の 6クラス分類にも対応
 
+## VictoryPredictor 推論モジュール
+
+`victory_detector.inference.VictoryPredictor` は学習済みCNNモデルを使った勝敗判定を行うクラスです。
+
+### 主な機能
+
+- **6クラス分類から3種類の勝敗へマッピング**：
+  - `victory_text` / `victory_progressbar` → `victory`
+  - `defeat_text` / `defeat_progressbar` → `defeat`
+  - `draw_text` → `draw`
+  - `none` → `unknown`（検知なし）
+
+- **モデルファイルに label_map を内包**：
+  - `train_classifier.py` で学習時に label_map と idx_to_label をモデルファイル (.pth) に保存
+  - 推論時は dataset ディレクトリ不要、モデルファイルのみで動作
+  - クラス数は自動検出されるため、4クラス・6クラスなど任意のクラス数に対応
+
+- **前処理パイプライン**：
+  1. 画像クロップ（デフォルト: `460,378,995,550`）
+  2. アスペクト比を維持したままリサイズ（長辺 128px）
+  3. BGR → RGB 変換
+  4. 0-1 正規化
+  5. テンソル変換とバッチ次元追加
+
+- **デバイス自動選択**：
+  - `device="auto"` で CUDA が利用可能なら GPU、なければ CPU を自動選択
+  - RTX 3070 / CUDA 12.8 環境で動作確認済み
+
+### 使用例
+
+```python
+from victory_detector.inference import VictoryPredictor
+
+predictor = VictoryPredictor(
+    model_path=Path("artifacts/models/victory_classifier.pth"),
+    crop_region=(460, 378, 995, 550),
+    image_size=128,
+)
+
+# 画像から推論
+detection = predictor.predict(image)  # DetectionResult(outcome, confidence)
+print(f"{detection.outcome}: {detection.confidence:.4f}")
+```
+
+## クールダウン機能
+
+`StateManager` は重複カウント防止のため、クールダウン機能を実装しています。
+
+### 仕様
+
+- **デフォルト180秒のクールダウン期間**：
+  - 前回の検知（`delta > 0` のイベント）から指定秒数以内の検知はカウントしない
+  - クールダウン中の検知は `delta=0` でイベントログに記録されるが、カウントには反映されない
+  - これにより、同一試合の繰り返し検知を防止
+
+- **残り時間の通知**：
+  - クールダウン中のイベントには `note` フィールドに残り時間を記録
+  - 例: `[cooldown: 120s remaining]`
+
+- **イベントソーシングパターン**：
+  - すべての検知イベント（`delta=0` を含む）は JSONL ファイルに永続化
+  - `StateManager` 起動時に過去のイベントログから最後の検知時刻を復元
+  - プロセス再起動後もクールダウン状態を維持
+
+### イベントログ例
+
+```jsonl
+{"type": "result", "value": "victory", "delta": 1, "timestamp": "2025-11-09T10:00:00Z", "confidence": 0.9998}
+{"type": "result", "value": "victory", "delta": 0, "timestamp": "2025-11-09T10:01:30Z", "confidence": 0.9995, "note": "[cooldown: 90s remaining]"}
+{"type": "result", "value": "defeat", "delta": 1, "timestamp": "2025-11-09T10:05:00Z", "confidence": 0.9992}
+```
+
+1行目は通常カウント、2行目はクールダウン中のため `delta=0` でカウントされず、3行目は再びカウントされています。
+
 ## 今後の方針
 
 - 配信オーバーレイは Python `/overlay` と静的ビルドの二本立てを維持しつつ、React コンポーネントの共有やビルド成果物の配布フローを整備する。
-- draw を含む自動判定（画像解析）を導入し、Victory Detector 側でスナップショットから勝敗を判定できるようにする。
 - CI パイプラインで Python/Node のテストを統合し、配信前の品質を担保する。
+- モデル精度の継続的改善：新しいサンプルデータの追加、データ拡張（Data Augmentation）の検討、モデルアーキテクチャの最適化。
+- 推論信頼度の閾値調整：実運用でのログ分析に基づいて、`unknown` 判定への切り替え閾値を最適化する。

@@ -9,6 +9,32 @@
 - エラー時は `{"error": "<reason>"}` 形式の JSON を返し、HTTP ステータスで詳細を示します。
 - オーバーレイ UI からアクセスできるよう、すべてのレスポンスに `Access-Control-Allow-Origin: *` を付与しています。
 
+## イベントの種類とクールダウン
+
+### イベントタイプ
+
+- `result`: CNN推論による自動検知イベント。`confidence` フィールドに信頼度（0.0〜1.0）を含む。
+- `adjustment`: 手動補正イベント。`confidence` は常に 1.0、`note` フィールドに補正理由を記録可能。
+
+### クールダウン機能
+
+重複カウント防止のため、`StateManager` はクールダウン機能を実装しています（デフォルト180秒）。
+
+- **通常検知**: `delta=1` でカウントに反映され、最後の検知時刻が更新される。
+- **クールダウン中の検知**: `delta=0` でイベントログには記録されるが、カウントには反映されない。`note` フィールドに残り時間が記録される（例: `[cooldown: 120s remaining]`）。
+- **手動補正**: `adjustment` イベントは常にカウントに反映され、クールダウンの影響を受けない。
+
+### イベントフィールド
+
+| フィールド   | 型     | 説明                                                                    |
+| ------------ | ------ | ----------------------------------------------------------------------- |
+| `type`       | string | `"result"` または `"adjustment"`                                        |
+| `value`      | string | `"victory"`, `"defeat"`, `"draw"` のいずれか                            |
+| `delta`      | int    | カウント増減値。通常は `1`、クールダウン中は `0`                        |
+| `timestamp`  | string | ISO 8601 形式のタイムスタンプ（UTC）                                    |
+| `confidence` | float  | 信頼度（`result` イベントのみ、0.0〜1.0）                               |
+| `note`       | string | 補足情報（オプション）。クールダウン中は残り時間、手動補正時は補正理由 |
+
 ## `GET /state`
 
 最新の勝敗カウントとイベント情報を返します。
@@ -20,14 +46,22 @@
   "victories": 12,
   "defeats": 8,
   "draws": 3,
-  "total": 20,
+  "total": 23,
   "results": [
     {
       "type": "result",
       "value": "victory",
       "delta": 1,
-      "confidence": 0.92,
+      "confidence": 0.9987,
       "timestamp": "2025-01-01T12:34:56Z",
+    },
+    {
+      "type": "result",
+      "value": "victory",
+      "delta": 0,
+      "confidence": 0.9923,
+      "timestamp": "2025-01-01T12:35:30Z",
+      "note": "[cooldown: 146s remaining]"
     },
   ],
   "adjustments": [
@@ -44,6 +78,7 @@
 
 - `results` と `adjustments` は最新イベントを時系列順に格納します。
 - 信頼度 (`confidence`) は自動判定イベントにのみ含まれます。
+- `delta=0` のイベントはクールダウン中の検知を示し、カウントには反映されていません（`note` フィールドに残り時間を記録）。
 - `victories` / `defeats` / `draws` は累計値であり、`total` はそれらの合計です。
 
 ## `GET /history`
@@ -66,7 +101,15 @@ GET /history?limit=5
       "value": "victory",
       "delta": 1,
       "timestamp": "2025-01-01T12:30:00Z",
-      "confidence": 0.88,
+      "confidence": 0.9876,
+    },
+    {
+      "type": "result",
+      "value": "victory",
+      "delta": 0,
+      "timestamp": "2025-01-01T12:31:15Z",
+      "confidence": 0.9654,
+      "note": "[cooldown: 105s remaining]"
     },
     {
       "type": "adjustment",
@@ -78,6 +121,8 @@ GET /history?limit=5
   ],
 }
 ```
+
+- `events` 配列には `delta=0` のクールダウンイベントも含まれます。UI 側で履歴を表示する際、`delta=0` を区別して表示することを推奨します。
 
 ### エラー
 
