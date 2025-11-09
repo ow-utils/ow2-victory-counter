@@ -154,4 +154,8 @@ class VictoryPredictor:
         # 6クラス→3種類マッピング
         outcome = self._map_class_to_outcome(class_name)
 
-        return DetectionResult(outcome=outcome, confidence=confidence)
+        return DetectionResult(
+            outcome=outcome,
+            confidence=confidence,
+            predicted_class=class_name,
+        )

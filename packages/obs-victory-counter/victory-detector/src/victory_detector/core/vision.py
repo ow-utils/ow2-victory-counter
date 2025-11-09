@@ -35,6 +35,7 @@ class DetectionResult:
 
     outcome: Outcome
     confidence: float
+    predicted_class: Optional[str] = None
 
     def is_confident(self, threshold: float = 0.7) -> bool:
         """指定した閾値以上の信頼度があるかを判定する。"""
