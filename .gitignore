@@ -17,4 +17,3 @@ uv.lock
 # Data and models (large binary files)
 packages/obs-victory-counter/victory-detector/data/
 packages/obs-victory-counter/victory-detector/dataset/
-packages/obs-victory-counter/victory-detector/artifacts/
