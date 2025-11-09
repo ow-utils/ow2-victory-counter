@@ -111,11 +111,8 @@ def _process_metadata_samples(
             elif bbox:
                 x, y, w, h = map(int, bbox)
             else:
-                # fallback: 画面中央を切り出し
-                w = int(width * 0.5)
-                h = int(height * 0.3)
-                x = (width - w) // 2
-                y = (height - h) // 2
+                # fallback: 推奨クロップ領域を使用
+                x, y, w, h = 460, 378, 995, 550
 
             x = max(0, min(x, width - 1))
             y = max(0, min(y, height - 1))
@@ -156,10 +153,8 @@ def _process_structured_samples(
                 w = int(round(cw * width)) if abs(cw) <= 1 else int(round(cw))
                 h = int(round(ch * height)) if abs(ch) <= 1 else int(round(ch))
             else:
-                w = int(width * 0.5)
-                h = int(height * 0.3)
-                x = (width - w) // 2
-                y = (height - h) // 2
+                # fallback: 推奨クロップ領域を使用
+                x, y, w, h = 460, 378, 995, 550
 
             x = max(0, min(x, width - 1))
             y = max(0, min(y, height - 1))
