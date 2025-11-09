@@ -1,16 +1,11 @@
 # フェーズ7 TODO 総覧
 
-## 最優先タスク
-
-### Git 履歴から画像ファイル（.png）を削除
-- [ ] git-filter-repo のインストール確認
-- [ ] Git 履歴から .png ファイルを削除（`git filter-repo --path-glob '*.png' --invert-paths`）
-- [ ] リモートブランチに force push（`git push origin --force --all`）
-- [ ] ローカルの LFS キャッシュをクリーンアップ（`git lfs prune`）
-- [ ] 検証：`git log --all --full-history -- "*.png"` で履歴が消えたことを確認
-- [ ] 要求ファイルを `docs/plans/planned/` へ移動
-
 ## 完了済みマイルストーン
+
+- [x] Git 履歴から画像ファイル（.png）を削除
+  - git-filter-repo で全履歴から .png を削除
+  - git lfs prune でローカル LFS キャッシュをクリーンアップ
+  - 履歴から完全に削除されたことを検証済み
 
 - [x] Victory/Defeat/Draw データモデル拡張と API/UI の更新
 - [x] 配信用 `/overlay` エンドポイントとオーバーレイ UI の整備
