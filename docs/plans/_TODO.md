@@ -64,3 +64,6 @@
 - 追加で収集したサンプルは `scripts/export_templates.py` → `scripts/build_dataset.py` の順でテンプレート／学習データに反映し、必要に応じて `scripts/train_classifier.py` でモデルを再学習する。簡易なデータセット構築には、`samples/victory/`, `samples/defeat/` などのフォルダに直接 PNG を配置する方法も利用できる。
 - データセット構築時は `_resize_keep_aspect_ratio()` により画像のアスペクト比を維持したまま長辺を基準にリサイズするため、出力画像は必ずしも正方形ではない（例: 128×96、100×128 など）。モデルは `AdaptiveAvgPool2d(4, 4)` により可変サイズ入力に対応しているため、異なるアスペクト比の画像でも学習・推論が可能。
 - クラス数はデータセットのディレクトリ構造から自動検出される（4クラス、6クラスなど任意の数に対応）。例えば `victory_text`, `victory_progress`, `defeat_text`, `defeat_progress`, `draw`, `none` の6つのフォルダを配置すれば、自動的に6クラス分類器として学習される。
+- **推奨クロップ領域**: `460,378,995,550` (x, y, width, height)
+  - データセット構築時に `build_dataset.py --crop 460,378,995,550` で使用
+  - この領域は画面中央の勝敗テキストバナーと画面下部のプログレスバーの両方を含む統一領域として設定されており、`victory_text`/`defeat_text` と `victory_progress`/`defeat_progress` の両方のクラスを一度の推論で判定できる
