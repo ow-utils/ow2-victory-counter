@@ -13,3 +13,8 @@ uv.lock
 
 # Env files
 .env
+
+# Data and models (large binary files)
+data/
+dataset/
+artifacts/
