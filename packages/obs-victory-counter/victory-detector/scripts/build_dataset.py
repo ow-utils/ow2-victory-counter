@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build dataset from samples.")
     parser.add_argument("--samples", type=Path, default=SAMPLES_ROOT)
     parser.add_argument("--output", type=Path, default=DATASET_ROOT)
-    parser.add_argument("--size", type=int, default=128, help="出力画像の一辺のサイズ")
+    parser.add_argument("--size", type=int, default=None, help="出力画像の一辺のサイズ（未指定時はリサイズしない）")
     parser.add_argument(
         "--crop",
         type=str,
@@ -58,7 +58,7 @@ def main() -> int:
 def _process_structured_samples(
     samples_root: Path,
     output_root: Path,
-    size: int,
+    size: int | None,
     crop_rect: tuple[float, float, float, float] | None,
 ) -> None:
     for label_dir in sorted(samples_root.iterdir()):
@@ -120,16 +120,24 @@ def _write_sample(
     output_root: Path,
     label: str,
     file_name: str,
-    size: int,
+    size: int | None,
 ) -> None:
     x, y, w, h = crop
     cropped = image[y : y + h, x : x + w]
-    resized = _resize_keep_aspect_ratio(cropped, size)
+
+    # size指定時のみリサイズ、未指定時はオリジナルサイズ
+    if size is not None:
+        processed = _resize_keep_aspect_ratio(cropped, size)
+        size_info = f"resized=({processed.shape[1]},{processed.shape[0]})"
+    else:
+        processed = cropped
+        size_info = f"original=({processed.shape[1]},{processed.shape[0]})"
+
     output_dir = output_root / label
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / file_name
-    cv2.imwrite(str(output_path), resized)
-    print(f"[INFO] {output_path} を出力しました。 (crop=({x},{y},{w},{h}), resized=({resized.shape[1]},{resized.shape[0]}))")
+    cv2.imwrite(str(output_path), processed)
+    print(f"[INFO] {output_path} を出力しました。 (crop=({x},{y},{w},{h}), {size_info})")
 
 
 if __name__ == "__main__":

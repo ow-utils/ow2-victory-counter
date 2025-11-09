@@ -51,7 +51,7 @@ class VictoryPredictor:
         model_path: Path,
         device: str = "auto",
         crop_region: tuple[int, int, int, int] = (460, 378, 995, 550),
-        image_size: int = 128,
+        image_size: int | None = None,
     ) -> None:
         """VictoryPredictorを初期化する。
 
@@ -59,7 +59,7 @@ class VictoryPredictor:
             model_path: 学習済みモデル(.pth)のパス（label_map含む）
             device: 使用デバイス ("auto", "cpu", "cuda")
             crop_region: クロップ領域 (x, y, width, height)
-            image_size: リサイズ後の画像サイズ（長辺）
+            image_size: リサイズ後の画像サイズ（長辺）。Noneの場合はリサイズしない
         """
         self.crop_region = crop_region
         self.image_size = image_size
@@ -103,8 +103,11 @@ class VictoryPredictor:
 
         cropped = image[y : y + h, x : x + w]
 
-        # 2. アスペクト比維持リサイズ
-        resized = _resize_keep_aspect_ratio(cropped, self.image_size)
+        # 2. アスペクト比維持リサイズ（image_size指定時のみ）
+        if self.image_size is not None:
+            resized = _resize_keep_aspect_ratio(cropped, self.image_size)
+        else:
+            resized = cropped
 
         # 3. BGR -> RGB変換
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
