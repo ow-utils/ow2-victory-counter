@@ -30,7 +30,7 @@ if str(SRC_DIR) not in sys.path:
 from victory_detector import server  # noqa: E402  (import after sys.path tweak)
 from victory_detector.core import state  # noqa: E402
 
-DEFAULT_EVENT_LOG = HERE.parent / "events_cli.log"
+DEFAULT_EVENT_LOG = HERE.parent / "logs" / "detections.jsonl"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8912
 

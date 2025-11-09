@@ -19,17 +19,17 @@ Victory Detector を OBS Studio に組み込み、配信中に勝敗カウント
 
 ```bash
 cd packages/obs-victory-counter/victory-detector
-PYTHONPATH=src UV_NO_SYNC=1 uv run python -m victory_detector.cli tests/fixtures/snapshots_simple.json --event-log events_cli.log
+PYTHONPATH=src UV_NO_SYNC=1 uv run python -m victory_detector.cli tests/fixtures/snapshots_simple.json --event-log logs/detections.jsonl
 ```
 
-CLI を実行すると `events_cli.log` に初期イベントが保存されます。OBS から同じログを参照することで、配信開始時点の勝敗カウントが再現されます。
+CLI を実行すると `logs/detections.jsonl` に初期イベントが保存されます。OBS から同じログを参照することで、配信開始時点の勝敗カウントが再現されます。
 
 ## 3. OBS Scripts Manager への登録
 
 1. OBS を起動し、メニューの **ツール > スクリプト** を選択します。
 2. **Python スクリプト** タブで「+」ボタンを押し、`packages/obs-victory-counter/victory-detector/scripts/obs_victory_detector.py` を追加します。
 3. 右側の設定で以下を指定できます。
-   - **Event Log Path**: 勝敗ログの JSON Lines ファイル。既定は `events_cli.log`。
+   - **Event Log Path**: 勝敗ログの JSON Lines ファイル。既定は `logs/detections.jsonl`。
    - **Host**: HTTP サーバのバインドアドレス（既定 `127.0.0.1`）。
    - **Port**: HTTP ポート（既定 `8912`）。
    - **Reload Interval (sec)**: EventLog の再読み込み間隔（秒、既定 5）。
