@@ -10,6 +10,7 @@ import argparse
 import base64
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 
 import cv2  # type: ignore
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--interval", type=float, default=DEFAULT_INTERVAL, help="キャプチャ間隔（秒）")
     parser.add_argument("--screenshot-width", type=int, default=1920, help="スクリーンショットの幅")
     parser.add_argument("--screenshot-height", type=int, default=1080, help="スクリーンショットの高さ")
+    parser.add_argument("--save-detections", type=Path, default=None, help="検知時のスクリーンショット保存先ディレクトリ（オプション）")
     return parser.parse_args()
 
 
@@ -66,6 +68,11 @@ def main() -> int:
         f"Defeat={state_manager.summary.defeats}, "
         f"Draw={state_manager.summary.draws}"
     )
+
+    # スクリーンショット保存ディレクトリの作成
+    if args.save_detections:
+        args.save_detections.mkdir(parents=True, exist_ok=True)
+        print(f"[INFO] 検知時スクリーンショット保存: {args.save_detections}")
 
     # OBS接続
     client = ReqClient(host=args.host, port=args.port, password=args.password)
@@ -114,6 +121,16 @@ def main() -> int:
 
                         # StateManagerに記録
                         event = state_manager.record_detection(detection)
+
+                        # 検知時スクリーンショット保存
+                        if args.save_detections and detection.outcome in ("victory", "defeat", "draw") and event:
+                            timestamp_str = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]  # ミリ秒まで
+                            predicted_class = detection.predicted_class or "unknown"
+                            status = "counted" if event.delta > 0 else "cooldown"
+                            filename = f"{timestamp_str}-{predicted_class}-{status}.png"
+                            filepath = args.save_detections / filename
+                            cv2.imwrite(str(filepath), image)
+                            print(f"[INFO] スクリーンショット保存: {filename}")
 
                         # 結果出力
                         output: dict = {

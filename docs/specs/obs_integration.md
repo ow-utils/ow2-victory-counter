@@ -49,7 +49,11 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
 
    ```bash
    cd packages/obs-victory-counter/victory-detector
-   uv run python scripts/build_dataset.py --data data/samples --output dataset --crop 460,378,995,550 --size 128
+   # オリジナルサイズで構築（デフォルト、推奨）
+   uv run python scripts/build_dataset.py --data data/samples --output dataset --crop 460,378,995,550
+
+   # またはリサイズを指定
+   uv run python scripts/build_dataset.py --data data/samples --output dataset --crop 460,378,995,550 --size 512
    ```
 
 3. CNN モデルを訓練します。
@@ -75,7 +79,8 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
      --model artifacts/models/victory_classifier.pth \
      --event-log logs/detections.jsonl \
      --cooldown 180 \
-     --interval 2.0
+     --interval 2.0 \
+     --save-detections data/detections/session01
    ```
 
    - `--source`: OBS のソース名（例: "ゲームキャプチャ"、"ウィンドウキャプチャ (Overwatch 2)"）
@@ -83,6 +88,7 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
    - `--event-log`: イベントログファイル（OBS スクリプトと同じパスを指定）
    - `--cooldown`: クールダウン時間（秒、デフォルト 180）
    - `--interval`: キャプチャ間隔（秒、デフォルト 2.0）
+   - `--save-detections`: **（オプション）** 検知時のスクリーンショット保存先ディレクトリ。victory/defeat/draw 検知時に `{timestamp}-{predicted_class}-{status}.png` 形式で自動保存され、誤検知分析に活用できます
 
 3. 推論結果は標準出力に JSON 形式で出力されます。
 

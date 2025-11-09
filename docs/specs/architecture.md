@@ -92,6 +92,7 @@
   - `defeat_text` / `defeat_progressbar` → `defeat`
   - `draw_text` → `draw`
   - `none` → `unknown`（検知なし）
+  - `DetectionResult` には `outcome` に加えて、元の詳細クラス名を保持する `predicted_class` フィールドも含まれる（誤検知分析に活用）
 
 - **モデルファイルに label_map を内包**：
   - `train_classifier.py` で学習時に label_map と idx_to_label をモデルファイル (.pth) に保存
@@ -100,7 +101,7 @@
 
 - **前処理パイプライン**：
   1. 画像クロップ（デフォルト: `460,378,995,550`）
-  2. アスペクト比を維持したままリサイズ（長辺 128px）
+  2. アスペクト比を維持したままリサイズ（`image_size` パラメータ指定時のみ。未指定時はオリジナルサイズを維持）
   3. BGR → RGB 変換
   4. 0-1 正規化
   5. テンソル変換とバッチ次元追加
@@ -114,15 +115,22 @@
 ```python
 from victory_detector.inference import VictoryPredictor
 
+# オリジナルサイズで推論（デフォルト）
 predictor = VictoryPredictor(
     model_path=Path("artifacts/models/victory_classifier.pth"),
     crop_region=(460, 378, 995, 550),
-    image_size=128,
 )
 
 # 画像から推論
-detection = predictor.predict(image)  # DetectionResult(outcome, confidence)
-print(f"{detection.outcome}: {detection.confidence:.4f}")
+detection = predictor.predict(image)  # DetectionResult(outcome, confidence, predicted_class)
+print(f"{detection.outcome}: {detection.confidence:.4f} ({detection.predicted_class})")
+
+# リサイズを指定する場合
+predictor_resized = VictoryPredictor(
+    model_path=Path("artifacts/models/victory_classifier.pth"),
+    crop_region=(460, 378, 995, 550),
+    image_size=512,  # 長辺を512pxにリサイズ
+)
 ```
 
 ## クールダウン機能
@@ -154,6 +162,30 @@ print(f"{detection.outcome}: {detection.confidence:.4f}")
 ```
 
 1行目は通常カウント、2行目はクールダウン中のため `delta=0` でカウントされず、3行目は再びカウントされています。
+
+## 検知時スクリーンショット保存（誤検知分析）
+
+`run_capture_monitor_ws.py` は `--save-detections` オプションにより、検知時のスクリーンショットを自動保存できます。
+
+### 機能
+
+- **保存対象**：victory/defeat/draw を検知した場合のみ保存（unknown は保存しない）
+- **保存タイミング**：カウントされた検知（`delta > 0`）とクールダウン中の検知（`delta = 0`）の両方を保存
+- **ファイル名形式**：`{timestamp}-{predicted_class}-{status}.png`
+  - `timestamp`: `YYYYMMDD-HHMMSS-mmm` 形式（ミリ秒まで）
+  - `predicted_class`: 詳細クラス名（`victory_text`, `victory_progressbar`, `defeat_text`, `defeat_progressbar`, `draw_text` など）
+  - `status`: `counted`（カウント済み）または `cooldown`（クールダウン中）
+
+### 使用例
+
+```bash
+python scripts/run_capture_monitor_ws.py \
+  --source "ゲームキャプチャ" \
+  --model artifacts/models/victory_classifier.pth \
+  --save-detections data/detections/session01
+```
+
+保存されたスクリーンショットは誤検知分析に活用し、誤検知パターンを学習データに追加することでモデルを継続的に改善できます。
 
 ## 今後の方針
 
