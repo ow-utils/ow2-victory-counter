@@ -91,8 +91,13 @@ def main() -> int:
         print(f"Epoch {epoch}/{args.epochs} - train_loss: {train_loss:.4f} train_acc: {train_acc:.2f}% val_loss: {val_loss:.4f} val_acc: {val_acc:.2f}%")
 
     args.checkpoint.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), args.checkpoint)
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'label_map': dataset.label_map,
+        'idx_to_label': dataset.idx_to_label,
+    }, args.checkpoint)
     print(f"[INFO] Saved model to {args.checkpoint}")
+    print(f"[INFO] Saved label_map: {dataset.label_map}")
     return 0
 
 

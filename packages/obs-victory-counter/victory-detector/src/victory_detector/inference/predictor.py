@@ -11,7 +11,6 @@ import torch
 import torch.nn.functional as F
 
 from victory_detector.core.vision import DetectionResult
-from victory_detector.training.dataset import VictoryDataset
 from victory_detector.training.model import VictoryClassifier
 
 # 6クラス分類結果から勝敗・ドローへのマッピング
@@ -50,7 +49,6 @@ class VictoryPredictor:
     def __init__(
         self,
         model_path: Path,
-        dataset_path: Path,
         device: str = "auto",
         crop_region: tuple[int, int, int, int] = (460, 378, 995, 550),
         image_size: int = 128,
@@ -58,8 +56,7 @@ class VictoryPredictor:
         """VictoryPredictorを初期化する。
 
         Args:
-            model_path: 学習済みモデル(.pth)のパス
-            dataset_path: データセットディレクトリのパス（label_map取得用）
+            model_path: 学習済みモデル(.pth)のパス（label_map含む）
             device: 使用デバイス ("auto", "cpu", "cuda")
             crop_region: クロップ領域 (x, y, width, height)
             image_size: リサイズ後の画像サイズ（長辺）
@@ -73,16 +70,15 @@ class VictoryPredictor:
         else:
             self.device = torch.device(device)
 
-        # label_map読み込み（dataset構造から自動検出）
-        dataset = VictoryDataset(dataset_path)
-        self.label_map = dataset.label_map
-        self.idx_to_label = dataset.idx_to_label
+        # モデルとメタデータ読み込み
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=False)
+        self.label_map = checkpoint['label_map']
+        self.idx_to_label = checkpoint['idx_to_label']
         num_classes = len(self.label_map)
 
-        # モデル読み込み
+        # モデル初期化
         self.model = VictoryClassifier(num_classes=num_classes)
-        state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
-        self.model.load_state_dict(state_dict)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.to(self.device)
         self.model.eval()
 
