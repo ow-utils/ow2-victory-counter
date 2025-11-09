@@ -59,6 +59,8 @@
 
 ## 参考メモ（データ収集・ラベリング）
 
+※以下のパスは victory-detector プロジェクト (`packages/obs-victory-counter/victory-detector/`) 内の相対パスです。
+
 - スクリーンショットは OBS で勝敗画面が表示されたタイミングを保存し、`data/samples/YYYYMMDD_runXX/` に配置する。JSON メタデータには `label`, `variant`（アクセシビリティ／モード、テンプレート生成に使用），`template_bbox`（`[x, y, width, height]`）を記録する。なお、CNN データセット構築では `variant` は不要で、`samples/<label>/*.png` という簡易構造にも対応している。
 - ラベルは `victory`, `defeat`, `draw`, `none`（勝敗バナーが出ていないシーン）を基本とし、品質が低い場合は `"quality": "low"` などのフラグを付け、PoC 学習から除外できるようにする。
 - 追加で収集したサンプルは `scripts/export_templates.py` → `scripts/build_dataset.py` の順でテンプレート／学習データに反映し、必要に応じて `scripts/train_classifier.py` でモデルを再学習する。簡易なデータセット構築には、`samples/victory/`, `samples/defeat/` などのフォルダに直接 PNG を配置する方法も利用できる。

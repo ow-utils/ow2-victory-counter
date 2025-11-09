@@ -36,7 +36,9 @@
 
 ## サンプルデータ保管
 
-- 画像解析 PoC 用のスクリーンショットは `/data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
+※以下のパスは victory-detector プロジェクト (`packages/obs-victory-counter/victory-detector/`) 内の相対パスです。
+
+- 画像解析 PoC 用のスクリーンショットは `data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
 - 例: `data/samples/20251103_run01/20251103_run01.json` には draw バナーの PNG とメタデータを格納している。
 - ラベリング手順や命名規則は `docs/plans/2025-11-03-08全体TODO.md` を参照。データ追加時は同ドキュメントの TODO／参考メモを更新し、必要に応じてテンプレート座標（`template_bbox`）などのメタ情報を追記する。
 - 明度しきい値を使って候補領域を抽出する補助ツールとして `scripts/list_overlay_components.py` を用意している。ImageMagick が必要で、テンプレート矩形を決める際のヒントにする。
