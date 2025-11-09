@@ -1,15 +1,11 @@
 """学習用データセットを構築するスクリプト。
 
-以下の 2 通りの入力構成に対応する。
+`samples/<label>/*.png` 形式のフォルダ構造からデータセットを生成する。
+label ごとに画像を配置するだけで処理できる。
 
-1. 従来形式 (`data/samples/YYYYMMDD_runXX/*.json`)
-   - JSON の `template_bbox` を利用してクロップ。
-2. 新形式 (`samples/<label>/*.png`)
-   - JSON が存在しない場合はこちらを想定。label ごとに
-     画像を配置するだけで処理できる。
-
-どちらの場合も `--crop x,y,width,height` を指定すると、共通の矩形を
-使ってクロップできる。値はピクセル、または 0〜1 の比率指定。
+`--crop x,y,width,height` を指定すると、共通の矩形でクロップできる。
+値はピクセル、または 0〜1 の比率指定。未指定時は推奨クロップ領域
+460,378,995,550 が使用される。
 
 出力は `dataset/<label>/` の構造で保存される。
 """
@@ -17,7 +13,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 import cv2  # type: ignore
@@ -56,77 +51,8 @@ def main() -> int:
             print("[ERROR] --crop は 'x,y,width,height' 形式で指定してください。", exc)
             return 1
 
-    json_files = sorted(args.samples.glob("*/**/*.json"))
-
-    if json_files:
-        _process_metadata_samples(json_files, args.output, args.size, crop_rect)
-    else:
-        _process_structured_samples(args.samples, args.output, args.size, crop_rect)
-
+    _process_structured_samples(args.samples, args.output, args.size, crop_rect)
     return 0
-
-
-def _process_metadata_samples(
-    json_paths: list[Path],
-    output_root: Path,
-    size: int,
-    crop_rect: tuple[float, float, float, float] | None,
-) -> None:
-    for json_path in json_paths:
-        metadata = json.loads(json_path.read_text())
-
-        for sample in metadata.get("samples", []):
-            label = sample.get("label")
-            bbox = sample.get("template_bbox")
-            file_name = sample.get("file")
-            if not file_name:
-                continue
-
-            if label not in ("victory", "defeat", "draw", "none"):
-                continue
-
-            if crop_rect is None and (not bbox or label == "none"):
-                # テンプレート矩形が無い場合は後続のクロップで全体を使用
-                bbox = None
-
-            if crop_rect is None and bbox is None:
-                continue
-
-            sample_path = json_path.parent / file_name
-            if not sample_path.exists():
-                continue
-
-            image = cv2.imread(str(sample_path), cv2.IMREAD_COLOR)
-            if image is None:
-                continue
-
-            height, width = image.shape[:2]
-
-            if crop_rect:
-                cx, cy, cw, ch = crop_rect
-                x = int(round(cx * width)) if abs(cx) <= 1 else int(round(cx))
-                y = int(round(cy * height)) if abs(cy) <= 1 else int(round(cy))
-                w = int(round(cw * width)) if abs(cw) <= 1 else int(round(cw))
-                h = int(round(ch * height)) if abs(ch) <= 1 else int(round(ch))
-            elif bbox:
-                x, y, w, h = map(int, bbox)
-            else:
-                # fallback: 推奨クロップ領域を使用
-                x, y, w, h = 460, 378, 995, 550
-
-            x = max(0, min(x, width - 1))
-            y = max(0, min(y, height - 1))
-            w = max(1, min(w, width - x))
-            h = max(1, min(h, height - y))
-
-            _write_sample(
-                image=image,
-                crop=(x, y, w, h),
-                output_root=output_root,
-                label=label,
-                file_name=file_name,
-                size=size,
-            )
 
 
 def _process_structured_samples(
