@@ -12,12 +12,12 @@
 - [x] テンプレートマッチング PoC（スコア分布の把握と閾値策定）
 - [x] `scripts/check_templates.py` によるテンプレート整合性チェック
 - [x] obs-websocket(5.x) 経由でのスクリーンショット取得 PoC
+- [x] `scripts/build_dataset.py` を用いた `victory/defeat/draw/none` データセットの整備（6クラス、230枚で完了）
+- [x] `scripts/train_classifier.py` で軽量 CNN を学習し、精度・推論時間を評価（検証精度91.30%達成）
 
 ## 進行中タスク
 
 ### 画像解析 (CNN 化)
-- [ ] `scripts/build_dataset.py` を用いた `victory/defeat/draw/none` データセットの整備（none クラスの収集含む）。アスペクト比保持リサイズ・可変クラス数対応済み。従来の JSON ベースに加え、`samples/<label>/` フォルダに直接 PNG を配置する簡易構造にも対応
-- [ ] `scripts/train_classifier.py` で軽量 CNN を学習し、精度・推論時間を評価
 - [ ] CNN推論モジュールの実装
   - [ ] `victory_detector/inference/predictor.py` にVictoryPredictorクラスを作成
   - [ ] モデルチェックポイント(.pth)の読み込み処理
@@ -31,11 +31,21 @@
   - [ ] Softmax/argmaxによるクラス判定
   - [ ] 信頼度しきい値の設定
   - [ ] ラベルマッピング
+- [ ] 6クラス分類結果から勝敗・ドローへのマッピング実装
+  - [ ] victory_text/victory_progressbar → victory
+  - [ ] defeat_text/defeat_progressbar → defeat
+  - [ ] draw_text → draw
+  - [ ] none → 検知なし（カウントしない）
+- [ ] 重複カウント防止（クールダウン）機能の実装
+  - [ ] StateManagerに最終検知時刻の記録機能を追加
+  - [ ] 設定可能なクールダウン時間（デフォルト2-3分）
+  - [ ] クールダウン中の検知をログに記録（カウントはしない）
 - [ ] `run_capture_monitor_ws.py` への統合
   - [ ] テンプレートマッチングからCNNへの切り替え
+  - [ ] StateManagerへの統合方法の決定（HTTP API経由 or 直接呼び出し）
+  - [ ] クールダウン設定の組み込み
   - [ ] パフォーマンステスト（推論時間測定）
   - [ ] 精度評価
-- [ ] Victory Detector への自動反映（`/adjust` POST）の実装とログ検証
 
 ### OBS 連携・運用
 - [ ] websocket 監視スクリプトの設定ファイル化（variant ごとの `template_bbox` / モデル指定）
