@@ -64,9 +64,7 @@ def _process_structured_samples(
     for label_dir in sorted(samples_root.iterdir()):
         if not label_dir.is_dir():
             continue
-        label = label_dir.name.lower()
-        if label not in ("victory", "defeat", "draw", "none"):
-            continue
+        label = label_dir.name
         for image_path in sorted(label_dir.glob("*.png")):
             image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
             if image is None:
