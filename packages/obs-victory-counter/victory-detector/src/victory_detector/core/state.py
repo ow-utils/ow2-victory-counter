@@ -84,13 +84,16 @@ class CounterState:
         return self.victories + self.defeats + self.draws
 
     def apply(self, event: Event) -> None:
-        if event.value == "victory":
-            self.victories += event.delta
-        elif event.value == "defeat":
-            self.defeats += event.delta
-        else:
-            self.draws += event.delta
+        # delta > 0の場合のみカウントを更新
+        if event.delta > 0:
+            if event.value == "victory":
+                self.victories += event.delta
+            elif event.value == "defeat":
+                self.defeats += event.delta
+            else:
+                self.draws += event.delta
 
+        # delta=0でもイベントリストには追加（ログとして保持）
         if event.type == "result":
             self.results.append(event)
         else:
@@ -135,33 +138,73 @@ class EventLog:
 class StateManager:
     """勝敗判定と手動補正を管理するユーティリティ。"""
 
-    def __init__(self, event_log: EventLog) -> None:
+    def __init__(self, event_log: EventLog, cooldown_seconds: int = 180) -> None:
         self._log = event_log
+        self._cooldown_seconds = cooldown_seconds
         self._state = CounterState()
         for event in self._log.read_events():
             self._state.apply(event)
+        self._last_detection_time = self._find_last_detection_time()
 
     @property
     def summary(self) -> CounterState:
         return self._state
 
+    def _find_last_detection_time(self) -> Optional[datetime]:
+        """イベントログから最後の検知時刻（delta > 0のresult）を取得。"""
+        events = list(self._log.read_events())
+        for event in reversed(events):
+            if event.type == "result" and event.delta > 0:
+                return datetime.fromisoformat(event.timestamp)
+        return None
+
     def record_detection(
         self, detection: DetectionResult, note: str = ""
     ) -> Optional[Event]:
-        """判定結果をイベントとして保存する。"""
+        """判定結果をイベントとして保存する。
+
+        クールダウン期間内の検知はログに記録されるが、カウントには反映されない（delta=0）。
+        """
 
         if detection.outcome not in ("victory", "defeat", "draw"):
             return None
 
+        now = datetime.now(timezone.utc)
+        in_cooldown = False
+        elapsed = 0.0
+
+        # クールダウンチェック
+        if self._last_detection_time is not None:
+            elapsed = (now - self._last_detection_time).total_seconds()
+            in_cooldown = elapsed < self._cooldown_seconds
+
+        # クールダウン中の処理
+        if in_cooldown:
+            remaining = self._cooldown_seconds - elapsed
+            cooldown_note = f"[cooldown: {remaining:.0f}s remaining] {note}".strip()
+            event = Event(
+                type="result",
+                value=detection.outcome,
+                delta=0,  # カウントしない
+                timestamp=now.isoformat(),
+                confidence=detection.confidence,
+                note=cooldown_note,
+            )
+            self._log.append(event)  # ログには残す
+            # _state.apply()は呼ばない（delta=0なのでカウント増えない）
+            return event
+
+        # 通常処理
         event = Event(
             type="result",
             value=detection.outcome,
             delta=1,
-            timestamp=utcnow_iso(),
+            timestamp=now.isoformat(),
             confidence=detection.confidence,
             note=note,
         )
         self._persist(event)
+        self._last_detection_time = now  # 最後の検知時刻を更新
         return event
 
     def record_adjustment(self, value: Outcome, delta: int, note: str = "") -> Event:
