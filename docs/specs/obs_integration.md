@@ -32,10 +32,7 @@ CLI を実行すると `events_cli.log` に初期イベントが保存されま�
    - **Event Log Path**: 勝敗ログの JSON Lines ファイル。既定は `events_cli.log`。
    - **Host**: HTTP サーバのバインドアドレス（既定 `127.0.0.1`）。
    - **Port**: HTTP ポート（既定 `8912`）。
-   - **Capture Enabled**: スクリーンショット保存を有効化するか。PoC 用に勝敗画面を PNG 出力したい場合にオンにする。
-   - **Screenshot Directory**: 画像の保存先ディレクトリ。既定は `packages/obs-victory-counter/victory-detector/captures/`。
-   - **Screenshot Interval (sec)**: キャプチャ間隔（秒）。
-   - **Screenshot Source**: 保存対象のソース名（例: ゲームキャプチャ）。対象ソースが存在しない場合はキャプチャが停止する。
+   - **Reload Interval (sec)**: EventLog の再読み込み間隔（秒、既定 5）。
 4. スクリプトを有効にすると、バックグラウンドで HTTP サーバが起動し `/state` `/history` `/adjust` が利用可能になります。
 5. スクリプトを無効化／削除するとサーバは自動で停止します。
 
