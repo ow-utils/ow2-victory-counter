@@ -52,6 +52,7 @@ class VictoryPredictor:
         device: str = "auto",
         crop_region: tuple[int, int, int, int] = (460, 378, 995, 550),
         image_size: int | None = None,
+        mask_regions: list[tuple[int, int, int, int]] | None = None,
     ) -> None:
         """VictoryPredictorを初期化する。
 
@@ -60,9 +61,11 @@ class VictoryPredictor:
             device: 使用デバイス ("auto", "cpu", "cuda")
             crop_region: クロップ領域 (x, y, width, height)
             image_size: リサイズ後の画像サイズ（長辺）。Noneの場合はリサイズしない
+            mask_regions: マスク領域のリスト [(x, y, width, height), ...]。Noneの場合はマスクなし
         """
         self.crop_region = crop_region
         self.image_size = image_size
+        self.mask_regions = mask_regions
 
         # デバイス設定
         if device == "auto":
@@ -91,7 +94,19 @@ class VictoryPredictor:
         Returns:
             前処理済みテンソル (1, C, H', W')
         """
-        # 1. クロップ
+        # 1. マスク適用（元画像の座標）
+        if self.mask_regions:
+            image = image.copy()  # 元画像を変更しないようコピー
+            for mx, my, mw, mh in self.mask_regions:
+                height, width = image.shape[:2]
+                # マスク領域のクリッピング
+                mx = max(0, min(mx, width - 1))
+                my = max(0, min(my, height - 1))
+                mw = max(1, min(mw, width - mx))
+                mh = max(1, min(mh, height - my))
+                image[my : my + mh, mx : mx + mw] = 0  # 黒で塗りつぶす
+
+        # 2. クロップ
         x, y, w, h = self.crop_region
         height, width = image.shape[:2]
 
@@ -103,22 +118,22 @@ class VictoryPredictor:
 
         cropped = image[y : y + h, x : x + w]
 
-        # 2. アスペクト比維持リサイズ（image_size指定時のみ）
+        # 3. アスペクト比維持リサイズ（image_size指定時のみ）
         if self.image_size is not None:
             resized = _resize_keep_aspect_ratio(cropped, self.image_size)
         else:
             resized = cropped
 
-        # 3. BGR -> RGB変換
+        # 4. BGR -> RGB変換
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
 
-        # 4. 0-1正規化
+        # 5. 0-1正規化
         normalized = rgb.astype(np.float32) / 255.0
 
-        # 5. テンソル変換 (H, W, C) -> (C, H, W)
+        # 6. テンソル変換 (H, W, C) -> (C, H, W)
         tensor = torch.from_numpy(normalized).permute(2, 0, 1)
 
-        # 6. バッチ次元追加
+        # 7. バッチ次元追加
         return tensor.unsqueeze(0)
 
     def _map_class_to_outcome(self, class_name: str) -> Literal["victory", "defeat", "draw", "unknown"]:

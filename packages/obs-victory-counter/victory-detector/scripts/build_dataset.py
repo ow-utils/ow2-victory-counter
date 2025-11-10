@@ -32,6 +32,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="クロップ矩形を 'x,y,width,height' 形式で指定 (値はピクセルまたは 0〜1 の比率)",
     )
+    parser.add_argument("--mask", nargs='?', const='0,534,1920,295', default=None, help="マスク領域 (x,y,width,height)。値を省略した場合はデフォルト: 0,534,1920,295")
     return parser.parse_args()
 
 
@@ -51,7 +52,24 @@ def main() -> int:
             print("[ERROR] --crop は 'x,y,width,height' 形式で指定してください。", exc)
             return 1
 
-    _process_structured_samples(args.samples, args.output, args.size, crop_rect)
+    # マスク領域のパース
+    mask_regions = None
+    if args.mask is not None:
+        mask_regions = []
+        mask_str = args.mask
+        try:
+            parts = mask_str.split(",")
+            if len(parts) != 4:
+                print(f"[ERROR] マスク領域の形式が不正です: {mask_str}")
+                return 1
+            x, y, w, h = map(int, parts)
+            mask_regions.append((x, y, w, h))
+        except ValueError:
+            print(f"[ERROR] マスク領域の形式が不正です: {mask_str}")
+            return 1
+    print(f"[INFO] Mask regions: {mask_regions if mask_regions else 'disabled'}")
+
+    _process_structured_samples(args.samples, args.output, args.size, crop_rect, mask_regions)
     return 0
 
 
@@ -60,6 +78,7 @@ def _process_structured_samples(
     output_root: Path,
     size: int | None,
     crop_rect: tuple[float, float, float, float] | None,
+    mask_regions: list[tuple[int, int, int, int]] | None = None,
 ) -> None:
     for label_dir in sorted(samples_root.iterdir()):
         if not label_dir.is_dir():
@@ -92,6 +111,7 @@ def _process_structured_samples(
                 label=label,
                 file_name=image_path.name,
                 size=size,
+                mask_regions=mask_regions,
             )
 
 
@@ -121,7 +141,20 @@ def _write_sample(
     label: str,
     file_name: str,
     size: int | None,
+    mask_regions: list[tuple[int, int, int, int]] | None = None,
 ) -> None:
+    # マスク適用（クロップより前）
+    if mask_regions:
+        image = image.copy()  # 元画像を変更しないようコピー
+        for mx, my, mw, mh in mask_regions:
+            height, width = image.shape[:2]
+            # マスク領域のクリッピング
+            mx = max(0, min(mx, width - 1))
+            my = max(0, min(my, height - 1))
+            mw = max(1, min(mw, width - mx))
+            mh = max(1, min(mh, height - my))
+            image[my : my + mh, mx : mx + mw] = 0  # 黒で塗りつぶす
+
     x, y, w, h = crop
     cropped = image[y : y + h, x : x + w]
 

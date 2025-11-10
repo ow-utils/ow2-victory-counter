@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--screenshot-width", type=int, default=1920, help="スクリーンショットの幅")
     parser.add_argument("--screenshot-height", type=int, default=1080, help="スクリーンショットの高さ")
     parser.add_argument("--save-detections", type=Path, default=None, help="検知時のスクリーンショット保存先ディレクトリ（オプション）")
+    parser.add_argument("--mask", nargs='?', const='0,534,1920,295', default=None, help="マスク領域 (x,y,width,height)。値を省略した場合はデフォルト: 0,534,1920,295")
     return parser.parse_args()
 
 
@@ -51,16 +52,34 @@ def main() -> int:
         print(f"[ERROR] モデルファイルが見つかりません: {args.model}")
         return 1
 
+    # マスク領域のパース
+    mask_regions = None
+    if args.mask is not None:
+        mask_regions = []
+        mask_str = args.mask
+        try:
+            parts = mask_str.split(",")
+            if len(parts) != 4:
+                print(f"[ERROR] マスク領域の形式が不正です: {mask_str}")
+                return 1
+            x, y, w, h = map(int, parts)
+            mask_regions.append((x, y, w, h))
+        except ValueError:
+            print(f"[ERROR] マスク領域の形式が不正です: {mask_str}")
+            return 1
+
     # VictoryPredictorの初期化
     print("[INFO] CNN推論モジュールを初期化中...")
     predictor = VictoryPredictor(
         model_path=args.model,
         crop_region=(460, 378, 995, 550),
         image_size=args.size,
+        mask_regions=mask_regions,
     )
     print(f"[INFO] Device: {predictor.device}")
     print(f"[INFO] Image size: {args.size if args.size else 'original (995x550)'}")
     print(f"[INFO] Classes: {list(predictor.label_map.keys())}")
+    print(f"[INFO] Mask regions: {mask_regions if mask_regions else 'disabled'}")
 
     # StateManagerの初期化
     event_log = EventLog(args.event_log)
