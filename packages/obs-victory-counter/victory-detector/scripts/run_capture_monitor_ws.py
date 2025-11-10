@@ -20,8 +20,9 @@ from obsws_python import ReqClient
 from victory_detector.core.state import EventLog, StateManager
 from victory_detector.inference import VictoryPredictor
 
-DEFAULT_INTERVAL = 2.0
+DEFAULT_INTERVAL = 0.25
 DEFAULT_COOLDOWN = 180
+DEFAULT_REQUIRED_CONSECUTIVE = 3
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", type=Path, default=Path("artifacts/models/victory_classifier.pth"), help="学習済みモデルのパス")
     parser.add_argument("--event-log", type=Path, default=Path("logs/detections.jsonl"), help="イベントログの保存先")
     parser.add_argument("--cooldown", type=int, default=DEFAULT_COOLDOWN, help="クールダウン時間（秒）")
+    parser.add_argument("--required-consecutive", type=int, default=DEFAULT_REQUIRED_CONSECUTIVE, help="カウントに必要な連続検知回数")
     parser.add_argument("--interval", type=float, default=DEFAULT_INTERVAL, help="キャプチャ間隔（秒）")
     parser.add_argument("--screenshot-width", type=int, default=1920, help="スクリーンショットの幅")
     parser.add_argument("--screenshot-height", type=int, default=1080, help="スクリーンショットの高さ")
@@ -59,8 +61,9 @@ def main() -> int:
 
     # StateManagerの初期化
     event_log = EventLog(args.event_log)
-    state_manager = StateManager(event_log, cooldown_seconds=args.cooldown)
+    state_manager = StateManager(event_log, cooldown_seconds=args.cooldown, required_consecutive=args.required_consecutive)
     print(f"[INFO] クールダウン: {args.cooldown}秒")
+    print(f"[INFO] 連続検知回数: {args.required_consecutive}回")
     print(f"[INFO] イベントログ: {args.event_log}")
     print(
         f"[INFO] 現在のカウント: "
@@ -119,15 +122,14 @@ def main() -> int:
                         # CNN推論
                         detection = predictor.predict(image)
 
-                        # StateManagerに記録
-                        event = state_manager.record_detection(detection)
+                        # StateManagerに記録（連続検知対応）
+                        response = state_manager.record_detection(detection)
 
-                        # 検知時スクリーンショット保存
-                        if args.save_detections and detection.outcome in ("victory", "defeat", "draw") and event:
+                        # 検知時スクリーンショット保存（最初の検知のみ）
+                        if args.save_detections and response.is_first_detection and detection.outcome in ("victory", "defeat", "draw"):
                             timestamp_str = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]  # ミリ秒まで
                             predicted_class = detection.predicted_class or "unknown"
-                            status = "counted" if event.delta > 0 else "cooldown"
-                            filename = f"{timestamp_str}-{predicted_class}-{status}.png"
+                            filename = f"{timestamp_str}-{predicted_class}-first.png"
                             filepath = args.save_detections / filename
                             cv2.imwrite(str(filepath), image)
                             print(f"[INFO] スクリーンショット保存: {filename}")
@@ -136,7 +138,9 @@ def main() -> int:
                         output: dict = {
                             "outcome": detection.outcome,
                             "confidence": round(detection.confidence, 4),
-                            "counted": event.delta > 0 if event else False,
+                            "counted": response.event is not None,
+                            "consecutive_count": response.consecutive_count,
+                            "consecutive_required": args.required_consecutive,
                             "timestamp": time.time(),
                             "counter": {
                                 "victories": state_manager.summary.victories,
@@ -145,9 +149,9 @@ def main() -> int:
                             },
                         }
 
-                        # クールダウン中の場合はnoteを追加
-                        if event and event.delta == 0:
-                            output["cooldown_note"] = event.note
+                        # カウントされた場合
+                        if response.event:
+                            output["predicted_class"] = detection.predicted_class
 
                         print(json.dumps(output, ensure_ascii=False))
                     else:

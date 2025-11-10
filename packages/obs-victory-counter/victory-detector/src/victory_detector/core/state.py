@@ -70,6 +70,15 @@ class Event:
 
 
 @dataclass(slots=True)
+class DetectionResponse:
+    """検知結果のレスポンス（連続検知対応）。"""
+
+    event: Optional[Event]
+    consecutive_count: int
+    is_first_detection: bool
+
+
+@dataclass(slots=True)
 class CounterState:
     """勝敗カウンタの集計結果。"""
 
@@ -138,13 +147,17 @@ class EventLog:
 class StateManager:
     """勝敗判定と手動補正を管理するユーティリティ。"""
 
-    def __init__(self, event_log: EventLog, cooldown_seconds: int = 180) -> None:
+    def __init__(self, event_log: EventLog, cooldown_seconds: int = 180, required_consecutive: int = 3) -> None:
         self._log = event_log
         self._cooldown_seconds = cooldown_seconds
+        self._required_consecutive = required_consecutive
         self._state = CounterState()
         for event in self._log.read_events():
             self._state.apply(event)
         self._last_detection_time = self._find_last_detection_time()
+        # 連続検知追跡用
+        self._consecutive_outcome: Optional[Outcome] = None
+        self._consecutive_count: int = 0
 
     @property
     def summary(self) -> CounterState:
@@ -160,52 +173,76 @@ class StateManager:
 
     def record_detection(
         self, detection: DetectionResult, note: str = ""
-    ) -> Optional[Event]:
-        """判定結果をイベントとして保存する。
+    ) -> DetectionResponse:
+        """判定結果を連続検知として処理する。
 
-        クールダウン期間内の検知はログに記録されるが、カウントには反映されない（delta=0）。
+        連続で同じ結果が required_consecutive 回検知されたらカウント。
+        異なる結果が出たら連続カウントをリセット。
         """
 
         if detection.outcome not in ("victory", "defeat", "draw"):
-            return None
+            # unknown の場合は連続カウントをリセット
+            self._consecutive_outcome = None
+            self._consecutive_count = 0
+            return DetectionResponse(
+                event=None,
+                consecutive_count=0,
+                is_first_detection=False,
+            )
 
         now = datetime.now(timezone.utc)
-        in_cooldown = False
-        elapsed = 0.0
-
-        # クールダウンチェック
-        if self._last_detection_time is not None:
-            elapsed = (now - self._last_detection_time).total_seconds()
-            in_cooldown = elapsed < self._cooldown_seconds
 
         # クールダウン中の処理
-        if in_cooldown:
-            remaining = self._cooldown_seconds - elapsed
-            cooldown_note = f"[cooldown: {remaining:.0f}s remaining] {note}".strip()
+        if self._last_detection_time is not None:
+            elapsed = (now - self._last_detection_time).total_seconds()
+            if elapsed < self._cooldown_seconds:
+                # クールダウン中は連続カウントしない
+                remaining = self._cooldown_seconds - elapsed
+                return DetectionResponse(
+                    event=None,
+                    consecutive_count=0,
+                    is_first_detection=False,
+                )
+
+        # 連続検知の判定
+        is_first = False
+        if self._consecutive_outcome == detection.outcome:
+            # 同じ結果が続いている
+            self._consecutive_count += 1
+        else:
+            # 異なる結果が出た → リセット
+            self._consecutive_outcome = detection.outcome
+            self._consecutive_count = 1
+            is_first = True
+
+        # 必要回数に達したかチェック
+        if self._consecutive_count >= self._required_consecutive:
+            # カウント確定
             event = Event(
                 type="result",
                 value=detection.outcome,
-                delta=0,  # カウントしない
+                delta=1,
                 timestamp=now.isoformat(),
                 confidence=detection.confidence,
-                note=cooldown_note,
+                note=note,
             )
-            self._log.append(event)  # ログには残す
-            # _state.apply()は呼ばない（delta=0なのでカウント増えない）
-            return event
+            self._persist(event)
+            self._last_detection_time = now  # クールダウン開始
+            # 連続カウントをリセット
+            self._consecutive_outcome = None
+            self._consecutive_count = 0
+            return DetectionResponse(
+                event=event,
+                consecutive_count=self._required_consecutive,
+                is_first_detection=is_first,
+            )
 
-        # 通常処理
-        event = Event(
-            type="result",
-            value=detection.outcome,
-            delta=1,
-            timestamp=now.isoformat(),
-            confidence=detection.confidence,
-            note=note,
+        # まだ確定していない
+        return DetectionResponse(
+            event=None,
+            consecutive_count=self._consecutive_count,
+            is_first_detection=is_first,
         )
-        self._persist(event)
-        self._last_detection_time = now  # 最後の検知時刻を更新
-        return event
 
     def record_adjustment(self, value: Outcome, delta: int, note: str = "") -> Event:
         event = Event(

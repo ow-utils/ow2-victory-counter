@@ -79,7 +79,8 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
      --model artifacts/models/victory_classifier.pth \
      --event-log logs/detections.jsonl \
      --cooldown 180 \
-     --interval 2.0 \
+     --required-consecutive 3 \
+     --interval 0.25 \
      --save-detections data/detections/session01
    ```
 
@@ -87,18 +88,24 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
    - `--model`: 学習済みモデルのパス
    - `--event-log`: イベントログファイル（OBS スクリプトと同じパスを指定）
    - `--cooldown`: クールダウン時間（秒、デフォルト 180）
-   - `--interval`: キャプチャ間隔（秒、デフォルト 2.0）
-   - `--save-detections`: **（オプション）** 検知時のスクリーンショット保存先ディレクトリ。victory/defeat/draw 検知時に `{timestamp}-{predicted_class}-{status}.png` 形式で自動保存され、誤検知分析に活用できます
+   - `--required-consecutive`: カウントに必要な連続検知回数（デフォルト 3）。同じ結果が3回連続で検知されたらカウント確定
+   - `--interval`: キャプチャ間隔（秒、デフォルト 0.25）。0.25秒 × 3回 = 0.75秒で判定確定
+   - `--save-detections`: **（オプション）** 検知時のスクリーンショット保存先ディレクトリ。連続検知の最初の1回のみ `{timestamp}-{predicted_class}-first.png` 形式で保存
 
 3. 推論結果は標準出力に JSON 形式で出力されます。
 
    ```jsonl
-   {"outcome": "victory", "confidence": 0.9987, "counted": true, "timestamp": 1731148320.5, "counter": {"victories": 1, "defeats": 0, "draws": 0}}
-   {"outcome": "victory", "confidence": 0.9923, "counted": false, "timestamp": 1731148322.5, "counter": {"victories": 1, "defeats": 0, "draws": 0}, "cooldown_note": "[cooldown: 178s remaining]"}
+   {"outcome": "victory", "confidence": 0.9987, "counted": false, "consecutive_count": 1, "consecutive_required": 3, "timestamp": 1731148320.0, "counter": {"victories": 0, "defeats": 0, "draws": 0}}
+   {"outcome": "victory", "confidence": 0.9992, "counted": false, "consecutive_count": 2, "consecutive_required": 3, "timestamp": 1731148320.25, "counter": {"victories": 0, "defeats": 0, "draws": 0}}
+   {"outcome": "victory", "confidence": 0.9995, "counted": true, "consecutive_count": 3, "consecutive_required": 3, "timestamp": 1731148320.5, "counter": {"victories": 1, "defeats": 0, "draws": 0}, "predicted_class": "victory_text"}
+   {"outcome": "victory", "confidence": 0.9988, "counted": false, "consecutive_count": 0, "consecutive_required": 3, "timestamp": 1731148320.75, "counter": {"victories": 1, "defeats": 0, "draws": 0}}
    ```
 
-   - `counted: true` はカウントに反映された検知
-   - `counted: false` はクールダウン中の検知（`cooldown_note` に残り時間が記録される）
+   - `counted: true`: カウントに反映された検知（3回連続確定時）
+   - `counted: false`: まだ確定していない検知、またはクールダウン中の検知
+   - `consecutive_count`: 現在の連続検知回数
+   - `consecutive_required`: カウントに必要な連続回数
+   - `predicted_class`: カウント確定時のみ出力される詳細クラス名
 
 ### 4.3 二重起動の注意
 
