@@ -157,7 +157,7 @@ def main() -> int:
                     else:
                         print("[WARN] PNG データのデコードに失敗しました。")
 
-            time.sleep(max(args.interval, 0.5))
+            time.sleep(args.interval)
 
     except KeyboardInterrupt:
         print("\n[INFO] 監視を終了します。")
