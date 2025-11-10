@@ -32,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--password", default="", help="OBS WebSocket password")
     parser.add_argument("--source", required=True, help="スクリーンショット対象のソース名")
     parser.add_argument("--model", type=Path, default=Path("artifacts/models/victory_classifier.pth"), help="学習済みモデルのパス")
+    parser.add_argument("--size", type=int, default=None, help="推論時の画像サイズ（長辺、未指定時はオリジナルサイズ）")
     parser.add_argument("--event-log", type=Path, default=Path("logs/detections.jsonl"), help="イベントログの保存先")
     parser.add_argument("--cooldown", type=int, default=DEFAULT_COOLDOWN, help="クールダウン時間（秒）")
     parser.add_argument("--required-consecutive", type=int, default=DEFAULT_REQUIRED_CONSECUTIVE, help="カウントに必要な連続検知回数")
@@ -55,8 +56,10 @@ def main() -> int:
     predictor = VictoryPredictor(
         model_path=args.model,
         crop_region=(460, 378, 995, 550),
+        image_size=args.size,
     )
     print(f"[INFO] Device: {predictor.device}")
+    print(f"[INFO] Image size: {args.size if args.size else 'original (995x550)'}")
     print(f"[INFO] Classes: {list(predictor.label_map.keys())}")
 
     # StateManagerの初期化
