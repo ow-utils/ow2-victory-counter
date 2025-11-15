@@ -49,7 +49,6 @@
 ### サンプル画像とラベリング
 
 - 画像解析用のスクリーンショットは `data/samples` 以下に保存する。サブディレクトリ名は `YYYYMMDD_runXX` とし、同名の JSON に解像度・UI 言語・アクセシビリティ設定・各サンプルのラベルを記録する。
-- 例: `data/samples/20251103_run01/20251103_run01.json` には draw バナーの PNG とメタデータを格納している。
 - ラベリング手順や命名規則は `docs/plans/2025-11-03-08全体TODO.md` を参照。データ追加時は同ドキュメントの TODO／参考メモを更新する。
 
 ### CNN 学習ワークフロー（現行）
@@ -76,10 +75,10 @@
   - この設計により、アスペクト比や解像度の異なる入力画像でも学習・推論が可能
 
 - ラベルクラス数はデータセットから自動検出される：
-  - `dataset/` 配下のディレクトリ構造（`victory/`, `defeat/`, `draw/`, `none/` など）から自動認識
-  - 4クラス固定ではなく、任意のクラス数に対応（6クラス、8クラスなど）
+  - `dataset/` 配下のディレクトリ構造（`victory/`, `defeat/`, `none/` など）から自動認識
+  - 4クラス固定ではなく、任意のクラス数に対応（5クラス、8クラスなど）
   - 学習スクリプト実行時に `VictoryDataset` が label_map を自動生成し、`num_classes` が自動設定される
-  - 例：`victory_text`, `victory_progress`, `defeat_text`, `defeat_progress`, `draw`, `none` の 6クラス分類にも対応
+  - 例：`victory_text`, `victory_progress`, `defeat_text`, `defeat_progress`, `none` の 5クラス分類に対応
 
 ## VictoryPredictor 推論モジュール
 
@@ -87,17 +86,17 @@
 
 ### 主な機能
 
-- **6クラス分類から3種類の勝敗へマッピング**：
+- **5クラス分類から勝敗へマッピング**：
   - `victory_text` / `victory_progressbar` → `victory`
   - `defeat_text` / `defeat_progressbar` → `defeat`
-  - `draw_text` → `draw`
   - `none` → `unknown`（検知なし）
+  - ※ 過去には `draw_text` クラスが存在したが、教師データ不足による誤判定のため除外
   - `DetectionResult` には `outcome` に加えて、元の詳細クラス名を保持する `predicted_class` フィールドも含まれる（誤検知分析に活用）
 
 - **モデルファイルに label_map を内包**：
   - `train_classifier.py` で学習時に label_map と idx_to_label をモデルファイル (.pth) に保存
   - 推論時は dataset ディレクトリ不要、モデルファイルのみで動作
-  - クラス数は自動検出されるため、4クラス・6クラスなど任意のクラス数に対応
+  - クラス数は自動検出されるため、4クラス・5クラスなど任意のクラス数に対応
 
 - **前処理パイプライン**：
   1. 画像クロップ（デフォルト: `460,378,995,550`）
@@ -170,7 +169,7 @@ predictor_resized = VictoryPredictor(
 ### 仕様
 
 - **連続N回の検知でカウント**（デフォルト3回）:
-  - 同じ結果（victory/defeat/draw）が連続で検知された場合のみカウント
+  - 同じ結果（victory/defeat）が連続で検知された場合のみカウント
   - 異なる結果が出た場合は連続カウントをリセット
   - 一時的なノイズや画面切り替え時の誤検知を防止
 
@@ -215,11 +214,11 @@ predictor_resized = VictoryPredictor(
 
 ### 機能
 
-- **保存対象**：victory/defeat/draw を検知した場合のみ保存（unknown は保存しない）
+- **保存対象**：victory/defeat を検知した場合のみ保存（unknown は保存しない）
 - **保存タイミング**：カウントされた検知（`delta > 0`）とクールダウン中の検知（`delta = 0`）の両方を保存
 - **ファイル名形式**：`{timestamp}-{predicted_class}-{status}.png`
   - `timestamp`: `YYYYMMDD-HHMMSS-mmm` 形式（ミリ秒まで）
-  - `predicted_class`: 詳細クラス名（`victory_text`, `victory_progressbar`, `defeat_text`, `defeat_progressbar`, `draw_text` など）
+  - `predicted_class`: 詳細クラス名（`victory_text`, `victory_progressbar`, `defeat_text`, `defeat_progressbar` など）
   - `status`: `counted`（カウント済み）または `cooldown`（クールダウン中）
 
 ### 使用例

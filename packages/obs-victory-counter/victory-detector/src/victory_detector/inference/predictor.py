@@ -13,13 +13,12 @@ import torch.nn.functional as F
 from victory_detector.core.vision import DetectionResult
 from victory_detector.training.model import VictoryClassifier
 
-# 6クラス分類結果から勝敗・ドローへのマッピング
-CLASS_TO_OUTCOME: dict[str, Literal["victory", "defeat", "draw", "unknown"]] = {
+# 5クラス分類結果から勝敗へのマッピング
+CLASS_TO_OUTCOME: dict[str, Literal["victory", "defeat", "unknown"]] = {
     "victory_text": "victory",
     "victory_progressbar": "victory",
     "defeat_text": "defeat",
     "defeat_progressbar": "defeat",
-    "draw_text": "draw",
     "none": "unknown",  # 検知なし
 }
 
@@ -136,14 +135,14 @@ class VictoryPredictor:
         # 7. バッチ次元追加
         return tensor.unsqueeze(0)
 
-    def _map_class_to_outcome(self, class_name: str) -> Literal["victory", "defeat", "draw", "unknown"]:
-        """6クラス分類結果を3種類の勝敗結果にマッピングする。
+    def _map_class_to_outcome(self, class_name: str) -> Literal["victory", "defeat", "unknown"]:
+        """5クラス分類結果を勝敗結果にマッピングする。
 
         Args:
             class_name: 分類クラス名
 
         Returns:
-            勝敗結果 ("victory", "defeat", "draw", "unknown")
+            勝敗結果 ("victory", "defeat", "unknown")
         """
         return CLASS_TO_OUTCOME.get(class_name, "unknown")
 

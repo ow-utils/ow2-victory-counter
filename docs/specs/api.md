@@ -29,11 +29,13 @@
 | フィールド   | 型     | 説明                                                                    |
 | ------------ | ------ | ----------------------------------------------------------------------- |
 | `type`       | string | `"result"` または `"adjustment"`                                        |
-| `value`      | string | `"victory"`, `"defeat"`, `"draw"` のいずれか                            |
+| `value`      | string | `"victory"`, `"defeat"`, `"draw"` のいずれか（※注1）                   |
 | `delta`      | int    | カウント増減値。通常は `1`、クールダウン中は `0`                        |
 | `timestamp`  | string | ISO 8601 形式のタイムスタンプ（UTC）                                    |
 | `confidence` | float  | 信頼度（`result` イベントのみ、0.0〜1.0）                               |
 | `note`       | string | 補足情報（オプション）。クールダウン中は残り時間、手動補正時は補正理由 |
+
+※注1: CNNモデルは現在 `victory`/`defeat` のみを出力します（`draw` は教師データ不足により除外）。API は `draw` も受け付けますが、自動検知では出力されません。
 
 ## `GET /state`
 
@@ -136,11 +138,13 @@ GET /history?limit=5
 
 ```json
 {
-  "value": "victory", // "victory" / "defeat" / "draw"
+  "value": "victory", // "victory" / "defeat" / "draw" (※注2)
   "delta": 2, // 省略時は 1
   "note": "manual fix" // 任意
 }
 ```
+
+※注2: CNNモデルは現在 `victory`/`defeat` のみを出力します（`draw` は教師データ不足により除外）。API は `draw` も受け付けますが、自動検知では出力されません。
 
 ### レスポンス
 
@@ -160,15 +164,14 @@ GET /history?limit=5
 
 ### エラー
 
-- `value` が `"victory"` / `"defeat"` / `"draw"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。
+- `value` が `"victory"` / `"defeat"` / `"draw"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。（※注3）
 - 内部エラー時は `500 Internal Server Error` を返します（エラーログはサーバ側に記録されます）。
+
+※注3: CNNモデルは現在 `victory`/`defeat` のみを出力します（`draw` は教師データ不足により除外）。API は `draw` も受け付けますが、自動検知では出力されません。
 
 ---
 
 今後、履歴を範囲指定で取得する、あるいは UI の更新通知を WebSocket で配信するといった拡張を検討する場合、本ドキュメントを更新して周知してください。
-
-- `value` が `"victory"` / `"defeat"` / `"draw"` 以外、または JSON が不正な場合は `400 Bad Request` と `{"error": "invalid_payload"}` を返します。
-- 内部エラー時は `500 Internal Server Error` を返します（エラーログはサーバ側に記録されます）。
 
 ## `GET /overlay`
 

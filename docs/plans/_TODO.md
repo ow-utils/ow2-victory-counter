@@ -48,10 +48,11 @@
 - draw判定を除外し、5クラス（none, victory_text, victory_progressbar, defeat_text, defeat_progressbar）分類に移行
 
 **実施タスク**:
-- [ ] dataset/draw_text ディレクトリを削除（dataset_backup/ に移動してバックアップ）
-- [ ] predictor.py の CLASS_TO_OUTCOME 定数から "draw_text": "draw" エントリを削除
-- [ ] 型ヒント Literal["victory", "defeat", "draw", "unknown"] から "draw" を削除
-- [ ] 5クラスでモデル再学習（train_classifier.py --batch-size 16 --epochs 30）
+- [x] dataset/draw_text ディレクトリを削除（すでに存在せず、完了扱い）
+- [x] predictor.py の CLASS_TO_OUTCOME 定数から "draw_text": "draw" エントリを削除
+- [x] 型ヒント Literal["victory", "defeat", "draw", "unknown"] から "draw" を削除
+- [x] ドキュメント更新（architecture.md、api.md、プランファイル）
+- [ ] 5クラスでモデル再学習（train_classifier.py --epochs 30）
 - [ ] 推論テストと動作確認（draw_text が出力されないことを確認）
 - [ ] 実運用での精度評価
 
