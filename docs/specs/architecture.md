@@ -134,33 +134,64 @@ predictor_resized = VictoryPredictor(
 
 ## クールダウン機能
 
-`StateManager` は重複カウント防止のため、クールダウン機能を実装しています。
+`StateManager` は重複カウント防止と放置対策のため、2段階クールダウン機能を実装しています。
 
-### 仕様
+### 2段階クールダウンの仕様
 
-- **デフォルト180秒のクールダウン期間**：
-  - 前回の検知（`delta > 0` のイベント）から指定秒数以内の検知はカウントしない
-  - クールダウン中の検知は `delta=0` でイベントログに記録されるが、カウントには反映されない
+**状態遷移**:
+1. **COOLDOWN** (0〜180秒): すべての検知を無視
+2. **WAITING_FOR_NONE** (180秒以降): none/unknown が規定回数（デフォルト50回）連続検知されるまで待機
+3. **READY**: 次の勝敗判定が可能
+
+**各状態の動作**:
+
+- **COOLDOWN 状態**（第1段階）：
+  - 勝敗確定後、デフォルト180秒間はすべての検知を無視
   - これにより、同一試合の繰り返し検知を防止
 
-- **残り時間の通知**：
-  - クールダウン中のイベントには `note` フィールドに残り時間を記録
-  - 例: `[cooldown: 120s remaining]`
+- **WAITING_FOR_NONE 状態**（第2段階）：
+  - クールダウン時間経過後、none/unknown が連続で規定回数（デフォルト50回）検知されるまで待機
+  - **none/unknown 検知**: カウント++、規定回数到達で READY へ遷移
+  - **victory/defeat 検知**: カウントリセット、まだ判定不可（放置画面の誤カウント防止）
+  - これにより、プログレスバー画面で放置していても誤カウントされない
 
-- **イベントソーシングパターン**：
+- **READY 状態**：
+  - 通常の勝敗判定が可能
+  - 連続3回の検知で勝敗確定 → COOLDOWN へ遷移
+
+**パラメータ**:
+- `cooldown_seconds`: クールダウン時間（デフォルト180秒）
+- `none_required_consecutive`: READY へ遷移するために必要な none 連続回数（デフォルト50回）
+
+**イベントソーシングパターン**：
   - すべての検知イベント（`delta=0` を含む）は JSONL ファイルに永続化
   - `StateManager` 起動時に過去のイベントログから最後の検知時刻を復元
-  - プロセス再起動後もクールダウン状態を維持
+  - プロセス再起動後もクールダウン状態を維持（初期状態は COOLDOWN）
 
-### イベントログ例
+### 動作例（タイムライン）
 
-```jsonl
-{"type": "result", "value": "victory", "delta": 1, "timestamp": "2025-11-09T10:00:00Z", "confidence": 0.9998}
-{"type": "result", "value": "victory", "delta": 0, "timestamp": "2025-11-09T10:01:30Z", "confidence": 0.9995, "note": "[cooldown: 90s remaining]"}
-{"type": "result", "value": "defeat", "delta": 1, "timestamp": "2025-11-09T10:05:00Z", "confidence": 0.9992}
+```
+0秒:    victory 確定 → COOLDOWN 開始
+10秒:   unknown 検知 → 無視（COOLDOWN 中）
+180秒:  クールダウン時間経過 → WAITING_FOR_NONE へ自動遷移
+181秒:  unknown 検知 → none カウント = 1
+182秒:  unknown 検知 → none カウント = 2
+...
+230秒:  unknown 検知 → none カウント = 50 → READY へ遷移
+231秒:  victory 検知 (1/3) → 連続カウント開始
+232秒:  victory 検知 (2/3)
+233秒:  victory 検知 (3/3) → 確定、COOLDOWN へ
 ```
 
-1行目は通常カウント、2行目はクールダウン中のため `delta=0` でカウントされず、3行目は再びカウントされています。
+**放置時の動作**:
+```
+0秒:    victory 確定 → COOLDOWN 開始
+180秒:  WAITING_FOR_NONE へ遷移
+181秒:  victory 検知 → none カウントリセット（放置中、まだ判定不可）
+200秒:  victory 検知 → none カウントリセット
+...
+（none が検知されない限り、永久に WAITING_FOR_NONE 状態のまま）
+```
 
 ## 連続検知機能
 

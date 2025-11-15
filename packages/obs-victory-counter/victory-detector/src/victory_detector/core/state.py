@@ -12,6 +12,7 @@ from .vision import DetectionResult
 
 EventType = Literal["result", "adjustment"]
 Outcome = Literal["victory", "defeat", "draw"]
+CooldownState = Literal["COOLDOWN", "WAITING_FOR_NONE", "READY"]
 
 
 def utcnow_iso() -> str:
@@ -147,17 +148,30 @@ class EventLog:
 class StateManager:
     """勝敗判定と手動補正を管理するユーティリティ。"""
 
-    def __init__(self, event_log: EventLog, cooldown_seconds: int = 180, required_consecutive: int = 3) -> None:
+    def __init__(
+        self,
+        event_log: EventLog,
+        cooldown_seconds: int = 180,
+        required_consecutive: int = 3,
+        none_required_consecutive: int = 50,
+    ) -> None:
         self._log = event_log
         self._cooldown_seconds = cooldown_seconds
         self._required_consecutive = required_consecutive
+        self._none_required_consecutive = none_required_consecutive
         self._state = CounterState()
         for event in self._log.read_events():
             self._state.apply(event)
         self._last_detection_time = self._find_last_detection_time()
-        # 連続検知追跡用
+        # 連続検知追跡用（勝敗判定用）
         self._consecutive_outcome: Optional[Outcome] = None
         self._consecutive_count: int = 0
+        # 2段階クールダウン用
+        self._cooldown_state: CooldownState = "READY"
+        self._none_consecutive_count: int = 0
+        # 初期状態の設定
+        if self._last_detection_time is not None:
+            self._cooldown_state = "COOLDOWN"
 
     @property
     def summary(self) -> CounterState:
@@ -174,12 +188,63 @@ class StateManager:
     def record_detection(
         self, detection: DetectionResult, note: str = ""
     ) -> DetectionResponse:
-        """判定結果を連続検知として処理する。
+        """判定結果を2段階クールダウンと連続検知で処理する。
 
-        連続で同じ結果が required_consecutive 回検知されたらカウント。
-        異なる結果が出たら連続カウントをリセット。
+        2段階クールダウン:
+        1. COOLDOWN: すべての検知を無視（0〜cooldown_seconds）
+        2. WAITING_FOR_NONE: none をカウント、victory/defeat は無視
+        3. READY: 次の勝敗判定が可能（none が規定回数検知後）
+
+        連続検知:
+        - 同じ結果が required_consecutive 回検知されたらカウント
+        - 異なる結果が出たら連続カウントをリセット
         """
 
+        now = datetime.now(timezone.utc)
+
+        # 状態1: COOLDOWN（時間経過待ち）
+        if self._cooldown_state == "COOLDOWN":
+            if self._last_detection_time is not None:
+                elapsed = (now - self._last_detection_time).total_seconds()
+                if elapsed < self._cooldown_seconds:
+                    # クールダウン中はすべての検知を無視
+                    return DetectionResponse(
+                        event=None,
+                        consecutive_count=0,
+                        is_first_detection=False,
+                    )
+                else:
+                    # 時間経過 → WAITING_FOR_NONE へ遷移
+                    self._cooldown_state = "WAITING_FOR_NONE"
+                    self._none_consecutive_count = 0
+
+        # 状態2: WAITING_FOR_NONE（none 連続検知待ち）
+        if self._cooldown_state == "WAITING_FOR_NONE":
+            if detection.outcome not in ("victory", "defeat", "draw"):
+                # unknown/none を検知
+                self._none_consecutive_count += 1
+                if self._none_consecutive_count >= self._none_required_consecutive:
+                    # none が規定回数 → READY へ遷移
+                    self._cooldown_state = "READY"
+                    self._none_consecutive_count = 0
+                    # 勝敗判定用カウントもリセット
+                    self._consecutive_outcome = None
+                    self._consecutive_count = 0
+                return DetectionResponse(
+                    event=None,
+                    consecutive_count=0,
+                    is_first_detection=False,
+                )
+            else:
+                # victory/defeat/draw を検知 → カウントリセット（まだ判定不可）
+                self._none_consecutive_count = 0
+                return DetectionResponse(
+                    event=None,
+                    consecutive_count=0,
+                    is_first_detection=False,
+                )
+
+        # 状態3: READY（通常の勝敗判定）
         if detection.outcome not in ("victory", "defeat", "draw"):
             # unknown の場合は連続カウントをリセット
             self._consecutive_outcome = None
@@ -189,20 +254,6 @@ class StateManager:
                 consecutive_count=0,
                 is_first_detection=False,
             )
-
-        now = datetime.now(timezone.utc)
-
-        # クールダウン中の処理
-        if self._last_detection_time is not None:
-            elapsed = (now - self._last_detection_time).total_seconds()
-            if elapsed < self._cooldown_seconds:
-                # クールダウン中は連続カウントしない
-                remaining = self._cooldown_seconds - elapsed
-                return DetectionResponse(
-                    event=None,
-                    consecutive_count=0,
-                    is_first_detection=False,
-                )
 
         # 連続検知の判定
         is_first = False
@@ -227,7 +278,9 @@ class StateManager:
                 note=note,
             )
             self._persist(event)
-            self._last_detection_time = now  # クールダウン開始
+            self._last_detection_time = now
+            # COOLDOWN 状態へ遷移
+            self._cooldown_state = "COOLDOWN"
             # 連続カウントをリセット
             self._consecutive_outcome = None
             self._consecutive_count = 0
