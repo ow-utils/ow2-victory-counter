@@ -62,8 +62,6 @@
 - 変更前: 6クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, draw_text, none）
 - 変更後: 5クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, none）
 
-## 進行中タスク
-
 ### クールダウン明け再開条件の追加（2025-11-16）
 
 **背景**:
@@ -90,7 +88,9 @@
 - [x] `record_detection()` メソッドで2段階クールダウンロジックを実装
 - [x] 既存の連続検知機能（victory/defeat 3回）との整合性確保
 - [x] architecture.md に仕様を追記
-- [ ] 実運用テストと動作確認
+- [x] 実運用テストと動作確認
+
+## 進行中タスク
 
 ### 連続検知機能（2025-11-10）
 
