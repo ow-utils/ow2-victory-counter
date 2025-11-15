@@ -3,6 +3,7 @@
 ## 完了済みマイルストーン
 
 - [x] Git 履歴から画像ファイル（.png）を削除
+
   - git-filter-repo で全履歴から .png を削除
   - git lfs prune でローカル LFS キャッシュをクリーンアップ
   - 履歴から完全に削除されたことを検証済み
@@ -38,27 +39,30 @@
   - スクリーンショット保存は連続検知の最初の1回のみ
   - DetectionResponse データクラスで連続検知状態を返す
 
-## 進行中タスク
-
 ### draw判定の除外と5クラスモデルへの移行（2025-11-16）
 
 **背景**:
+
 - draw_textクラス（19枚）の誤判定が多発
 - 教師データが少なく学習データ拡充が困難
 - draw判定を除外し、5クラス（none, victory_text, victory_progressbar, defeat_text, defeat_progressbar）分類に移行
 
 **実施タスク**:
+
 - [x] dataset/draw_text ディレクトリを削除（すでに存在せず、完了扱い）
 - [x] predictor.py の CLASS_TO_OUTCOME 定数から "draw_text": "draw" エントリを削除
 - [x] 型ヒント Literal["victory", "defeat", "draw", "unknown"] から "draw" を削除
 - [x] ドキュメント更新（architecture.md、api.md、プランファイル）
-- [ ] 5クラスでモデル再学習（train_classifier.py --epochs 30）
-- [ ] 推論テストと動作確認（draw_text が出力されないことを確認）
-- [ ] 実運用での精度評価
+- [x] 5クラスでモデル再学習（train_classifier.py --epochs 30）
+- [x] 推論テストと動作確認（draw_text が出力されないことを確認）
+- [x] 実運用での精度評価
 
 **クラス構成の変更**:
+
 - 変更前: 6クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, draw_text, none）
 - 変更後: 5クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, none）
+
+## 進行中タスク
 
 ### 連続検知機能（2025-11-10）
 
@@ -71,25 +75,24 @@
   - [ ] 誤検知画像を学習データに追加して再訓練
 
 ### OBS 連携・運用
+
 - [ ] websocket 監視スクリプトの設定ファイル化（variant ごとの `template_bbox` / モデル指定）
 - [ ] キャプチャ間隔を 0.3s 前後に設定した長時間テストと負荷計測
 - [ ] 誤判定時のリトライ／エラーログ整理
 
 ### 静的ビルド・CI
+
 - [ ] `victory-counter-overlay-ui` の静的ビルドと管理 UI のコンポーネント共有計画
 - [ ] Python/Node の lint/test/build を GitHub Actions で自動化
 - [ ] モデル学習・テンプレート生成の CI 手順（少なくともフォーマットチェック、テンプレート整合性チェック）
 
 ### ドキュメント整備
+
 - [ ] CNN 学習・推論手順を `docs/specs/architecture.md` などに追記
 - [ ] ユーザー向けセットアップ手順（obs-websocket 設定 / キャプチャソース選択 / CNN 導入手順）の整備
 
 ## バックログ
 
-- [ ] 勝敗判定の放置対策（2025-11-15）
-  - [ ] クールダウン明け再開条件として `none` の連続検知（規定回数）を導入し、victory/defeat progressbar 画面放置時の誤カウントを防止
-  - [ ] `required_none_consecutive`（仮）パラメータを `StateManager` へ追加し、クールダウン解除と連続検知ロジックの整合性を担保する
-  - [ ] 仕様を `docs/specs/architecture.md` に追記し、運用手順へ `none` 連続判定の役割を説明
 - [ ] ライバル以外のモード・他言語 UI のスクリーンショット収集と `template_bbox` 整備
 - [ ] 勝敗判定が不確実な場合のフォールバック（テンプレート照合とのハイブリッド等）
 - [ ] 学習データの共有方法（LFS or 外部ストレージ）とバージョン管理方針
