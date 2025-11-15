@@ -52,7 +52,12 @@ def running_server(tmp_path):
     log_dir = tmp_path / "log"
     log_dir.mkdir()
     event_log = state.EventLog(log_dir / "events.log")
-    manager = state.StateManager(event_log)
+    manager = state.StateManager(
+        event_log,
+        cooldown_seconds=0,
+        required_consecutive=1,
+        required_none_consecutive=0,
+    )
     manager.record_detection(DetectionResult("victory", 0.8))
     manager.record_adjustment("defeat", 1, note="manual")
     manager.record_adjustment("draw", 1, note="tie")
