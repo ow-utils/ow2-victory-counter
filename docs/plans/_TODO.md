@@ -40,6 +40,25 @@
 
 ## 進行中タスク
 
+### draw判定の除外と5クラスモデルへの移行（2025-11-16）
+
+**背景**:
+- draw_textクラス（19枚）の誤判定が多発
+- 教師データが少なく学習データ拡充が困難
+- draw判定を除外し、5クラス（none, victory_text, victory_progressbar, defeat_text, defeat_progressbar）分類に移行
+
+**実施タスク**:
+- [ ] dataset/draw_text ディレクトリを削除（dataset_backup/ に移動してバックアップ）
+- [ ] predictor.py の CLASS_TO_OUTCOME 定数から "draw_text": "draw" エントリを削除
+- [ ] 型ヒント Literal["victory", "defeat", "draw", "unknown"] から "draw" を削除
+- [ ] 5クラスでモデル再学習（train_classifier.py --batch-size 16 --epochs 30）
+- [ ] 推論テストと動作確認（draw_text が出力されないことを確認）
+- [ ] 実運用での精度評価
+
+**クラス構成の変更**:
+- 変更前: 6クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, draw_text, none）
+- 変更後: 5クラス（victory_text, victory_progressbar, defeat_text, defeat_progressbar, none）
+
 ### 連続検知機能（2025-11-10）
 
 実運用テストとモデル再訓練を踏まえ、誤検知をさらに削減するための連続検知機能を実装：
