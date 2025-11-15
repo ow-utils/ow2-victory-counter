@@ -33,24 +33,12 @@ def _default_event_log_path(base: Path) -> Path:
     return base / "events.log"
 
 
-def run(
-    snapshot_file: Path,
-    event_log: Path | None = None,
-    *,
-    required_consecutive: int = 1,
-    required_none_consecutive: int = 0,
-    cooldown_seconds: int = 0,
-) -> dict[str, Any]:
+def run(snapshot_file: Path, event_log: Path | None = None) -> dict[str, Any]:
     """CLI本体。スナップショットを読み込み、勝敗推定とイベント追記を行う。"""
 
     snapshots = _load_snapshots(snapshot_file)
     log_path = event_log or _default_event_log_path(snapshot_file.parent)
-    manager = state.StateManager(
-        state.EventLog(log_path),
-        cooldown_seconds=cooldown_seconds,
-        required_consecutive=required_consecutive,
-        required_none_consecutive=required_none_consecutive,
-    )
+    manager = state.StateManager(state.EventLog(log_path))
 
     for snapshot in snapshots:
         detection = vision.evaluate_snapshot(snapshot)
@@ -78,33 +66,9 @@ def main() -> None:
         type=Path,
         help="Path to output event log (defaults next to snapshot file).",
     )
-    parser.add_argument(
-        "--required-consecutive",
-        type=int,
-        default=1,
-        help="連続検知が必要な回数（CLIデフォルト: 1）",
-    )
-    parser.add_argument(
-        "--required-none",
-        type=int,
-        default=0,
-        help="クールダウン解除後に必要な none 連続回数（CLIデフォルト: 0）",
-    )
-    parser.add_argument(
-        "--cooldown",
-        type=int,
-        default=0,
-        help="クールダウン秒数（CLIデフォルト: 0=無効）",
-    )
     args = parser.parse_args()
 
-    result = run(
-        args.snapshot_file,
-        args.event_log,
-        required_consecutive=args.required_consecutive,
-        required_none_consecutive=args.required_none,
-        cooldown_seconds=args.cooldown,
-    )
+    result = run(args.snapshot_file, args.event_log)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

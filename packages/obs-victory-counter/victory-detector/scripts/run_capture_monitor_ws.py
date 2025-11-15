@@ -23,7 +23,6 @@ from victory_detector.inference import VictoryPredictor
 DEFAULT_INTERVAL = 0.25
 DEFAULT_COOLDOWN = 180
 DEFAULT_REQUIRED_CONSECUTIVE = 3
-DEFAULT_REQUIRED_NONE = 30
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,7 +36,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--event-log", type=Path, default=Path("logs/detections.jsonl"), help="イベントログの保存先")
     parser.add_argument("--cooldown", type=int, default=DEFAULT_COOLDOWN, help="クールダウン時間（秒）")
     parser.add_argument("--required-consecutive", type=int, default=DEFAULT_REQUIRED_CONSECUTIVE, help="カウントに必要な連続検知回数")
-    parser.add_argument("--required-none", type=int, default=DEFAULT_REQUIRED_NONE, help="クールダウン解除後に必要な `none` 連続検知回数")
     parser.add_argument("--interval", type=float, default=DEFAULT_INTERVAL, help="キャプチャ間隔（秒）")
     parser.add_argument("--screenshot-width", type=int, default=1920, help="スクリーンショットの幅")
     parser.add_argument("--screenshot-height", type=int, default=1080, help="スクリーンショットの高さ")
@@ -85,15 +83,9 @@ def main() -> int:
 
     # StateManagerの初期化
     event_log = EventLog(args.event_log)
-    state_manager = StateManager(
-        event_log,
-        cooldown_seconds=args.cooldown,
-        required_consecutive=args.required_consecutive,
-        required_none_consecutive=args.required_none,
-    )
+    state_manager = StateManager(event_log, cooldown_seconds=args.cooldown, required_consecutive=args.required_consecutive)
     print(f"[INFO] クールダウン: {args.cooldown}秒")
     print(f"[INFO] 連続検知回数: {args.required_consecutive}回")
-    print(f"[INFO] none解除必要回数: {args.required_none}回")
     print(f"[INFO] イベントログ: {args.event_log}")
     print(
         f"[INFO] 現在のカウント: "

@@ -147,17 +147,10 @@ class EventLog:
 class StateManager:
     """勝敗判定と手動補正を管理するユーティリティ。"""
 
-    def __init__(
-        self,
-        event_log: EventLog,
-        cooldown_seconds: int = 180,
-        required_consecutive: int = 3,
-        required_none_consecutive: int = 30,
-    ) -> None:
+    def __init__(self, event_log: EventLog, cooldown_seconds: int = 180, required_consecutive: int = 3) -> None:
         self._log = event_log
         self._cooldown_seconds = cooldown_seconds
         self._required_consecutive = required_consecutive
-        self._required_none_consecutive = max(0, required_none_consecutive)
         self._state = CounterState()
         for event in self._log.read_events():
             self._state.apply(event)
@@ -165,11 +158,6 @@ class StateManager:
         # 連続検知追跡用
         self._consecutive_outcome: Optional[Outcome] = None
         self._consecutive_count: int = 0
-        # クールダウン解除後の none 連続検知追跡
-        self._needs_none_clearance = (
-            self._required_none_consecutive > 0 and self._last_detection_time is not None
-        )
-        self._none_consecutive_count = 0
 
     @property
     def summary(self) -> CounterState:
@@ -193,10 +181,9 @@ class StateManager:
         """
 
         if detection.outcome not in ("victory", "defeat", "draw"):
-            # unknown の場合は連続カウントをリセットし、none連続判定を進める
+            # unknown の場合は連続カウントをリセット
             self._consecutive_outcome = None
             self._consecutive_count = 0
-            self._update_none_clearance(detection.predicted_class)
             return DetectionResponse(
                 event=None,
                 consecutive_count=0,
@@ -216,18 +203,6 @@ class StateManager:
                     consecutive_count=0,
                     is_first_detection=False,
                 )
-
-        if self._needs_none_clearance:
-            # none連続判定が完了するまで勝敗カウントを停止
-            self._consecutive_outcome = None
-            self._consecutive_count = 0
-            if detection.predicted_class != "none":
-                self._none_consecutive_count = 0
-            return DetectionResponse(
-                event=None,
-                consecutive_count=0,
-                is_first_detection=False,
-            )
 
         # 連続検知の判定
         is_first = False
@@ -253,8 +228,6 @@ class StateManager:
             )
             self._persist(event)
             self._last_detection_time = now  # クールダウン開始
-            self._needs_none_clearance = self._required_none_consecutive > 0
-            self._none_consecutive_count = 0
             # 連続カウントをリセット
             self._consecutive_outcome = None
             self._consecutive_count = 0
@@ -286,22 +259,6 @@ class StateManager:
     def _persist(self, event: Event) -> None:
         self._log.append(event)
         self._state.apply(event)
-
-    def _update_none_clearance(self, predicted_class: Optional[str]) -> None:
-        """クールダウン明けに必要な none 連続検知の状態を更新する。"""
-
-        if not self._needs_none_clearance or self._required_none_consecutive <= 0:
-            if self._required_none_consecutive <= 0:
-                self._needs_none_clearance = False
-            return
-
-        if predicted_class == "none":
-            self._none_consecutive_count += 1
-            if self._none_consecutive_count >= self._required_none_consecutive:
-                self._needs_none_clearance = False
-                self._none_consecutive_count = 0
-        else:
-            self._none_consecutive_count = 0
 
     def history(self, limit: int) -> list[Event]:
         """直近のイベントを取得する。"""

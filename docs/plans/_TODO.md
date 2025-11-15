@@ -3,7 +3,6 @@
 ## 完了済みマイルストーン
 
 - [x] Git 履歴から画像ファイル（.png）を削除
-
   - git-filter-repo で全履歴から .png を削除
   - git lfs prune でローカル LFS キャッシュをクリーンアップ
   - 履歴から完全に削除されたことを検証済み
@@ -38,10 +37,6 @@
   - 異なる結果が出たら連続カウントをリセット
   - スクリーンショット保存は連続検知の最初の1回のみ
   - DetectionResponse データクラスで連続検知状態を返す
-- [x] 勝敗判定の放置対策（2025-11-15）
-  - クールダウン明け再開条件として `none` の連続検知（規定回数）を導入
-  - `required_none_consecutive` パラメータを StateManager/CLI に追加
-  - `docs/specs/architecture.md` に仕様を追記
 
 ## 進行中タスク
 
@@ -56,24 +51,25 @@
   - [ ] 誤検知画像を学習データに追加して再訓練
 
 ### OBS 連携・運用
-
 - [ ] websocket 監視スクリプトの設定ファイル化（variant ごとの `template_bbox` / モデル指定）
 - [ ] キャプチャ間隔を 0.3s 前後に設定した長時間テストと負荷計測
 - [ ] 誤判定時のリトライ／エラーログ整理
 
 ### 静的ビルド・CI
-
 - [ ] `victory-counter-overlay-ui` の静的ビルドと管理 UI のコンポーネント共有計画
 - [ ] Python/Node の lint/test/build を GitHub Actions で自動化
 - [ ] モデル学習・テンプレート生成の CI 手順（少なくともフォーマットチェック、テンプレート整合性チェック）
 
 ### ドキュメント整備
-
 - [ ] CNN 学習・推論手順を `docs/specs/architecture.md` などに追記
 - [ ] ユーザー向けセットアップ手順（obs-websocket 設定 / キャプチャソース選択 / CNN 導入手順）の整備
 
 ## バックログ
 
+- [ ] 勝敗判定の放置対策（2025-11-15）
+  - [ ] クールダウン明け再開条件として `none` の連続検知（規定回数）を導入し、victory/defeat progressbar 画面放置時の誤カウントを防止
+  - [ ] `required_none_consecutive`（仮）パラメータを `StateManager` へ追加し、クールダウン解除と連続検知ロジックの整合性を担保する
+  - [ ] 仕様を `docs/specs/architecture.md` に追記し、運用手順へ `none` 連続判定の役割を説明
 - [ ] ライバル以外のモード・他言語 UI のスクリーンショット収集と `template_bbox` 整備
 - [ ] 勝敗判定が不確実な場合のフォールバック（テンプレート照合とのハイブリッド等）
 - [ ] 学習データの共有方法（LFS or 外部ストレージ）とバージョン管理方針
