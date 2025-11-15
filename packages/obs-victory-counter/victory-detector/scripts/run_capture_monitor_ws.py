@@ -170,7 +170,6 @@ def main() -> int:
                             "confidence": round(detection.confidence, 4),
                             "counted": response.event is not None,
                             "consecutive_count": response.consecutive_count,
-                            "consecutive_required": args.required_consecutive,
                             "timestamp": time.time(),
                             "counter": {
                                 "victories": state_manager.summary.victories,
