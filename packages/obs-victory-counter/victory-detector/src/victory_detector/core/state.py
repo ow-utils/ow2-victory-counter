@@ -152,7 +152,7 @@ class StateManager:
         self,
         event_log: EventLog,
         cooldown_seconds: int = 180,
-        required_consecutive: int = 3,
+        required_consecutive: int = 2,
         none_required_consecutive: int = 50,
     ) -> None:
         self._log = event_log

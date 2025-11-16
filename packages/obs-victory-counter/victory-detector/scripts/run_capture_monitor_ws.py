@@ -22,7 +22,7 @@ from victory_detector.inference import VictoryPredictor
 
 DEFAULT_INTERVAL = 0.25
 DEFAULT_COOLDOWN = 180
-DEFAULT_REQUIRED_CONSECUTIVE = 3
+DEFAULT_REQUIRED_CONSECUTIVE = 2
 
 
 def parse_args() -> argparse.Namespace:

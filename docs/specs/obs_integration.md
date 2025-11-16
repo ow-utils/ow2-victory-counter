@@ -88,8 +88,8 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
    - `--model`: 学習済みモデルのパス
    - `--event-log`: イベントログファイル（OBS スクリプトと同じパスを指定）
    - `--cooldown`: クールダウン時間（秒、デフォルト 180）
-   - `--required-consecutive`: カウントに必要な連続検知回数（デフォルト 3）。同じ結果が3回連続で検知されたらカウント確定
-   - `--interval`: キャプチャ間隔（秒、デフォルト 0.25）。0.25秒 × 3回 = 0.75秒で判定確定
+   - `--required-consecutive`: カウントに必要な連続検知回数（デフォルト 2）。同じ結果が2回連続で検知されたらカウント確定
+   - `--interval`: キャプチャ間隔（秒、デフォルト 0.25）。0.25秒 × 2回 = 0.5秒で判定確定
    - `--save-detections`: **（オプション）** 検知時のスクリーンショット保存先ディレクトリ。連続検知の最初の1回のみ `{timestamp}-{predicted_class}-first.png` 形式で保存
 
 3. 推論結果は標準出力に JSON 形式で出力されます。
@@ -101,7 +101,7 @@ OBS スクリプトとは別に、CNN を使った自動勝敗判定を行う外
    {"outcome": "victory", "confidence": 0.9988, "counted": false, "consecutive_count": 0, "consecutive_required": 3, "timestamp": 1731148320.75, "counter": {"victories": 1, "defeats": 0, "draws": 0}}
    ```
 
-   - `counted: true`: カウントに反映された検知（3回連続確定時）
+   - `counted: true`: カウントに反映された検知（2回連続確定時）
    - `counted: false`: まだ確定していない検知、またはクールダウン中の検知
    - `consecutive_count`: 現在の連続検知回数
    - `consecutive_required`: カウントに必要な連続回数
