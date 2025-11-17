@@ -52,7 +52,7 @@
 
 ### 🔴 2.1 ディレクトリー構造作成
 
-- ⏳ `packages/ow2-victory-counter-rs/` ディレクトリー作成
+- ✅ `packages/ow2-victory-counter-rs/` ディレクトリー作成
   ```bash
   mkdir -p packages/ow2-victory-counter-rs/{src/{server,state,predictor,capture},frontend/{obs-ui,admin-ui},models,config,templates}
   ```
@@ -61,7 +61,7 @@
 
 ### 🔴 2.2 Cargo.toml設定
 
-- ⏳ `Cargo.toml` 作成
+- ✅ `Cargo.toml` 作成
   ```toml
   [package]
   name = "ow2-victory-detector"
@@ -87,8 +87,8 @@
 
 ### 🔴 2.3 フロントエンドpackage.json設定
 
-- ⏳ `frontend/obs-ui/package.json` 作成
-- ⏳ `frontend/admin-ui/package.json` 作成
+- ✅ `frontend/obs-ui/package.json` 作成
+- ✅ `frontend/admin-ui/package.json` 作成
   ```json
   {
     "name": "obs-ui",
