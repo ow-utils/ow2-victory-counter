@@ -87,11 +87,10 @@
 
 ### 🔴 2.3 フロントエンドpackage.json設定
 
-- ✅ `frontend/obs-ui/package.json` 作成
-- ✅ `frontend/admin-ui/package.json` 作成
+- ✅ `frontend/package.json` 作成（単一プロジェクト）
   ```json
   {
-    "name": "obs-ui",
+    "name": "ow2-victory-counter-ui",
     "version": "0.1.0",
     "type": "module",
     "scripts": {
@@ -109,6 +108,7 @@
   ```
 - **依存関係**: 2.1
 - **参照**: [実装詳細#開発環境](./2025-11-16-04実装詳細.md#開発環境)
+- **備考**: マルチページアプリケーション方式（obs.html, admin.html）
 
 ---
 
@@ -116,40 +116,38 @@
 
 ### 🔴 3.1 Vite設定ファイル作成
 
-- ⏳ `frontend/obs-ui/vite.config.ts` 作成
-- ⏳ `frontend/admin-ui/vite.config.ts` 作成
+- ✅ `frontend/vite.config.ts` 作成（マルチページアプリ設定）
   ```typescript
   import { defineConfig } from "vite";
   import { svelte } from "@sveltejs/vite-plugin-svelte";
+  import { resolve } from "path";
 
   export default defineConfig({
     plugins: [svelte()],
+    build: {
+      rollupOptions: {
+        input: {
+          obs: resolve(__dirname, "obs.html"),
+          admin: resolve(__dirname, "admin.html"),
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {
-        "/events": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
-        },
-        "/api": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
-        },
-        "/custom.css": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
-        },
+        "/events": { target: "http://localhost:3000", changeOrigin: true },
+        "/api": { target: "http://localhost:3000", changeOrigin: true },
+        "/custom.css": { target: "http://localhost:3000", changeOrigin: true },
       },
     },
   });
   ```
 - **依存関係**: 2.3
-- **目的**: Vite dev serverがAPIエンドポイントをRustサーバーにプロキシ
+- **目的**: マルチページアプリ（obs.html, admin.html）+ Rustサーバーへのプロキシ
 
 ### 🔴 3.2 TypeScript設定
 
-- ⏳ `frontend/obs-ui/tsconfig.json` 作成
-- ⏳ `frontend/admin-ui/tsconfig.json` 作成
+- ✅ `frontend/tsconfig.json` 作成
   ```json
   {
     "extends": "@tsconfig/svelte/tsconfig.json",
@@ -160,13 +158,18 @@
       "resolveJsonModule": true,
       "allowJs": true,
       "checkJs": true,
-      "isolatedModules": true
+      "isolatedModules": true,
+      "baseUrl": ".",
+      "paths": {
+        "$lib/*": ["src/lib/*"]
+      }
     },
     "include": ["src/**/*.ts", "src/**/*.svelte"],
     "exclude": ["node_modules"]
   }
   ```
 - **依存関係**: 2.3
+- **備考**: `$lib/*` エイリアスで共通コンポーネントをインポート可能
 
 ### 🟡 3.3 開発フロードキュメント
 
