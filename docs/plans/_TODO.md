@@ -22,7 +22,7 @@
 
 ### 🔴 1.1 Rust環境構築
 
-- ⏳ Rust 1.70以上のインストール
+- ✅ Rust 1.70以上のインストール
   ```bash
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
   rustc --version  # 1.70以上を確認
@@ -32,13 +32,13 @@
 
 ### 🔴 1.2 JavaScript環境構築
 
-- ⏳ Node.js 18.x以上のインストール
+- ✅ Node.js 18.x以上のインストール
   ```bash
   nvm install 18
   nvm use 18
   node --version  # v18.x以上を確認
   ```
-- ⏳ pnpm 8.x以上のインストール
+- ✅ pnpm 8.x以上のインストール
   ```bash
   npm install -g pnpm
   pnpm --version  # 8.x以上を確認
