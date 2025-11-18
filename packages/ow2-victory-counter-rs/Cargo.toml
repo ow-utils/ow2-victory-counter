@@ -10,8 +10,8 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # 画像処理・推論モジュール (Task 4.1, 4.2)
-# ort = { version = "2.0.0-rc.10", features = ["download-binaries"] }  # Task 4.2で有効化
-# ndarray = "0.17"  # Task 4.2で有効化
+ort = { version = "2.0.0-rc.10", features = ["download-binaries"] }  # ONNX Runtime
+ndarray = "0.16"  # 多次元配列（テンソル操作） - ort 2.0.0-rc.10 は 0.17 未対応
 obws = "0.14"  # OBS WebSocket クライアント
 base64 = "0.22"  # Base64 デコード
 image = "0.25"  # 画像処理 (pure Rust, opencvの代替)

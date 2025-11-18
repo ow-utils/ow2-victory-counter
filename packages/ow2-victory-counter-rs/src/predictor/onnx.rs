@@ -1,5 +1,32 @@
-// ONNX prediction implementation
-// TODO: Implement VictoryPredictor with ort and ndarray (Task 4.2)
+use image::DynamicImage;
+use ndarray::Array4;
+use ort::{
+    session::{builder::GraphOptimizationLevel, Session},
+    value::Value,
+};
+use std::collections::HashMap;
+use tracing::{debug, info};
+
+#[derive(Debug)]
+pub enum PredictionError {
+    ModelLoad(String),
+    LabelMapLoad(String),
+    Inference(String),
+    TensorConversion(String),
+}
+
+impl std::fmt::Display for PredictionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PredictionError::ModelLoad(e) => write!(f, "Model load error: {}", e),
+            PredictionError::LabelMapLoad(e) => write!(f, "Label map load error: {}", e),
+            PredictionError::Inference(e) => write!(f, "Inference error: {}", e),
+            PredictionError::TensorConversion(e) => write!(f, "Tensor conversion error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for PredictionError {}
 
 #[derive(Debug, Clone)]
 pub struct Detection {
@@ -9,12 +36,158 @@ pub struct Detection {
 }
 
 pub struct VictoryPredictor {
-    // Placeholder fields
+    session: Session,
+    label_map: HashMap<usize, String>,
 }
 
 impl VictoryPredictor {
-    pub fn new(_model_path: &str, _label_map_path: &str) -> Result<Self, String> {
-        // Placeholder implementation
-        Ok(Self {})
+    /// ONNX モデルとラベルマップを読み込んで VictoryPredictor を作成
+    pub fn new(model_path: &str, label_map_path: &str) -> Result<Self, PredictionError> {
+        info!("Loading ONNX model from: {}", model_path);
+
+        // ONNX Session の初期化
+        let session = Session::builder()
+            .map_err(|e| PredictionError::ModelLoad(e.to_string()))?
+            .with_optimization_level(GraphOptimizationLevel::Level3)
+            .map_err(|e| PredictionError::ModelLoad(e.to_string()))?
+            .commit_from_file(model_path)
+            .map_err(|e| PredictionError::ModelLoad(e.to_string()))?;
+
+        info!("ONNX model loaded successfully");
+
+        // label_map 読み込み
+        info!("Loading label map from: {}", label_map_path);
+        let label_map_json = std::fs::read_to_string(label_map_path)
+            .map_err(|e| PredictionError::LabelMapLoad(e.to_string()))?;
+
+        let label_map: HashMap<usize, String> = serde_json::from_str(&label_map_json)
+            .map_err(|e| PredictionError::LabelMapLoad(e.to_string()))?;
+
+        info!("Label map loaded: {:?}", label_map);
+
+        Ok(Self {
+            session,
+            label_map,
+        })
+    }
+
+    /// 画像から勝敗を推論
+    pub fn predict(&mut self, image: &DynamicImage) -> Result<Detection, PredictionError> {
+        debug!(
+            "Running prediction on image: {}x{}",
+            image.width(),
+            image.height()
+        );
+
+        // 1. 画像をテンソルに変換 (HWC → CHW, RGB, 正規化)
+        let tensor = self.image_to_tensor(image)?;
+
+        // 2. テンソルを Value に変換
+        let value = Value::from_array(tensor)
+            .map_err(|e| PredictionError::Inference(format!("Failed to create value: {}", e)))?;
+
+        // 3. ONNX Runtime 推論
+        let (class_idx, confidence, predicted_class) = {
+            let outputs = self
+                .session
+                .run(ort::inputs![value])
+                .map_err(|e| PredictionError::Inference(e.to_string()))?;
+
+            // 4. 出力から最大確率のクラスを取得
+            let output_tensor = outputs[0]
+                .try_extract_array::<f32>()
+                .map_err(|e| PredictionError::Inference(format!("Failed to extract tensor: {}", e)))?;
+
+            let probs = output_tensor.as_slice().ok_or_else(|| {
+                PredictionError::Inference("Failed to get tensor as slice".to_string())
+            })?;
+
+            let (class_idx, &confidence) = probs
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                .ok_or_else(|| {
+                    PredictionError::Inference("No predictions returned".to_string())
+                })?;
+
+            // クラス ID をラベルに変換
+            let predicted_class = self
+                .label_map
+                .get(&class_idx)
+                .cloned()
+                .unwrap_or_else(|| format!("unknown_{}", class_idx));
+
+            (class_idx, confidence, predicted_class)
+        };
+
+        let outcome = self.class_to_outcome(&predicted_class);
+
+        debug!(
+            "Prediction: class={}, outcome={}, confidence={:.4}",
+            predicted_class, outcome, confidence
+        );
+
+        Ok(Detection {
+            outcome,
+            confidence,
+            predicted_class,
+        })
+    }
+
+    /// 画像を NCHW テンソルに変換 (N=1, C=3, H=height, W=width)
+    fn image_to_tensor(&self, image: &DynamicImage) -> Result<Array4<f32>, PredictionError> {
+        let rgb_image = image.to_rgb8();
+        let (width, height) = (rgb_image.width(), rgb_image.height());
+
+        debug!(
+            "Converting image to tensor: {}x{} RGB",
+            width, height
+        );
+
+        // NCHW 形式のテンソルを作成
+        let mut tensor = Array4::<f32>::zeros((1, 3, height as usize, width as usize));
+
+        // HWC (image) → CHW (tensor) 変換 + 正規化 (0-255 → 0-1)
+        for y in 0..height {
+            for x in 0..width {
+                let pixel = rgb_image.get_pixel(x, y);
+                tensor[[0, 0, y as usize, x as usize]] = pixel[0] as f32 / 255.0; // R
+                tensor[[0, 1, y as usize, x as usize]] = pixel[1] as f32 / 255.0; // G
+                tensor[[0, 2, y as usize, x as usize]] = pixel[2] as f32 / 255.0; // B
+            }
+        }
+
+        Ok(tensor)
+    }
+
+    /// クラス名を outcome に変換
+    fn class_to_outcome(&self, class: &str) -> String {
+        match class {
+            "victory" | "victory_1" | "victory_2" => "victory".to_string(),
+            "defeat" | "defeat_1" | "defeat_2" => "defeat".to_string(),
+            "draw" => "draw".to_string(),
+            _ => "none".to_string(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_class_to_outcome() {
+        let predictor = VictoryPredictor {
+            session: unsafe { std::mem::zeroed() }, // テスト用ダミー
+            label_map: HashMap::new(),
+        };
+
+        assert_eq!(predictor.class_to_outcome("victory"), "victory");
+        assert_eq!(predictor.class_to_outcome("victory_1"), "victory");
+        assert_eq!(predictor.class_to_outcome("defeat"), "defeat");
+        assert_eq!(predictor.class_to_outcome("defeat_2"), "defeat");
+        assert_eq!(predictor.class_to_outcome("draw"), "draw");
+        assert_eq!(predictor.class_to_outcome("none"), "none");
+        assert_eq!(predictor.class_to_outcome("unknown"), "none");
     }
 }
