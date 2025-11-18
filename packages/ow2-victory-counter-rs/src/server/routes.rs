@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{
         sse::{Event, KeepAlive, Sse},
-        Html, IntoResponse, Response,
+        Html, Response,
     },
     routing::{get, post},
     Json, Router,
@@ -118,15 +118,12 @@ async fn sse_handler(
     let rx = manager.subscribe();
     drop(manager);
 
-    let stream = BroadcastStream::new(rx).map(|result| {
-        result
-            .map(|update| {
-                Event::default()
-                    .event("counter-update")
-                    .json_data(&update)
-                    .unwrap()
-            })
-            .map_err(|_| Infallible)
+    let stream = BroadcastStream::new(rx).filter_map(|result| match result {
+        Ok(update) => Some(Ok(Event::default()
+            .event("counter-update")
+            .json_data(&update)
+            .unwrap())),
+        Err(_) => None,
     });
 
     Sse::new(stream).keep_alive(
