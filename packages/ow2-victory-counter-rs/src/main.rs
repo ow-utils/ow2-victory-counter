@@ -4,12 +4,26 @@ mod predictor;
 mod server;
 mod state;
 
+use capture::OBSCapture;
+use clap::Parser;
+use config::Config;
+use predictor::VictoryPredictor;
 use server::{app, AppState};
 use state::StateManager;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use tracing::{info, Level};
+use tracing::{debug, error, info, warn, Level};
 use tracing_subscriber;
+
+/// Overwatch 2 Victory Counter - Rust implementation
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to config file
+    #[arg(short, long, default_value = "config.toml")]
+    config: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,24 +34,150 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Starting ow2-victory-detector...");
 
-    // StateManager初期化（クールダウン10秒、連続3回検知）
-    let state_manager = Arc::new(Mutex::new(StateManager::new(10, 3)));
+    // コマンドライン引数パース
+    let args = Args::parse();
+
+    // 設定ファイル読み込み
+    info!("Loading config from: {}", args.config);
+    let config = Config::from_file(&args.config)?;
+    debug!("Config loaded: {:?}", config);
+
+    // OBSCapture初期化
+    info!(
+        "Connecting to OBS WebSocket at {}:{}...",
+        config.obs.host, config.obs.port
+    );
+    let obs_capture = OBSCapture::new(
+        &config.obs.host,
+        config.obs.port,
+        config.obs.password.as_deref(),
+        config.obs.source_name.clone(),
+    )
+    .await?;
+    info!("OBS WebSocket connected successfully");
+
+    // VictoryPredictor初期化
+    info!("Loading ONNX model...");
+    let predictor = VictoryPredictor::new(
+        config.model.model_path.to_str().unwrap(),
+        config.model.label_map_path.to_str().unwrap(),
+    )?;
+    info!("ONNX model loaded successfully");
+
+    // StateManager初期化
+    let state_manager = Arc::new(Mutex::new(StateManager::new(
+        config.state.cooldown_seconds,
+        config.state.required_consecutive,
+    )));
 
     // AppState作成
     let app_state = AppState {
         state_manager: state_manager.clone(),
     };
 
-    // HTTPサーバー起動
-    let app = app(app_state);
-    let addr = "127.0.0.1:3000";
-    info!("HTTP server listening on http://{}", addr);
-    info!("  - OBS UI: http://{}/", addr);
-    info!("  - Admin UI: http://{}/admin", addr);
-    info!("  - SSE endpoint: http://{}/events", addr);
+    // 検知ループをバックグラウンドで起動
+    let detection_task = {
+        let state_manager = state_manager.clone();
+        let config = config.clone();
+        tokio::spawn(async move {
+            detection_loop(obs_capture, predictor, state_manager, config).await;
+        })
+    };
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    // HTTPサーバー起動
+    let server_task = {
+        let app = app(app_state);
+        let addr = format!("{}:{}", config.server.host, config.server.port);
+        info!("HTTP server listening on http://{}", addr);
+        info!("  - OBS UI: http://{}/", addr);
+        info!("  - Admin UI: http://{}/admin", addr);
+        info!("  - SSE endpoint: http://{}/events", addr);
+
+        let listener = tokio::net::TcpListener::bind(&addr).await?;
+        tokio::spawn(async move {
+            if let Err(e) = axum::serve(listener, app).await {
+                error!("Server error: {}", e);
+            }
+        })
+    };
+
+    // 両方のタスクを待機
+    tokio::select! {
+        _ = detection_task => {
+            error!("Detection loop terminated unexpectedly");
+        }
+        _ = server_task => {
+            error!("HTTP server terminated unexpectedly");
+        }
+    }
 
     Ok(())
+}
+
+/// 検知ループ: 定期的に画像をキャプチャして推論を実行
+async fn detection_loop(
+    obs_capture: OBSCapture,
+    mut predictor: VictoryPredictor,
+    state_manager: Arc<Mutex<StateManager>>,
+    config: Config,
+) {
+    let interval = Duration::from_millis(config.detection.interval_ms);
+    let crop_rect = config.crop_rect_tuple();
+
+    info!(
+        "Starting detection loop (interval: {}ms, crop: {:?})",
+        config.detection.interval_ms, crop_rect
+    );
+
+    loop {
+        // 1. 画像キャプチャ
+        let image = match obs_capture.capture().await {
+            Ok(img) => img,
+            Err(e) => {
+                warn!("Failed to capture image: {}", e);
+                tokio::time::sleep(interval).await;
+                continue;
+            }
+        };
+
+        // 2. 前処理（クロップ）
+        let processed_image = match obs_capture.preprocess(image, crop_rect) {
+            Ok(img) => img,
+            Err(e) => {
+                warn!("Failed to preprocess image: {}", e);
+                tokio::time::sleep(interval).await;
+                continue;
+            }
+        };
+
+        // 3. 推論
+        let detection = match predictor.predict(&processed_image) {
+            Ok(det) => det,
+            Err(e) => {
+                warn!("Failed to predict: {}", e);
+                tokio::time::sleep(interval).await;
+                continue;
+            }
+        };
+
+        debug!(
+            "Detection: outcome={}, confidence={:.2}, class={}",
+            detection.outcome, detection.confidence, detection.predicted_class
+        );
+
+        // 4. StateManagerに記録
+        let mut manager = state_manager.lock().await;
+        let event_triggered = manager.record_detection(&detection.outcome);
+        drop(manager);
+
+        if event_triggered {
+            info!(
+                "Event triggered: {} (confidence: {:.2})",
+                detection.outcome, detection.confidence
+            );
+        }
+
+        // 5. 次のループまで待機
+        tokio::time::sleep(interval).await;
+    }
 }
