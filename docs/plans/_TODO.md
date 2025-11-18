@@ -205,8 +205,8 @@
 
 ### 🔴 4.3 StateManager
 
-- ⏳ `src/state/mod.rs` 作成
-- ⏳ `src/state/manager.rs` 作成
+- ✅ `src/state/mod.rs` 作成
+- ✅ `src/state/manager.rs` 作成
   - `State` enum（Ready, Cooldown, WaitingForNone）
   - `StateManager` 構造体
   - `record_detection()` メソッド（連続検知判定、状態遷移）
@@ -217,8 +217,8 @@
 
 ### 🔴 4.4 HTTPサーバー
 
-- ⏳ `src/server/mod.rs` 作成
-- ⏳ `src/server/routes.rs` 作成
+- ✅ `src/server/mod.rs` 作成
+- ✅ `src/server/routes.rs` 作成
   - `app()` 関数（axum Router設定）
   - `serve_obs_ui()` ハンドラー（GET /）
   - `serve_admin_ui()` ハンドラー（GET /admin）
@@ -229,6 +229,7 @@
   - `adjust()` ハンドラー（POST /api/adjust）
 - **依存関係**: 2.2, 4.3, 5.1, 5.2（フロントエンドビルド成果物）
 - **参照**: [実装詳細#HTTPサーバー](./2025-11-16-04実装詳細.md#4-http-サーバー)
+- **備考**: 開発モードはVite dev serverへリダイレクト、本番モードはビルド成果物を組み込み
 
 ### 🟡 4.5 設定管理
 
