@@ -334,31 +334,25 @@
 
 ### 🟡 6.2 custom.css
 
-- ⏳ `templates/custom.css` 作成（サンプルCSS）
-  ```css
-  /* 色を変更 */
-  .counter-grid {
-    --victory-color: #00ff00;
-    --defeat-color: #ff0000;
-    --font-size: 96px;
-  }
-
-  /* グロー効果 */
-  .value {
-    text-shadow: 0 0 20px currentColor;
-  }
-  ```
+- ✅ `templates/custom.css` 作成（サンプルCSS）
+  - 基本カラー設定
+  - グロー効果サンプル
+  - アニメーション効果サンプル
+  - レイアウト変更サンプル
+  - コメント付きで各種カスタマイズ例を記載
 - **依存関係**: 2.1
 - **参照**: [アーキテクチャ設計#カスタマイズ方法](../specs/ow2-victory-counter-rsアーキテクチャ設計.md#カスタマイズ方法)
 
 ### 🟡 6.3 エンドユーザー向けREADME
 
-- ⏳ `packages/ow2-victory-counter-rs/README.md` 作成
+- ✅ `packages/ow2-victory-counter-rs/README.md` 作成
   - 必要環境（Windows 10/11、OBS Studio）
   - インストール手順
   - 起動方法
   - OBS設定（ブラウザーソース追加）
+  - カスタマイズ方法（CSS、設定ファイル）
   - トラブルシューティング
+  - 開発者向け情報
 - **依存関係**: なし
 
 ---
