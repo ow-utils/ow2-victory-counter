@@ -126,6 +126,7 @@ def export_to_onnx(
             "input": {0: "batch_size"},  # バッチサイズを動的に
             "output": {0: "batch_size"},
         },
+        external_data=False,  # 単一ファイル形式で保存
     )
 
     print(f"[INFO] ONNX model exported to {output_path}")

@@ -381,7 +381,7 @@
   ```
 - ✅ `models/victory_classifier.label_map.json` 生成確認
 - **依存関係**: 7.1
-- **備考**: 5クラス分類モデル（defeat_progressbar, defeat_text, none, victory_progressbar, victory_text）。ONNX opset 18で変換。外部データ形式で .onnx.data ファイルも生成。
+- **備考**: 5クラス分類モデル（defeat_progressbar, defeat_text, none, victory_progressbar, victory_text）。ONNX opset 18で変換。単一ファイル形式（.onnx のみ、407KB）で保存。
 
 ---
 
