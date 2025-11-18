@@ -361,7 +361,7 @@
 
 ### 🔴 7.1 ONNX変換スクリプト
 
-- ⏳ `packages/obs-victory-counter/victory-detector/scripts/convert_to_onnx.py` 作成
+- ✅ `packages/obs-victory-counter/victory-detector/scripts/convert_to_onnx.py` 作成
   - PyTorchモデル読み込み
   - ダミー入力作成（1, 3, 550, 995）
   - torch.onnx.export実行
@@ -369,17 +369,19 @@
   - 精度検証（PyTorch vs ONNX Runtime）
 - **依存関係**: なし
 - **参照**: [実装詳細#ONNX変換スクリプト](./2025-11-16-04実装詳細.md#onnx-変換スクリプト)
+- **備考**: onnx, onnxruntime, onnxscript を依存関係に追加。PyTorchとONNXの出力が完全一致（差分0.000000）を確認。
 
 ### 🔴 7.2 ONNX変換実行
 
-- ⏳ PyTorchモデル→ONNX変換
+- ✅ PyTorchモデル→ONNX変換
   ```bash
-  python scripts/convert_to_onnx.py \
+  uv run python scripts/convert_to_onnx.py \
     --input artifacts/models/victory_classifier.pth \
-    --output packages/ow2-victory-counter-rs/models/victory_classifier.onnx
+    --output ../ow2-victory-counter-rs/models/victory_classifier.onnx
   ```
-- ⏳ `models/victory_classifier.label_map.json` 生成確認
+- ✅ `models/victory_classifier.label_map.json` 生成確認
 - **依存関係**: 7.1
+- **備考**: 5クラス分類モデル（defeat_progressbar, defeat_text, none, victory_progressbar, victory_text）。ONNX opset 18で変換。外部データ形式で .onnx.data ファイルも生成。
 
 ---
 

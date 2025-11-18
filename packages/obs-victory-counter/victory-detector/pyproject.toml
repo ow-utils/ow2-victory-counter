@@ -9,6 +9,9 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "torch>=2.9.0",
     "torchvision>=0.24.0",
+    "onnx>=1.16.0",
+    "onnxruntime>=1.16.0",
+    "onnxscript>=0.1.0",
 ]
 
 [build-system]
