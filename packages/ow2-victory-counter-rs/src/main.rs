@@ -1,4 +1,5 @@
 mod capture;
+mod config;
 mod predictor;
 mod server;
 mod state;

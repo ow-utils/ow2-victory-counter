@@ -9,6 +9,7 @@ tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+toml = "0.8"  # TOML設定ファイル読み込み
 # 画像処理・推論モジュール (Task 4.1, 4.2)
 ort = { version = "2.0.0-rc.10", features = ["download-binaries"] }  # ONNX Runtime
 ndarray = "0.16"  # 多次元配列（テンソル操作） - ort 2.0.0-rc.10 は 0.17 未対応

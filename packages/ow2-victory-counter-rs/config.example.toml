@@ -1,0 +1,41 @@
+# ow2-victory-detector 設定ファイル
+# このファイルを config.toml にコピーして使用してください
+
+[obs]
+# OBS WebSocket接続設定
+host = "localhost"
+port = 4455
+# password = "your-password"  # パスワードが設定されている場合のみ
+source_name = "OBS ソース名"  # キャプチャするOBSソース名（必須）
+
+[model]
+# 推論モデル設定
+model_path = "models/victory_classifier.onnx"
+label_map_path = "models/victory_classifier.label_map.json"
+
+[preprocessing]
+# 画像前処理設定
+# クロップ領域: [x, y, width, height]
+# 例: 勝敗表示が画面中央下部にある場合
+crop_rect = [465, 530, 990, 550]
+
+# フル画面を使用する場合:
+# crop_rect = [0, 0, 1920, 1080]
+
+[state]
+# 状態管理設定
+# クールダウン時間（秒）: 勝敗判定後、次の判定までの待機時間
+cooldown_seconds = 10
+
+# 連続検知必要回数: 誤検知防止のため、何回連続で同じ結果を検知したらカウントするか
+required_consecutive = 3
+
+[server]
+# HTTPサーバー設定
+host = "127.0.0.1"
+port = 3000
+
+[detection]
+# 検知ループ設定
+# 検知間隔（ミリ秒）: 画像キャプチャと推論の実行間隔
+interval_ms = 1000

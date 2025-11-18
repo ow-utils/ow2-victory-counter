@@ -198,14 +198,15 @@
 
 ### 🔴 4.2 CNN推論モジュール
 
-- ⏳ `src/predictor/mod.rs` 作成
-- ⏳ `src/predictor/onnx.rs` 作成
+- ✅ `src/predictor/mod.rs` 作成
+- ✅ `src/predictor/onnx.rs` 作成
   - `VictoryPredictor` 構造体
   - `new()` メソッド（ONNX Runtime初期化、label_map読み込み）
   - `predict()` メソッド（画像→テンソル変換→推論→ラベル変換）
   - `Detection` 構造体
 - **依存関係**: 2.2, 7.1（ONNXモデル）
 - **参照**: [実装詳細#CNN推論モジュール](./2025-11-16-04実装詳細.md#2-cnn-推論モジュール)
+- **備考**: ort 2.0.0-rc.10 対応。ndarray 0.16 使用（0.17 は未対応）。
 
 ### 🔴 4.3 StateManager
 
@@ -237,10 +238,13 @@
 
 ### 🟡 4.5 設定管理
 
-- ⏳ `src/config.rs` 作成
+- ✅ `src/config.rs` 作成
   - `Config` 構造体（OBS接続情報、モデルパス、クールダウン設定等）
-  - コマンドライン引数パース（clap使用）
+  - TOML設定ファイル読み込み
+  - デフォルト値サポート
+- ✅ `config.example.toml` 作成（コメント付き設定テンプレート）
 - **依存関係**: 2.2
+- **備考**: TOML形式を採用（JSONではなく）。toml 0.8 使用。
 
 ### 🔴 4.6 メインエントリーポイント
 
