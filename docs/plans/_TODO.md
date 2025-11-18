@@ -256,29 +256,32 @@
 
 ### 🔴 5.1 OBS用UI
 
-- ⏳ `frontend/obs-ui/src/App.svelte` 作成
+- ✅ `frontend/src/obs/main.ts` 作成
+- ✅ `frontend/src/obs/App.svelte` 作成
+  - Svelte 5 ルーン方式（$state, $effect, $derived）
   - `tweened` ストアでカウントアップアニメーション
-  - SSE接続（EventSource）
+  - SSE接続（EventSource）で `/events` に接続
   - `counter-update` イベント受信→UI更新
-  - スタイリング（CSS変数、テキストシャドウ）
-- ⏳ `frontend/obs-ui/src/main.ts` 作成
-- ⏳ `frontend/obs-ui/index.html` 作成
+  - Victory / Defeat のみ表示（drawは非表示）
+  - 最終更新時刻 + 勝敗を表示
+  - スタイリング（透明背景、CSS変数、テキストシャドウ）
 - **依存関係**: 2.3, 3.1, 3.2
 - **参照**: [実装詳細#OBS用UI](./2025-11-16-04実装詳細.md#5-obs-用-ui-svelte)
 
 ### 🔴 5.2 管理画面UI
 
-- ⏳ `frontend/admin-ui/src/App.svelte` 作成
+- ✅ `frontend/src/admin/main.ts` 作成
+- ✅ `frontend/src/admin/App.svelte` 作成
+  - Svelte 5 ルーン方式（$state, $effect, $derived）
   - `tweened` ストアでカウントアップアニメーション
-  - SSE接続（EventSource）
-  - localStorage永続化（`counter_state`キー）
-  - `onMount` でlocalStorage復元→POST /api/initialize
-  - 調整ボタン（+/-）→POST /api/adjust
-  - 初期化ボタン→POST /api/initialize
-- ⏳ `frontend/admin-ui/src/main.ts` 作成
-- ⏳ `frontend/admin-ui/index.html` 作成
+  - SSE接続（EventSource）で `/events` に接続
+  - Victory / Defeat のみ表示（drawは非表示）
+  - 最終更新時刻 + 勝敗を表示
+  - 調整ボタン（+/-）→ POST /api/adjust
+  - 初期化ボタン → POST /api/initialize
 - **依存関係**: 2.3, 3.1, 3.2
 - **参照**: [実装詳細#管理画面UI](./2025-11-16-04実装詳細.md#6-管理画面-ui-svelte)
+- **備考**: localStorage永続化は将来追加予定
 
 ### 🟡 5.3 ui-config.json対応
 
