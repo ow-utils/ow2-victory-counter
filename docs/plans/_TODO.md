@@ -184,13 +184,17 @@
 
 ### 🔴 4.1 画像取得・前処理モジュール
 
-- ⏳ `src/capture/mod.rs` 作成
-- ⏳ `src/capture/obs.rs` 作成
+- ✅ `src/capture/mod.rs` 作成
+- ✅ `src/capture/obs.rs` 作成
   - `OBSCapture` 構造体
-  - `capture()` メソッド（OBS WebSocket経由で画像取得）
-  - `preprocess()` メソッド（Base64デコード、PNGデコード、クロップ）
+  - `new()` メソッド（OBS WebSocket接続）
+  - `capture()` メソッド（OBS WebSocket経由で画像取得、Base64デコード、PNGデコード）
+  - `preprocess()` メソッド（クロップ）
+  - `to_rgb8()` メソッド（RGB8バッファ変換）
+  - `CaptureError` エラー型
 - **依存関係**: 2.2
 - **参照**: [実装詳細#画像取得・前処理モジュール](./2025-11-16-04実装詳細.md#1-画像取得前処理モジュール)
+- **備考**: opencv の代わりに image クレート (pure Rust) を使用。obws 0.14, base64 0.22 で実装。
 
 ### 🔴 4.2 CNN推論モジュール
 
