@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::BroadcastStream, StreamExt};
+use tower_http::services::ServeDir;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -22,7 +23,9 @@ pub struct AppState {
 }
 
 pub fn app(state: AppState) -> Router {
-    Router::new()
+    // 本番モード: frontend/dist/assets から静的ファイルを提供
+    #[cfg(not(debug_assertions))]
+    let router = Router::new()
         .route("/", get(serve_obs_ui))
         .route("/admin", get(serve_admin_ui))
         .route("/custom.css", get(serve_custom_css))
@@ -30,7 +33,22 @@ pub fn app(state: AppState) -> Router {
         .route("/api/status", get(get_status))
         .route("/api/initialize", post(initialize))
         .route("/api/adjust", post(adjust))
-        .with_state(state)
+        .nest_service("/assets", ServeDir::new("frontend/dist/assets"))
+        .with_state(state);
+
+    // 開発モード: Vite dev server が静的ファイルを提供
+    #[cfg(debug_assertions)]
+    let router = Router::new()
+        .route("/", get(serve_obs_ui))
+        .route("/admin", get(serve_admin_ui))
+        .route("/custom.css", get(serve_custom_css))
+        .route("/events", get(sse_handler))
+        .route("/api/status", get(get_status))
+        .route("/api/initialize", post(initialize))
+        .route("/api/adjust", post(adjust))
+        .with_state(state);
+
+    router
 }
 
 async fn serve_obs_ui() -> Html<String> {

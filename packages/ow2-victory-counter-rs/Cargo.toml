@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 axum = "0.8"
+tower-http = { version = "0.6", features = ["fs"] }  # 静的ファイル提供
 tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 serde = { version = "1", features = ["derive"] }
