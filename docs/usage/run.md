@@ -94,20 +94,22 @@ interval_ms = 1000  # 検知間隔（ミリ秒）
 cd path\to\ow2\packages\ow2-victory-counter-rs
 ```
 
-**開発ビルドで起動** （デバッグ用）:
+**リリースビルドで起動**（通常はこちらを使用）:
 ```powershell
-cargo run
+cargo run --release
 ```
 
-または、**リリースビルドで起動** （本番用）:
+または、ビルド済みの実行ファイルを直接起動:
 ```powershell
 .\target\release\ow2-victory-detector.exe
 ```
 
 **カスタム設定ファイルを指定**:
 ```powershell
-cargo run -- --config my-config.toml
+cargo run --release -- --config my-config.toml
 ```
+
+**注意**: `cargo run` （`--release` なし）を使用すると、開発モードで起動し、`http://localhost:5173` へリダイレクトされます。開発モードを使用する場合は、別のターミナルで `pnpm -C frontend dev` を先に起動してください。通常の使用では **`cargo run --release`** を推奨します。
 
 ---
 

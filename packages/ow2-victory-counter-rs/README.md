@@ -216,6 +216,31 @@ cd ..
 cargo build --release
 ```
 
+### 開発ワークフロー
+
+フロントエンドの変更を開発しながらテストする場合:
+
+**1. Vite 開発サーバーを起動** （別のターミナルで）:
+```bash
+cd frontend
+pnpm dev
+```
+
+Vite が `http://localhost:5173` で起動します。
+
+**2. Rust アプリケーションをデバッグモードで起動**:
+```bash
+cargo run
+```
+
+デバッグモード（`cargo run`）では、ブラウザーが自動的に Vite 開発サーバーへリダイレクトされ、フロントエンドの変更がホットリロードされます。
+
+**注意**:
+- `cargo run` （デバッグ）= Vite 開発サーバー（localhost:5173）へリダイレクト
+- `cargo run --release` （リリース）= ビルド済みファイル（frontend/dist/）を配信
+
+通常の使用では **`cargo run --release`** を推奨します。
+
 ### ログレベルの変更
 
 環境変数で設定:
