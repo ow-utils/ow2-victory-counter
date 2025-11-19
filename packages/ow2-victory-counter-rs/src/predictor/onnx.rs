@@ -4,6 +4,7 @@ use ort::{
     session::{builder::GraphOptimizationLevel, Session},
     value::Value,
 };
+use serde::Deserialize;
 use std::collections::HashMap;
 use tracing::{debug, info};
 
@@ -35,6 +36,31 @@ pub struct Detection {
     pub predicted_class: String,
 }
 
+/// label_map.json ファイルの構造を表す構造体
+#[derive(Debug, Deserialize)]
+struct LabelMapFile {
+    #[allow(dead_code)]
+    label_map: HashMap<String, usize>,
+    #[serde(deserialize_with = "deserialize_idx_to_label")]
+    idx_to_label: HashMap<usize, String>,
+}
+
+/// idx_to_label の文字列キーを usize に変換するカスタムデシリアライザー
+fn deserialize_idx_to_label<'de, D>(deserializer: D) -> Result<HashMap<usize, String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let string_map: HashMap<String, String> = HashMap::deserialize(deserializer)?;
+    string_map
+        .into_iter()
+        .map(|(k, v)| {
+            k.parse::<usize>()
+                .map(|key| (key, v))
+                .map_err(serde::de::Error::custom)
+        })
+        .collect()
+}
+
 pub struct VictoryPredictor {
     session: Session,
     label_map: HashMap<usize, String>,
@@ -60,8 +86,9 @@ impl VictoryPredictor {
         let label_map_json = std::fs::read_to_string(label_map_path)
             .map_err(|e| PredictionError::LabelMapLoad(e.to_string()))?;
 
-        let label_map: HashMap<usize, String> = serde_json::from_str(&label_map_json)
+        let label_map_file: LabelMapFile = serde_json::from_str(&label_map_json)
             .map_err(|e| PredictionError::LabelMapLoad(e.to_string()))?;
+        let label_map = label_map_file.idx_to_label;
 
         info!("Label map loaded: {:?}", label_map);
 
