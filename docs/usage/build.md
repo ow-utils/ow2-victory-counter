@@ -208,7 +208,7 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [465, 530, 990, 550]  # 勝敗表示の領域（要調整）
+crop_rect = [465, 530, 512, 283]  # 勝敗表示の領域（要調整）
 
 [state]
 cooldown_seconds = 10

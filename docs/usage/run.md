@@ -58,7 +58,7 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [465, 530, 990, 550]  # 勝敗表示の領域（1920x1080 の場合）
+crop_rect = [465, 530, 512, 283]  # 勝敗表示の領域（1920x1080 の場合）
 
 [state]
 cooldown_seconds = 10  # 勝敗判定後のクールダウン時間（秒）
@@ -80,7 +80,7 @@ interval_ms = 1000  # 検知間隔（ミリ秒）
 
 #### crop_rect
 - 勝敗表示の領域を指定します（`[x, y, width, height]`）
-- **デフォルト**: `[465, 530, 990, 550]` （1920x1080 の画面用）
+- **デフォルト**: `[465, 530, 512, 283]` （1920x1080 の画面用）
 - 画面解像度が異なる場合は調整が必要です（後述）
 
 ---
@@ -126,7 +126,7 @@ cargo run -- --config my-config.toml
  INFO    - OBS UI: http://127.0.0.1:3000/
  INFO    - Admin UI: http://127.0.0.1:3000/admin
  INFO    - SSE endpoint: http://127.0.0.1:3000/events
- INFO  Starting detection loop (interval: 1000ms, crop: (465, 530, 990, 550))
+ INFO  Starting detection loop (interval: 1000ms, crop: (465, 530, 512, 283))
 ```
 
 **重要なメッセージ**:
@@ -270,12 +270,12 @@ required_consecutive = 2  # デフォルトは 3
 
 **1920x1080 の場合**:
 ```toml
-crop_rect = [465, 530, 990, 550]
+crop_rect = [465, 530, 512, 283]
 ```
 
 **2560x1440 の場合** （参考値、要調整）:
 ```toml
-crop_rect = [620, 707, 1320, 733]
+crop_rect = [620, 707, 683, 377]
 ```
 
 ---

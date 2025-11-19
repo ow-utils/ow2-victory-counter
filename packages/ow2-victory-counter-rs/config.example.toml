@@ -17,7 +17,7 @@ label_map_path = "models/victory_classifier.label_map.json"
 # 画像前処理設定
 # クロップ領域: [x, y, width, height]
 # 例: 勝敗表示が画面中央下部にある場合
-crop_rect = [465, 530, 990, 550]
+crop_rect = [465, 530, 512, 283]
 
 # フル画面を使用する場合:
 # crop_rect = [0, 0, 1920, 1080]
