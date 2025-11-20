@@ -197,21 +197,36 @@ impl VictoryPredictor {
     }
 
     /// 画像を NCHW テンソルに変換 (N=1, C=3, H=height, W=width)
+    /// ONNXモデルが期待するサイズ（283x512）にリサイズする
     fn image_to_tensor(&self, image: &DynamicImage) -> Result<Array4<f32>, PredictionError> {
-        let rgb_image = image.to_rgb8();
-        let (width, height) = (rgb_image.width(), rgb_image.height());
+        const TARGET_WIDTH: u32 = 512;
+        const TARGET_HEIGHT: u32 = 283;
+
+        debug!(
+            "Original image size: {}x{}, resizing to {}x{}",
+            image.width(), image.height(), TARGET_WIDTH, TARGET_HEIGHT
+        );
+
+        // モデルが期待するサイズにリサイズ
+        let resized = image.resize_exact(
+            TARGET_WIDTH,
+            TARGET_HEIGHT,
+            image::imageops::FilterType::Triangle,
+        );
+
+        let rgb_image = resized.to_rgb8();
 
         debug!(
             "Converting image to tensor: {}x{} RGB",
-            width, height
+            TARGET_WIDTH, TARGET_HEIGHT
         );
 
         // NCHW 形式のテンソルを作成
-        let mut tensor = Array4::<f32>::zeros((1, 3, height as usize, width as usize));
+        let mut tensor = Array4::<f32>::zeros((1, 3, TARGET_HEIGHT as usize, TARGET_WIDTH as usize));
 
         // HWC (image) → CHW (tensor) 変換 + 正規化 (0-255 → 0-1)
-        for y in 0..height {
-            for x in 0..width {
+        for y in 0..TARGET_HEIGHT {
+            for x in 0..TARGET_WIDTH {
                 let pixel = rgb_image.get_pixel(x, y);
                 tensor[[0, 0, y as usize, x as usize]] = pixel[0] as f32 / 255.0; // R
                 tensor[[0, 1, y as usize, x as usize]] = pixel[1] as f32 / 255.0; // G
