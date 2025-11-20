@@ -46,7 +46,7 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [465, 530, 512, 283]  # 勝敗表示の領域（要調整）
+crop_rect = [460, 378, 995, 550]  # 1920x1080 での勝敗表示の標準的な位置
 ```
 
 ### 3. OBS WebSocket の有効化
@@ -86,7 +86,7 @@ INFO  HTTP server listening on http://127.0.0.1:3000
 INFO    - OBS UI: http://127.0.0.1:3000/
 INFO    - Admin UI: http://127.0.0.1:3000/admin
 INFO    - SSE endpoint: http://127.0.0.1:3000/events
-INFO  Starting detection loop (interval: 1000ms, crop: (465, 530, 512, 283))
+INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
 ```
 
 ### 2. OBS にブラウザーソースを追加
@@ -145,7 +145,8 @@ OBS のブラウザーソースで `カスタムCSS` に以下を追加:
 ```toml
 [preprocessing]
 # [x, y, width, height]
-crop_rect = [465, 530, 512, 283]
+# 1920x1080 での標準的な位置
+crop_rect = [460, 378, 995, 550]
 ```
 
 調整方法:
