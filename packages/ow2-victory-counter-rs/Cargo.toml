@@ -20,6 +20,7 @@ base64 = "0.22"  # Base64 デコード
 image = "0.25"  # 画像処理 (pure Rust, opencvの代替)
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = "0.4"  # タイムスタンプ生成（スクリーンショット保存用）
 
 [[bin]]
 name = "ow2-victory-detector"

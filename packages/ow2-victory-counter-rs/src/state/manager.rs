@@ -9,6 +9,15 @@ pub enum State {
     WaitingForNone,
 }
 
+/// 検知結果
+#[derive(Debug, Clone, Copy)]
+pub struct DetectionResult {
+    /// イベントがトリガーされたか（カウントが確定したか）
+    pub event_triggered: bool,
+    /// 連続検知の最初の1回か（スクリーンショット保存用）
+    pub is_first_detection: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CounterUpdate {
     pub victories: u32,
@@ -51,11 +60,21 @@ impl StateManager {
         self.broadcast_tx.subscribe()
     }
 
-    pub fn record_detection(&mut self, outcome: &str) -> bool {
+    pub fn record_detection(&mut self, outcome: &str) -> DetectionResult {
+        let mut result = DetectionResult {
+            event_triggered: false,
+            is_first_detection: false,
+        };
+
         match self.state {
             State::Ready => {
                 if outcome != "none" {
                     self.consecutive_detections.push(outcome.to_string());
+
+                    // 連続検知の最初の1回
+                    if self.consecutive_detections.len() == 1 {
+                        result.is_first_detection = true;
+                    }
 
                     if self.consecutive_detections.len() >= self.required_consecutive {
                         // カウント確定
@@ -66,7 +85,7 @@ impl StateManager {
 
                         // SSE配信
                         self.broadcast_update(Some(outcome.to_string()));
-                        return true;
+                        result.event_triggered = true;
                     }
                 } else {
                     self.consecutive_detections.clear();
@@ -90,7 +109,7 @@ impl StateManager {
             }
         }
 
-        false
+        result
     }
 
     fn increment_counter(&mut self, outcome: &str) {

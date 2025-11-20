@@ -5,6 +5,7 @@ mod server;
 mod state;
 
 use capture::OBSCapture;
+use chrono::Local;
 use clap::Parser;
 use config::Config;
 use predictor::VictoryPredictor;
@@ -127,6 +128,21 @@ async fn detection_loop(
     let interval = Duration::from_millis(config.detection.interval_ms);
     let crop_rect = config.crop_rect_tuple();
 
+    // スクリーンショット保存ディレクトリの作成
+    if config.screenshot.enabled {
+        if let Err(e) = tokio::fs::create_dir_all(&config.screenshot.save_dir).await {
+            warn!(
+                "Failed to create screenshot directory: {}. Screenshot saving disabled.",
+                e
+            );
+        } else {
+            info!(
+                "Screenshot saving enabled: {}",
+                config.screenshot.save_dir.display()
+            );
+        }
+    }
+
     info!(
         "Starting detection loop (interval: {}ms, crop: {:?})",
         config.detection.interval_ms, crop_rect
@@ -144,7 +160,7 @@ async fn detection_loop(
         };
 
         // 2. 前処理（クロップ）
-        let processed_image = match obs_capture.preprocess(image, crop_rect) {
+        let processed_image = match obs_capture.preprocess(image.clone(), crop_rect) {
             Ok(img) => img,
             Err(e) => {
                 warn!("Failed to preprocess image: {}", e);
@@ -178,17 +194,34 @@ async fn detection_loop(
 
         // 4. StateManagerに記録
         let mut manager = state_manager.lock().await;
-        let event_triggered = manager.record_detection(&detection.outcome);
+        let result = manager.record_detection(&detection.outcome);
         drop(manager);
 
-        if event_triggered {
+        // 5. スクリーンショット保存（設定で有効 + 最初の検知 + victory/defeat のみ）
+        if config.screenshot.enabled
+            && result.is_first_detection
+            && matches!(detection.outcome.as_str(), "victory" | "defeat")
+        {
+            let timestamp = Local::now().format("%Y%m%d-%H%M%S-%3f").to_string();
+            let filename = format!("{}-{}-first.png", timestamp, detection.predicted_class);
+            let filepath = config.screenshot.save_dir.join(&filename);
+
+            // 元画像（前処理前）を保存
+            if let Err(e) = image.save(&filepath) {
+                warn!("Failed to save screenshot: {}", e);
+            } else {
+                info!("スクリーンショット保存: {}", filename);
+            }
+        }
+
+        if result.event_triggered {
             info!(
                 "Event triggered: {} (confidence: {:.2})",
                 detection.outcome, detection.confidence
             );
         }
 
-        // 5. 次のループまで待機
+        // 6. 次のループまで待機
         tokio::time::sleep(interval).await;
     }
 }

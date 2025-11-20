@@ -15,6 +15,8 @@ pub struct Config {
     pub server: ServerConfig,
     /// 検知ループ設定
     pub detection: DetectionConfig,
+    /// スクリーンショット保存設定
+    pub screenshot: ScreenshotConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,6 +74,16 @@ pub struct DetectionConfig {
     pub interval_ms: u64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScreenshotConfig {
+    /// スクリーンショット保存機能を有効にするか
+    #[serde(default = "default_screenshot_enabled")]
+    pub enabled: bool,
+    /// スクリーンショット保存先ディレクトリ
+    #[serde(default = "default_screenshot_save_dir")]
+    pub save_dir: PathBuf,
+}
+
 // デフォルト値関数
 fn default_obs_host() -> String {
     "localhost".to_string()
@@ -99,6 +111,14 @@ fn default_server_port() -> u16 {
 
 fn default_detection_interval_ms() -> u64 {
     1000
+}
+
+fn default_screenshot_enabled() -> bool {
+    false
+}
+
+fn default_screenshot_save_dir() -> PathBuf {
+    PathBuf::from("screenshots")
 }
 
 impl Config {
@@ -139,6 +159,10 @@ impl Config {
             },
             detection: DetectionConfig {
                 interval_ms: default_detection_interval_ms(),
+            },
+            screenshot: ScreenshotConfig {
+                enabled: default_screenshot_enabled(),
+                save_dir: default_screenshot_save_dir(),
             },
         }
     }

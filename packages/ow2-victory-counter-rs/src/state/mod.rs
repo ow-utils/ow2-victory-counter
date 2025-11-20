@@ -1,3 +1,3 @@
 pub mod manager;
 
-pub use manager::{CounterUpdate, State, StateManager};
+pub use manager::{CounterUpdate, DetectionResult, State, StateManager};
