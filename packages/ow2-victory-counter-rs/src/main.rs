@@ -13,8 +13,8 @@ use state::StateManager;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use tracing::{debug, error, info, warn, Level};
-use tracing_subscriber;
+use tracing::{debug, error, info, warn};
+use tracing_subscriber::EnvFilter;
 
 /// Overwatch 2 Victory Counter - Rust implementation
 #[derive(Parser, Debug)]
@@ -27,9 +27,12 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // ログ初期化
+    // ログ初期化（環境変数 RUST_LOG で制御可能、デフォルトは info）
     tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("info"))
+        )
         .init();
 
     info!("Starting ow2-victory-detector...");
