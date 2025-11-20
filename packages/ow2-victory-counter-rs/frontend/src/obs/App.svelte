@@ -1,12 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { tweened } from 'svelte/motion';
-  import { cubicOut } from 'svelte/easing';
-  import type { Tweened } from 'svelte/motion';
 
   // Svelte 5 ルーン方式
-  let victories: Tweened<number>;
-  let defeats: Tweened<number>;
+  let victories = $state(0);
+  let defeats = $state(0);
   let lastOutcome = $state<string | null>(null);
   let lastUpdated = $state<number | null>(null);
 
@@ -19,18 +16,15 @@
     return `最終更新: ${formatted} - ${outcomeText}`;
   });
 
-  // onMount で tweened を初期化し、SSE接続を確立
+  // onMount で SSE接続を確立
   onMount(() => {
-    victories = tweened(0, { duration: 1000, easing: cubicOut });
-    defeats = tweened(0, { duration: 1000, easing: cubicOut });
-
     // SSE接続
     const eventSource = new EventSource('/events');
 
     eventSource.addEventListener('counter-update', (e: MessageEvent) => {
       const data = JSON.parse(e.data);
-      victories.set(data.victories);
-      defeats.set(data.defeats);
+      victories = data.victories;
+      defeats = data.defeats;
       lastOutcome = data.last_outcome;
       lastUpdated = data.timestamp;
     });
@@ -50,12 +44,12 @@
   <div class="counter-grid">
     <div class="counter-item victory">
       <div class="label">Victory</div>
-      <div class="value">{victories ? Math.floor($victories) : 0}</div>
+      <div class="value">{victories}</div>
     </div>
 
     <div class="counter-item defeat">
       <div class="label">Defeat</div>
-      <div class="value">{defeats ? Math.floor($defeats) : 0}</div>
+      <div class="value">{defeats}</div>
     </div>
   </div>
 
