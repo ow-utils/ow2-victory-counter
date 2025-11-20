@@ -133,16 +133,27 @@ async fn sse_handler(
     State(state): State<AppState>,
 ) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     let manager = state.state_manager.lock().await;
+    let current_state = manager.summary();
     let rx = manager.subscribe();
     drop(manager);
 
-    let stream = BroadcastStream::new(rx).filter_map(|result| match result {
+    // 接続時に現在の状態を即座に送信
+    let initial = tokio_stream::once(Ok(Event::default()
+        .event("counter-update")
+        .json_data(&current_state)
+        .unwrap()));
+
+    // その後、broadcast streamで更新を受信
+    let updates = BroadcastStream::new(rx).filter_map(|result| match result {
         Ok(update) => Some(Ok(Event::default()
             .event("counter-update")
             .json_data(&update)
             .unwrap())),
         Err(_) => None,
     });
+
+    // 初期データ + リアルタイム更新
+    let stream = initial.chain(updates);
 
     Sse::new(stream).keep_alive(
         KeepAlive::new()
