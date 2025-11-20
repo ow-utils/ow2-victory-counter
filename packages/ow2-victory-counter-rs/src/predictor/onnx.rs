@@ -34,6 +34,7 @@ pub struct Detection {
     pub outcome: String,
     pub confidence: f32,
     pub predicted_class: String,
+    pub probabilities: Vec<(String, f32)>,
 }
 
 /// label_map.json ファイルの構造を表す構造体
@@ -98,6 +99,21 @@ impl VictoryPredictor {
         })
     }
 
+    /// softmax関数: logitsを確率に変換
+    fn softmax(logits: &[f32]) -> Vec<f32> {
+        // 数値安定性のため、最大値を引く
+        let max_logit = logits.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+
+        // exp(x - max)を計算
+        let exp_values: Vec<f32> = logits.iter().map(|&x| (x - max_logit).exp()).collect();
+
+        // 合計を計算
+        let sum: f32 = exp_values.iter().sum();
+
+        // 正規化
+        exp_values.iter().map(|&x| x / sum).collect()
+    }
+
     /// 画像から勝敗を推論
     pub fn predict(&mut self, image: &DynamicImage) -> Result<Detection, PredictionError> {
         debug!(
@@ -114,21 +130,25 @@ impl VictoryPredictor {
             .map_err(|e| PredictionError::Inference(format!("Failed to create value: {}", e)))?;
 
         // 3. ONNX Runtime 推論
-        let (class_idx, confidence, predicted_class) = {
+        let (class_idx, confidence, predicted_class, probabilities) = {
             let outputs = self
                 .session
                 .run(ort::inputs![value])
                 .map_err(|e| PredictionError::Inference(e.to_string()))?;
 
-            // 4. 出力から最大確率のクラスを取得
+            // 4. 出力（logits）を取得
             let output_tensor = outputs[0]
                 .try_extract_array::<f32>()
                 .map_err(|e| PredictionError::Inference(format!("Failed to extract tensor: {}", e)))?;
 
-            let probs = output_tensor.as_slice().ok_or_else(|| {
+            let logits = output_tensor.as_slice().ok_or_else(|| {
                 PredictionError::Inference("Failed to get tensor as slice".to_string())
             })?;
 
+            // 5. softmax適用: logits -> 確率
+            let probs = Self::softmax(logits);
+
+            // 6. 最大確率のクラスを取得
             let (class_idx, &confidence) = probs
                 .iter()
                 .enumerate()
@@ -144,7 +164,21 @@ impl VictoryPredictor {
                 .cloned()
                 .unwrap_or_else(|| format!("unknown_{}", class_idx));
 
-            (class_idx, confidence, predicted_class)
+            // 7. 全クラスの確率をラベルとペアにする
+            let probabilities: Vec<(String, f32)> = probs
+                .iter()
+                .enumerate()
+                .map(|(idx, &prob)| {
+                    let label = self
+                        .label_map
+                        .get(&idx)
+                        .cloned()
+                        .unwrap_or_else(|| format!("unknown_{}", idx));
+                    (label, prob)
+                })
+                .collect();
+
+            (class_idx, confidence, predicted_class, probabilities)
         };
 
         let outcome = self.class_to_outcome(&predicted_class);
@@ -158,6 +192,7 @@ impl VictoryPredictor {
             outcome,
             confidence,
             predicted_class,
+            probabilities,
         })
     }
 
@@ -190,9 +225,9 @@ impl VictoryPredictor {
     /// クラス名を outcome に変換
     fn class_to_outcome(&self, class: &str) -> String {
         match class {
-            "victory" | "victory_1" | "victory_2" => "victory".to_string(),
-            "defeat" | "defeat_1" | "defeat_2" => "defeat".to_string(),
-            "draw" => "draw".to_string(),
+            "victory_text" | "victory_progressbar" => "victory".to_string(),
+            "defeat_text" | "defeat_progressbar" => "defeat".to_string(),
+            "none" => "none".to_string(),
             _ => "none".to_string(),
         }
     }
@@ -209,11 +244,10 @@ mod tests {
             label_map: HashMap::new(),
         };
 
-        assert_eq!(predictor.class_to_outcome("victory"), "victory");
-        assert_eq!(predictor.class_to_outcome("victory_1"), "victory");
-        assert_eq!(predictor.class_to_outcome("defeat"), "defeat");
-        assert_eq!(predictor.class_to_outcome("defeat_2"), "defeat");
-        assert_eq!(predictor.class_to_outcome("draw"), "draw");
+        assert_eq!(predictor.class_to_outcome("victory_text"), "victory");
+        assert_eq!(predictor.class_to_outcome("victory_progressbar"), "victory");
+        assert_eq!(predictor.class_to_outcome("defeat_text"), "defeat");
+        assert_eq!(predictor.class_to_outcome("defeat_progressbar"), "defeat");
         assert_eq!(predictor.class_to_outcome("none"), "none");
         assert_eq!(predictor.class_to_outcome("unknown"), "none");
     }

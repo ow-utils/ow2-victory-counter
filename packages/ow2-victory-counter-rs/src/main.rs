@@ -163,9 +163,17 @@ async fn detection_loop(
             }
         };
 
+        // 全クラスの確率を整形
+        let probs_str = detection
+            .probabilities
+            .iter()
+            .map(|(label, prob)| format!("{}={:.2}", label, prob))
+            .collect::<Vec<_>>()
+            .join(", ");
+
         debug!(
-            "Detection: outcome={}, confidence={:.2}, class={}",
-            detection.outcome, detection.confidence, detection.predicted_class
+            "Prediction: [{}] -> outcome={} (confidence={:.2})",
+            probs_str, detection.outcome, detection.confidence
         );
 
         // 4. StateManagerに記録
