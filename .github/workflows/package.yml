@@ -46,9 +46,9 @@ jobs:
         working-directory: packages/ow2-victory-counter-rs
         run: cargo build --release --locked
 
-      - name: markedをインストール
-        working-directory: packages/ow2-victory-counter-rs
-        run: pnpm add marked
+      - name: pandocをインストール
+        shell: pwsh
+        run: choco install pandoc -y --no-progress
 
       - name: 配布フォルダーを作成
         shell: pwsh
@@ -92,17 +92,7 @@ jobs:
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
           $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
           $htmlDest = Join-Path $packageRoot "利用方法.html"
-          $converter = Join-Path $env:TEMP "convert-md.mjs"
-          @"
-import { readFileSync, writeFileSync } from 'fs';
-import { marked } from 'marked';
-
-const [,, input, output] = process.argv;
-const md = readFileSync(input, 'utf8');
-const html = marked.parse(md, { gfm: true });
-writeFileSync(output, `<!doctype html><html lang="ja"><meta charset="UTF-8"><title>利用方法</title><body>${html}</body></html>`, 'utf8');
-"@ | Set-Content -Path $converter -Encoding UTF8
-          node $converter $mdSource $htmlDest
+          pandoc $mdSource -f gfm -t html5 -s -o $htmlDest
 
       - name: リリースZIPを作成
         shell: pwsh
