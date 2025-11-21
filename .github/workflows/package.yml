@@ -46,7 +46,7 @@ jobs:
         working-directory: packages/ow2-victory-counter-rs
         run: cargo build --release --locked
 
-      - name: 配布ZIPを作成
+      - name: 配布フォルダーを作成
         shell: pwsh
         working-directory: packages/ow2-victory-counter-rs
         run: |
@@ -88,15 +88,9 @@ jobs:
           New-Item -ItemType Directory -Path $docsDest -Force | Out-Null
           Copy-Item "..\\..\\docs\\usage\\run.md" -Destination $docsDest -Force
 
-          $zipPath = Join-Path $distRoot "ow2-victory-counter-rs.zip"
-          if (Test-Path $zipPath) {
-            Remove-Item $zipPath -Force
-          }
-          Compress-Archive -Path $packageRoot -DestinationPath $zipPath -Force
-
       - name: アーティファクトをアップロード
         uses: actions/upload-artifact@v4
         with:
           name: ow2-victory-counter-rs-${{ github.ref_name }}
-          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs.zip
+          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs
           if-no-files-found: error
