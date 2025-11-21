@@ -6,11 +6,12 @@ mod state;
 
 use capture::OBSCapture;
 use chrono::Local;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use config::Config;
 use predictor::VictoryPredictor;
 use server::{app, AppState};
 use state::StateManager;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -21,9 +22,36 @@ use tracing_subscriber::EnvFilter;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path to config file
-    #[arg(short, long, default_value = "config.toml")]
-    config: String,
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Run as server mode (default)
+    Server {
+        /// Path to config file
+        #[arg(short, long, default_value = "config.toml")]
+        config: String,
+    },
+    /// Run inference on a single image
+    Predict {
+        /// Path to input image
+        #[arg(short, long)]
+        image: PathBuf,
+        /// Path to ONNX model file
+        #[arg(short, long)]
+        model: PathBuf,
+        /// Path to label map JSON file
+        #[arg(short, long)]
+        label_map: PathBuf,
+        /// Output JSON file path (optional, prints to stdout if not specified)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        /// Skip cropping
+        #[arg(long)]
+        no_crop: bool,
+    },
 }
 
 #[tokio::main]
@@ -36,14 +64,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .init();
 
-    info!("Starting ow2-victory-detector...");
-
     // コマンドライン引数パース
     let args = Args::parse();
 
+    // サブコマンドに応じて実行モードを切り替え
+    match args.command {
+        Some(Commands::Server { config }) => {
+            run_server(config).await
+        }
+        Some(Commands::Predict {
+            image,
+            model,
+            label_map,
+            output,
+            no_crop,
+        }) => {
+            run_predict(image, model, label_map, output, no_crop).await
+        }
+        None => {
+            // サブコマンドが指定されていない場合はデフォルトでサーバーモード
+            run_server("config.toml".to_string()).await
+        }
+    }
+}
+
+/// サーバーモード: OBSから画像をキャプチャして推論を実行
+async fn run_server(config_path: String) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Starting ow2-victory-detector...");
+
     // 設定ファイル読み込み
-    info!("Loading config from: {}", args.config);
-    let config = Config::from_file(&args.config)?;
+    info!("Loading config from: {}", config_path);
+    let config = Config::from_file(&config_path)?;
     debug!("Config loaded: {:?}", config);
 
     // OBSCapture初期化
@@ -263,4 +314,93 @@ async fn detection_loop(
         // 6. 次のループまで待機
         tokio::time::sleep(interval).await;
     }
+}
+
+/// 画像推論モード: 単一の画像に対して推論を実行
+async fn run_predict(
+    image_path: PathBuf,
+    model_path: PathBuf,
+    label_map_path: PathBuf,
+    output_path: Option<PathBuf>,
+    no_crop: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Running prediction on single image: {:?}", image_path);
+
+    // 1. 画像読み込み
+    if !image_path.exists() {
+        error!("Image not found: {:?}", image_path);
+        std::process::exit(1);
+    }
+
+    let image = image::open(&image_path)
+        .map_err(|e| format!("Failed to load image: {}", e))?;
+
+    info!("Image loaded: {}x{} (WxH)", image.width(), image.height());
+
+    // 2. 前処理（クロップ）
+    let processed_image = if no_crop {
+        info!("Skipping crop");
+        image
+    } else {
+        // デフォルトのクロップ領域（1920x1080の標準的な勝敗表示位置）
+        let crop_rect = (460, 378, 995, 550);
+        info!("Cropping with rect: {:?}", crop_rect);
+
+        let (x, y, width, height) = crop_rect;
+
+        // クロップパラメータの検証
+        if x + width > image.width() || y + height > image.height() {
+            warn!(
+                "Crop region exceeds image dimensions, using full image instead"
+            );
+            image
+        } else {
+            image.crop_imm(x, y, width, height)
+        }
+    };
+
+    info!(
+        "Processed image size: {}x{}",
+        processed_image.width(),
+        processed_image.height()
+    );
+
+    // 3. VictoryPredictor初期化
+    info!("Loading ONNX model from: {:?}", model_path);
+    let mut predictor = VictoryPredictor::new(
+        model_path.to_str().unwrap(),
+        label_map_path.to_str().unwrap(),
+    )?;
+    info!("ONNX model loaded successfully");
+
+    // 4. 推論実行
+    let detection = predictor.predict(&processed_image)?;
+
+    // 5. 結果を辞書化
+    let result = serde_json::json!({
+        "image": image_path.to_str().unwrap(),
+        "outcome": detection.outcome,
+        "confidence": detection.confidence,
+        "predicted_class": detection.predicted_class,
+        "probabilities": detection.probabilities.iter().map(|(label, prob)| {
+            serde_json::json!({
+                "class": label,
+                "probability": prob,
+            })
+        }).collect::<Vec<_>>(),
+    });
+
+    // 6. 出力
+    if let Some(output_path) = output_path {
+        tokio::fs::write(
+            &output_path,
+            serde_json::to_string_pretty(&result)?,
+        )
+        .await?;
+        info!("Result saved to: {:?}", output_path);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    }
+
+    Ok(())
 }

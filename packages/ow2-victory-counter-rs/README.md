@@ -64,14 +64,25 @@ password = "your-password"  # パスワード設定時のみ
 
 ## 使い方
 
-### 1. ツールの起動
+このツールは2つのモードで動作します：
+
+- **serverモード**（デフォルト）: OBSから自動的に画像をキャプチャして推論を実行し、結果をWebサーバーで配信
+- **predictモード**: 単一の画像ファイルに対して推論を実行（比較テスト・デバッグ用）
+
+### 1. サーバーモード（通常使用）
+
+#### 1.1 ツールの起動
 
 ```bash
 # Windows
 ow2-victory-detector.exe
+# または明示的に
+ow2-victory-detector.exe server
 
 # macOS / Linux
 ./ow2-victory-detector
+# または明示的に
+./ow2-victory-detector server
 ```
 
 起動時のログ:
@@ -89,7 +100,7 @@ INFO    - SSE endpoint: http://127.0.0.1:3000/events
 INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
 ```
 
-### 2. OBS にブラウザーソースを追加
+#### 1.2 OBS にブラウザーソースを追加
 
 1. OBS で `ソース` → `+` → `ブラウザー` を選択
 2. 以下の設定を入力:
@@ -103,7 +114,7 @@ INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
 
 カウンターが表示されます！
 
-### 3. 管理画面でカウントを確認
+#### 1.3 管理画面でカウントを確認
 
 ブラウザーで `http://127.0.0.1:3000/admin` を開くと、管理画面が表示されます。
 
@@ -111,6 +122,94 @@ INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
 - 現在のカウント表示
 - `+` / `-` ボタンで手動調整
 - `リセット` ボタンで全カウントをゼロに
+
+### 2. 予測モード（比較テスト・デバッグ用）
+
+単一の画像ファイルに対して推論を実行するモードです。PoCとの比較テストやデバッグに活用できます。
+
+#### 2.1 基本的な使い方
+
+```bash
+# Windows
+ow2-victory-detector.exe predict ^
+  --image path/to/image.png ^
+  --model models/victory_classifier.onnx ^
+  --label-map models/victory_classifier.label_map.json
+
+# macOS / Linux
+./ow2-victory-detector predict \
+  --image path/to/image.png \
+  --model models/victory_classifier.onnx \
+  --label-map models/victory_classifier.label_map.json
+```
+
+#### 2.2 オプション
+
+| オプション | 短縮形 | 必須 | 説明 |
+|----------|--------|------|------|
+| `--image` | `-i` | ✅ | 入力画像のパス |
+| `--model` | `-m` | ✅ | ONNXモデルファイルのパス |
+| `--label-map` | `-l` | ✅ | ラベルマップJSONファイルのパス |
+| `--output` | `-o` | ❌ | 結果を保存するJSONファイルのパス（省略時は標準出力） |
+| `--no-crop` | - | ❌ | クロップをスキップ（デバッグ用） |
+
+#### 2.3 出力例
+
+```json
+{
+  "image": "path/to/image.png",
+  "outcome": "victory",
+  "confidence": 0.95,
+  "predicted_class": "victory_text",
+  "probabilities": [
+    { "class": "defeat_progressbar", "probability": 0.01 },
+    { "class": "defeat_text", "probability": 0.02 },
+    { "class": "none", "probability": 0.02 },
+    { "class": "victory_progressbar", "probability": 0.00 },
+    { "class": "victory_text", "probability": 0.95 }
+  ]
+}
+```
+
+#### 2.4 使用例: デバッグ画像で推論
+
+デバッグモードで保存した画像を使って推論を実行：
+
+```bash
+# デバッグモードで保存された画像を推論
+./ow2-victory-detector predict \
+  --image debug/cropped-20251121-143025-123.png \
+  --model models/victory_classifier.onnx \
+  --label-map models/victory_classifier.label_map.json \
+  --no-crop \
+  --output result.json
+```
+
+`--no-crop` オプションを使うと、デバッグモードですでにクロップされた画像をそのまま推論できます。
+
+#### 2.5 使用例: PoCとの比較テスト
+
+同じ画像をPoCとRustで推論して結果を比較：
+
+```bash
+# Rust版で推論
+./ow2-victory-detector predict \
+  --image screenshot.png \
+  --model models/victory_classifier.onnx \
+  --label-map models/victory_classifier.label_map.json \
+  --output rust_result.json
+
+# PoC版で推論（別のディレクトリで実行）
+cd ../obs-victory-counter/victory-detector
+uv run python scripts/inference_single_image.py \
+  --image ../../ow2-victory-counter-rs/screenshot.png \
+  --model artifacts/models/victory_classifier.pth \
+  --output ../../ow2-victory-counter-rs/poc_result.json
+
+# 結果を比較
+cd ../../ow2-victory-counter-rs
+diff rust_result.json poc_result.json
+```
 
 ## カスタマイズ
 

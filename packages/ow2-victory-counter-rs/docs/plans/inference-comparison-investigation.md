@@ -76,7 +76,10 @@ cat packages/obs-victory-counter/victory-detector/scripts/train.py
 
 ---
 
-## フェーズ2: デバッグ用画像保存機能の追加
+## フェーズ2: デバッグ用画像保存機能の追加 ✅ 実装完了
+
+**実装日**: 2025-01-21
+**コミットハッシュ**: c76d487
 
 ### 2.1 設定ファイルの拡張
 
@@ -187,6 +190,82 @@ loop {
 
 ---
 
+## フェーズ2.5: 単一画像推論機能の実装 ✅ 実装完了
+
+**実装日**: 2025-01-21
+
+### 概要
+
+PoCとRustの推論結果を同じ画像で比較できるように、両方に単一画像推論機能を実装しました。
+
+### 実装内容
+
+#### PoC (Python)
+
+**ファイル**: `packages/obs-victory-counter/victory-detector/scripts/inference_single_image.py`
+
+```bash
+uv run python scripts/inference_single_image.py \
+  --image path/to/image.png \
+  --model artifacts/models/victory_classifier.pth \
+  [--output result.json] \
+  [--size 512] \
+  [--no-crop]
+```
+
+**機能**:
+- 単一画像ファイルに対してPyTorch推論を実行
+- クロップとリサイズの制御が可能
+- JSON形式で結果を出力（Rust版と互換）
+
+#### Rust版
+
+**変更ファイル**: `src/main.rs`
+
+```bash
+cargo run --release -- predict \
+  --image path/to/image.png \
+  --model models/victory_classifier.onnx \
+  --label-map models/victory_classifier.label_map.json \
+  [--output result.json] \
+  [--no-crop]
+```
+
+**機能**:
+- サブコマンド方式の採用（`server` / `predict`）
+- デフォルトはserverモード（既存の動作を維持）
+- predictモードで単一画像推論を実行
+- `--no-crop` オプションでデバッグ画像をそのまま推論可能
+
+### JSON出力形式
+
+両方のツールで同じ形式のJSON出力に対応：
+
+```json
+{
+  "image": "path/to/image.png",
+  "outcome": "victory",
+  "confidence": 0.95,
+  "predicted_class": "victory_text",
+  "probabilities": [
+    { "class": "defeat_progressbar", "probability": 0.01 },
+    { "class": "defeat_text", "probability": 0.02 },
+    { "class": "none", "probability": 0.02 },
+    { "class": "victory_progressbar", "probability": 0.00 },
+    { "class": "victory_text", "probability": 0.95 }
+  ]
+}
+```
+
+### 成果
+
+- ✅ PoCとRustで同じ画像を推論可能に
+- ✅ JSON出力形式を統一して比較が容易に
+- ✅ デバッグモードで保存した画像を直接推論可能
+- ✅ フェーズ3（比較テスト）の準備完了
+
+---
+
 ## フェーズ3: 比較テスト
 
 ### 3.1 Rust版で画像を保存
@@ -219,13 +298,17 @@ loop {
    ```bash
    cd packages/obs-victory-counter/victory-detector
 
-   # 単一画像推論スクリプトを作成（必要に応じて）
+   # フェーズ2.5で実装した単一画像推論スクリプトを使用
    uv run python scripts/inference_single_image.py \
      --image ../../ow2-victory-counter-rs/debug/cropped-20251121-143025-123.png \
-     --model artifacts/models/victory_classifier.pth
+     --model artifacts/models/victory_classifier.pth \
+     --no-crop \
+     --output ../../ow2-victory-counter-rs/debug/poc-result-20251121-143025-123.json
    ```
 
 2. 推論結果（確率分布）を記録
+
+**注意**: `--no-crop` を指定することで、Rust版のデバッグモードで保存されたクロップ済み画像をそのまま推論できます。
 
 ### 3.3 結果の比較分析
 
@@ -447,6 +530,19 @@ dim { dim_param: "width" }   # 可変
 
 ---
 
+## 実装履歴
+
+| フェーズ | ステータス | 完了日 | 備考 |
+|---------|----------|--------|------|
+| フェーズ1 | ✅ 完了 | 2025-01-21 | PoCの処理方法を確認 |
+| フェーズ2 | ✅ 完了 | 2025-01-21 | デバッグ機能実装（コミット: c76d487） |
+| フェーズ2.5 | ✅ 完了 | 2025-01-21 | 単一画像推論機能実装（PoC + Rust） |
+| フェーズ3 | 🔜 次 | - | 比較テスト実施予定 |
+| フェーズ4 | ⏸️ 保留 | - | フェーズ3の結果次第で実施 |
+
+---
+
 **作成日**: 2025-01-21
-**ステータス**: 計画中
-**次のアクション**: フェーズ1の調査を開始
+**最終更新日**: 2025-01-21
+**ステータス**: 実装フェーズ完了、テスト準備完了
+**次のアクション**: フェーズ3（比較テスト）の実施
