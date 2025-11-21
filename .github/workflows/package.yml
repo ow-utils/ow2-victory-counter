@@ -92,7 +92,8 @@ jobs:
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
           $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
           $htmlDest = Join-Path $packageRoot "利用方法.html"
-          pandoc $mdSource -f gfm -t html5 -s -o $htmlDest
+          $header = Join-Path (Resolve-Path "..\\..\\docs\\assets\\pandoc") "header.html"
+          pandoc $mdSource -f gfm -t html5 -s --include-in-header=$header -o $htmlDest
 
       - name: リリースZIPを作成
         shell: pwsh
