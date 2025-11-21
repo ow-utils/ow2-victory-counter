@@ -153,7 +153,7 @@ class VictoryPredictor:
             image: 入力画像 (H, W, C) BGR形式
 
         Returns:
-            推論結果
+            推論結果（全クラスの確率分布を含む）
         """
         # 前処理
         input_tensor = self._preprocess(image).to(self.device)
@@ -171,8 +171,17 @@ class VictoryPredictor:
         # 6クラス→3種類マッピング
         outcome = self._map_class_to_outcome(class_name)
 
-        return DetectionResult(
+        # DetectionResult作成
+        result = DetectionResult(
             outcome=outcome,
             confidence=confidence,
             predicted_class=class_name,
         )
+
+        # 全クラスの確率を動的属性として追加（Rust版との比較用）
+        result.probabilities = {  # type: ignore
+            self.idx_to_label[i]: probabilities[i].item()
+            for i in range(len(self.idx_to_label))
+        }
+
+        return result

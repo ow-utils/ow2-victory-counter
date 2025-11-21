@@ -29,7 +29,7 @@ class VisionSnapshot:
     payload_advantage: float = 0.0
 
 
-@dataclass(slots=True)
+@dataclass
 class DetectionResult:
     """勝敗の推定結果。"""
 

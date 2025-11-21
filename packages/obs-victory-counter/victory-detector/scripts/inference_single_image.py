@@ -58,11 +58,16 @@ def main():
         "outcome": result.outcome,
         "confidence": float(result.confidence),
         "predicted_class": result.predicted_class,
-        "probabilities": [
-            {"class": cls, "probability": float(prob)}
-            for cls, prob in result.probabilities
-        ],
     }
+
+    # probabilitiesが存在する場合のみ追加（辞書形式で返される）
+    if hasattr(result, 'probabilities'):
+        result_dict["probabilities"] = [
+            {"class": cls, "probability": float(prob)}
+            for cls, prob in result.probabilities.items()
+        ]
+    else:
+        result_dict["probabilities"] = []
 
     # 出力
     if args.output:
