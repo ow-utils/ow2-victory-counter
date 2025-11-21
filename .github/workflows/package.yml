@@ -73,7 +73,10 @@ jobs:
 
           Copy-Item "models" -Destination $packageRoot -Recurse -Force
           Copy-Item "templates" -Destination $packageRoot -Recurse -Force
-          Copy-Item "frontend/dist" -Destination (Join-Path $packageRoot "frontend") -Recurse -Force
+          # フロントエンド成果物は frontend/dist 配下に配置（サーバーは frontend/dist/assets を参照）
+          $frontendDest = Join-Path $packageRoot "frontend/dist"
+          New-Item -ItemType Directory -Path $frontendDest -Force | Out-Null
+          Copy-Item "frontend/dist/*" -Destination $frontendDest -Recurse -Force
 
           if (Test-Path "config") {
             Copy-Item "config" -Destination $packageRoot -Recurse -Force
