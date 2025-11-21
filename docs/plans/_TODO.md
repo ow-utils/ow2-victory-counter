@@ -62,6 +62,7 @@
 ### 🔴 2.2 Cargo.toml設定
 
 - ✅ `Cargo.toml` 作成
+
   ```toml
   [package]
   name = "ow2-victory-detector"
@@ -82,6 +83,7 @@
   tracing = "0.1"
   tracing-subscriber = "0.3"
   ```
+
 - **依存関係**: 2.1
 - **参照**: [実装詳細#開発環境](./2025-11-16-04実装詳細.md#開発環境)
 
@@ -117,6 +119,7 @@
 ### 🔴 3.1 Vite設定ファイル作成
 
 - ✅ `frontend/vite.config.ts` 作成（マルチページアプリ設定）
+
   ```typescript
   import { defineConfig } from "vite";
   import { svelte } from "@sveltejs/vite-plugin-svelte";
@@ -142,6 +145,7 @@
     },
   });
   ```
+
 - **依存関係**: 2.3
 - **目的**: マルチページアプリ（obs.html, admin.html）+ Rustサーバーへのプロキシ
 
@@ -441,6 +445,15 @@
 - ⏳ ZIP圧縮
 - **依存関係**: 8.3, 6.1, 6.2, 6.3, 7.2
 - **参照**: [アーキテクチャ設計#配布構成](../specs/ow2-victory-counter-rsアーキテクチャ設計.md#配布構成)
+
+### 🔴 8.5 配布対象の確定
+
+- ⏳ `docs/usage/run.md` を配布ZIPに同梱
+- ⏳ `packages/ow2-victory-counter-rs` のリリースビルド成果物を収集（`ow2-victory-detector.exe`、モデル、設定テンプレート、`templates/custom.css`）
+  - ⏳ OBS/管理UIのフロントエンドを先行ビルドして組み込み済みであることを確認
+  - ⏳ コンフィグファイルのテンプレートや付属ファイル（`config/ui-config.json` など）を含める
+- **依存関係**: 8.1, 8.3, 6.1, 6.2, 6.3, 7.2
+- **参照**: [2025-11-22-01配布するための作業](./planned/2025-11-22-01配布するための作業.md)
 
 ---
 
