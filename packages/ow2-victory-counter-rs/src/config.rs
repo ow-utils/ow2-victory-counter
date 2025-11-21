@@ -17,6 +17,8 @@ pub struct Config {
     pub detection: DetectionConfig,
     /// スクリーンショット保存設定
     pub screenshot: ScreenshotConfig,
+    /// デバッグ設定
+    pub debug: DebugConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +86,25 @@ pub struct ScreenshotConfig {
     pub save_dir: PathBuf,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DebugConfig {
+    /// デバッグ機能を有効にするか
+    #[serde(default = "default_debug_enabled")]
+    pub enabled: bool,
+    /// デバッグ出力先ディレクトリ
+    #[serde(default = "default_debug_save_dir")]
+    pub save_dir: PathBuf,
+    /// クロップ後の画像を保存するか
+    #[serde(default = "default_debug_save_cropped")]
+    pub save_cropped: bool,
+    /// 前処理後の画像を保存するか（未実装）
+    #[serde(default = "default_debug_save_preprocessed")]
+    pub save_preprocessed: bool,
+    /// 推論結果を保存するか
+    #[serde(default = "default_debug_save_results")]
+    pub save_results: bool,
+}
+
 // デフォルト値関数
 fn default_obs_host() -> String {
     "localhost".to_string()
@@ -119,6 +140,26 @@ fn default_screenshot_enabled() -> bool {
 
 fn default_screenshot_save_dir() -> PathBuf {
     PathBuf::from("screenshots")
+}
+
+fn default_debug_enabled() -> bool {
+    false
+}
+
+fn default_debug_save_dir() -> PathBuf {
+    PathBuf::from("debug")
+}
+
+fn default_debug_save_cropped() -> bool {
+    true
+}
+
+fn default_debug_save_preprocessed() -> bool {
+    false
+}
+
+fn default_debug_save_results() -> bool {
+    true
 }
 
 impl Config {
@@ -163,6 +204,13 @@ impl Config {
             screenshot: ScreenshotConfig {
                 enabled: default_screenshot_enabled(),
                 save_dir: default_screenshot_save_dir(),
+            },
+            debug: DebugConfig {
+                enabled: default_debug_enabled(),
+                save_dir: default_debug_save_dir(),
+                save_cropped: default_debug_save_cropped(),
+                save_preprocessed: default_debug_save_preprocessed(),
+                save_results: default_debug_save_results(),
             },
         }
     }

@@ -143,6 +143,18 @@ async fn detection_loop(
         }
     }
 
+    // デバッグディレクトリの作成
+    if config.debug.enabled {
+        if let Err(e) = tokio::fs::create_dir_all(&config.debug.save_dir).await {
+            warn!(
+                "Failed to create debug directory: {}. Debug mode disabled.",
+                e
+            );
+        } else {
+            info!("Debug mode enabled: {}", config.debug.save_dir.display());
+        }
+    }
+
     info!(
         "Starting detection loop (interval: {}ms, crop: {:?})",
         config.detection.interval_ms, crop_rect
@@ -169,6 +181,16 @@ async fn detection_loop(
             }
         };
 
+        // デバッグ: クロップ後の画像を保存
+        if config.debug.enabled && config.debug.save_cropped {
+            let timestamp = Local::now().format("%Y%m%d-%H%M%S-%3f");
+            let filename = format!("cropped-{}.png", timestamp);
+            let filepath = config.debug.save_dir.join(&filename);
+            if let Err(e) = processed_image.save(&filepath) {
+                warn!("Failed to save cropped image: {}", e);
+            }
+        }
+
         // 3. 推論
         let detection = match predictor.predict(&processed_image) {
             Ok(det) => det,
@@ -191,6 +213,23 @@ async fn detection_loop(
             "Prediction: [{}] -> outcome={} (confidence={:.2})",
             probs_str, detection.outcome, detection.confidence
         );
+
+        // デバッグ: 推論結果を保存
+        if config.debug.enabled && config.debug.save_results {
+            let timestamp = Local::now().format("%Y%m%d-%H%M%S-%3f");
+            let result_json = serde_json::json!({
+                "timestamp": timestamp.to_string(),
+                "outcome": detection.outcome,
+                "confidence": detection.confidence,
+                "predicted_class": detection.predicted_class,
+                "probabilities": detection.probabilities,
+            });
+            let filename = format!("result-{}.json", timestamp);
+            let filepath = config.debug.save_dir.join(&filename);
+            if let Err(e) = tokio::fs::write(&filepath, serde_json::to_string_pretty(&result_json).unwrap()).await {
+                warn!("Failed to save result: {}", e);
+            }
+        }
 
         // 4. StateManagerに記録
         let mut manager = state_manager.lock().await;

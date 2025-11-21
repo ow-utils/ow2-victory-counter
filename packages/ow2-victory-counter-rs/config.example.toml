@@ -47,3 +47,12 @@ interval_ms = 1000
 # 誤検知の分析やモデル改善に活用できます
 enabled = false
 save_dir = "screenshots"  # 保存先ディレクトリ（相対パスまたは絶対パス）
+
+[debug]
+# デバッグ機能（開発・検証用）
+# 推論時の画像と結果を保存してPoC比較や問題の可視化に活用
+enabled = false
+save_dir = "debug"
+save_cropped = true        # クロップ後の元画像を保存
+save_preprocessed = false  # 前処理後（リサイズ後）の画像を保存（未実装）
+save_results = true        # 推論結果JSONを保存
