@@ -23,7 +23,7 @@ jobs:
       - name: pnpmをセットアップ
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
 
       - name: フロントエンド依存関係をインストール
         working-directory: packages/ow2-victory-counter-rs/frontend
