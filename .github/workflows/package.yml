@@ -92,7 +92,7 @@ jobs:
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
           $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
           $htmlDest = Join-Path $packageRoot "利用方法.html"
-          node -e "import { readFileSync, writeFileSync } from 'fs'; import { marked } from 'marked'; const md = readFileSync(process.argv[1], 'utf8'); const html = marked.parse(md, { gfm: true }); writeFileSync(process.argv[2], \`<!doctype html><html lang='ja'><meta charset='UTF-8'><title>利用方法</title><body>\${html}</body></html>\`, 'utf8');" $mdSource $htmlDest
+          node --input-type=module -e "import { readFileSync, writeFileSync } from 'fs'; import { marked } from 'marked'; const md = readFileSync(process.argv[1], 'utf8'); const html = marked.parse(md, { gfm: true }); writeFileSync(process.argv[2], '<!doctype html><html lang=\"ja\"><meta charset=\"UTF-8\"><title>利用方法</title><body>' + html + '</body></html>', 'utf8');" $mdSource $htmlDest
 
       - name: リリースZIPを作成
         shell: pwsh
