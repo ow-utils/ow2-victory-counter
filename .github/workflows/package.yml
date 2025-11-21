@@ -79,6 +79,7 @@ jobs:
           }
 
           Copy-Item "README.md" -Destination $packageRoot -Force
+          Copy-Item "debug.bat" -Destination $packageRoot -Force
 
           $docsDest = Join-Path $packageRoot "docs/usage"
           New-Item -ItemType Directory -Path $docsDest -Force | Out-Null
