@@ -71,15 +71,11 @@ jobs:
           Copy-Item "templates" -Destination $packageRoot -Recurse -Force
           Copy-Item "frontend/dist" -Destination (Join-Path $packageRoot "frontend") -Recurse -Force
 
-          $configDir = Join-Path $packageRoot "config"
-          if (-not (Test-Path $configDir)) {
-            New-Item -ItemType Directory -Path $configDir | Out-Null
-          }
           if (Test-Path "config") {
             Copy-Item "config" -Destination $packageRoot -Recurse -Force
           }
           if (Test-Path "config.example.toml") {
-            Copy-Item "config.example.toml" (Join-Path $configDir "config.example.toml") -Force
+            Copy-Item "config.example.toml" (Join-Path $packageRoot "config.example.toml") -Force
           }
 
           Copy-Item "README.md" -Destination $packageRoot -Force
