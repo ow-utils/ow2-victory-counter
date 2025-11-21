@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ow2-victory-counter-rs-${{ github.ref_name }}
-          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs.zip
+          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs
           if-no-files-found: error
 
       - name: GitHub Release作成＆アセット添付
