@@ -6,7 +6,7 @@
 host = "localhost"
 port = 4455
 # password = "your-password"  # パスワードが設定されている場合のみ
-source_name = "OBS ソース名"  # キャプチャするOBSソース名（必須）
+source_name = "ゲームキャプチャ" # OW2をキャプチャしているOBSのソース名
 
 [model]
 # 推論モデル設定
