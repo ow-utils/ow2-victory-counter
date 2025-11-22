@@ -51,6 +51,12 @@ pub struct ModelConfig {
 pub struct PreprocessingConfig {
     /// クロップ領域 [x, y, width, height]
     pub crop_rect: [u32; 4],
+    /// 推論モデルに入力するリサイズ後の幅
+    #[serde(default = "default_resize_width")]
+    pub resize_width: u32,
+    /// 推論モデルに入力するリサイズ後の高さ
+    #[serde(default = "default_resize_height")]
+    pub resize_height: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -138,6 +144,14 @@ fn default_detection_interval_ms() -> u64 {
     1000
 }
 
+fn default_resize_width() -> u32 {
+    512
+}
+
+fn default_resize_height() -> u32 {
+    283
+}
+
 fn default_screenshot_enabled() -> bool {
     false
 }
@@ -199,6 +213,8 @@ impl Config {
             },
             preprocessing: PreprocessingConfig {
                 crop_rect: [0, 0, 1920, 1080], // フル画面
+                resize_width: default_resize_width(),
+                resize_height: default_resize_height(),
             },
             state: StateConfig {
                 cooldown_seconds: default_cooldown_seconds(),

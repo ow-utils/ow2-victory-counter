@@ -39,12 +39,9 @@ enum Commands {
         /// Path to input image
         #[arg(short, long)]
         image: PathBuf,
-        /// Path to ONNX model file
-        #[arg(short, long)]
-        model: PathBuf,
-        /// Path to label map JSON file
-        #[arg(short, long)]
-        label_map: PathBuf,
+        /// Path to config file
+        #[arg(short, long, default_value = "config.toml")]
+        config: PathBuf,
         /// Output JSON file path (optional, prints to stdout if not specified)
         #[arg(short, long)]
         output: Option<PathBuf>,
@@ -74,12 +71,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(Commands::Predict {
             image,
-            model,
-            label_map,
+            config: config_path,
             output,
             no_crop,
         }) => {
-            run_predict(image, model, label_map, output, no_crop).await
+            run_predict(image, config_path, output, no_crop).await
         }
         None => {
             // サブコマンドが指定されていない場合はデフォルトでサーバーモード
@@ -117,6 +113,8 @@ async fn run_server(config_path: String) -> Result<(), Box<dyn std::error::Error
         config.model.model_path.to_str().unwrap(),
         config.model.label_map_path.to_str().unwrap(),
         config.model.class_map.clone(),
+        config.preprocessing.resize_width,
+        config.preprocessing.resize_height,
     )?;
     info!("ONNX model loaded successfully");
 
@@ -320,8 +318,7 @@ async fn detection_loop(
 /// 画像推論モード: 単一の画像に対して推論を実行
 async fn run_predict(
     image_path: PathBuf,
-    model_path: PathBuf,
-    label_map_path: PathBuf,
+    config_path: PathBuf,
     output_path: Option<PathBuf>,
     no_crop: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -338,13 +335,16 @@ async fn run_predict(
 
     info!("Image loaded: {}x{} (WxH)", image.width(), image.height());
 
-    // 2. 前処理（クロップ）
+    // 2. コンフィグ読み込み（サーバーと同じ設定を使用）
+    info!("Loading config for predict from: {:?}", config_path);
+    let config = Config::from_file(config_path.to_str().unwrap())?;
+
+    // 3. 前処理（クロップ）
     let processed_image = if no_crop {
         info!("Skipping crop");
         image
     } else {
-        // デフォルトのクロップ領域（1920x1080の標準的な勝敗表示位置）
-        let crop_rect = (460, 378, 995, 550);
+        let crop_rect = config.crop_rect_tuple();
         info!("Cropping with rect: {:?}", crop_rect);
 
         let (x, y, width, height) = crop_rect;
@@ -366,19 +366,26 @@ async fn run_predict(
         processed_image.height()
     );
 
-    // 3. VictoryPredictor初期化
-    info!("Loading ONNX model from: {:?}", model_path);
+    // 4. VictoryPredictor初期化
+    info!("Loading ONNX model from: {:?}", config.model.model_path);
+    let (target_width, target_height, class_map) = (
+        config.preprocessing.resize_width,
+        config.preprocessing.resize_height,
+        config.model.class_map.clone(),
+    );
     let mut predictor = VictoryPredictor::new(
-        model_path.to_str().unwrap(),
-        label_map_path.to_str().unwrap(),
-        std::collections::HashMap::new(),
+        config.model.model_path.to_str().unwrap(),
+        config.model.label_map_path.to_str().unwrap(),
+        class_map,
+        target_width,
+        target_height,
     )?;
     info!("ONNX model loaded successfully");
 
-    // 4. 推論実行
+    // 5. 推論実行
     let detection = predictor.predict(&processed_image)?;
 
-    // 5. 結果を辞書化
+    // 6. 結果を辞書化
     let result = serde_json::json!({
         "image": image_path.to_str().unwrap(),
         "outcome": detection.outcome,
@@ -393,6 +400,7 @@ async fn run_predict(
     });
 
     // 6. 出力
+    // 7. 出力
     if let Some(output_path) = output_path {
         tokio::fs::write(
             &output_path,
