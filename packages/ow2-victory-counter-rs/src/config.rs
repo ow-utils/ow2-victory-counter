@@ -175,6 +175,7 @@ impl Config {
     }
 
     /// デフォルト設定を作成
+    #[allow(dead_code)]
     pub fn default_with_required(source_name: String, model_path: PathBuf) -> Self {
         Self {
             obs: ObsConfig {
@@ -216,6 +217,7 @@ impl Config {
     }
 
     /// TOML文字列にシリアライズ（テンプレート生成用）
+    #[allow(dead_code)]
     pub fn to_toml_string(&self) -> Result<String, ConfigError> {
         toml::to_string_pretty(self).map_err(|e| ConfigError::Serialize(e.to_string()))
     }
@@ -231,6 +233,7 @@ impl Config {
 pub enum ConfigError {
     FileRead(String, String),
     Parse(String, String),
+    #[allow(dead_code)]
     Serialize(String),
 }
 

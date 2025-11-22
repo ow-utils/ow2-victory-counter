@@ -1,3 +1,3 @@
 pub mod obs;
 
-pub use obs::{CaptureError, OBSCapture};
+pub use obs::OBSCapture;

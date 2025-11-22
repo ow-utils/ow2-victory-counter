@@ -13,7 +13,7 @@ pub enum PredictionError {
     ModelLoad(String),
     LabelMapLoad(String),
     Inference(String),
-    TensorConversion(String),
+
 }
 
 impl std::fmt::Display for PredictionError {
@@ -22,7 +22,7 @@ impl std::fmt::Display for PredictionError {
             PredictionError::ModelLoad(e) => write!(f, "Model load error: {}", e),
             PredictionError::LabelMapLoad(e) => write!(f, "Label map load error: {}", e),
             PredictionError::Inference(e) => write!(f, "Inference error: {}", e),
-            PredictionError::TensorConversion(e) => write!(f, "Tensor conversion error: {}", e),
+
         }
     }
 }
@@ -130,7 +130,7 @@ impl VictoryPredictor {
             .map_err(|e| PredictionError::Inference(format!("Failed to create value: {}", e)))?;
 
         // 3. ONNX Runtime 推論
-        let (class_idx, confidence, predicted_class, probabilities) = {
+        let (_class_idx, confidence, predicted_class, probabilities) = {
             let outputs = self
                 .session
                 .run(ort::inputs![value])

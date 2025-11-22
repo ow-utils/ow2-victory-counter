@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::BroadcastStream, StreamExt};
+#[cfg(not(debug_assertions))]
 use tower_http::services::ServeDir;
 
 #[derive(Clone)]

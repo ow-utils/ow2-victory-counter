@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use image::{DynamicImage, ImageBuffer, Rgb};
+use image::DynamicImage;
 use obws::{
     requests::sources::{SourceId, TakeScreenshot},
     Client as ObsClient,
@@ -151,10 +151,8 @@ impl OBSCapture {
         Ok(cropped)
     }
 
-    /// 画像を RGB8 バッファに変換 (CNN 推論用)
-    pub fn to_rgb8(&self, image: &DynamicImage) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-        image.to_rgb8()
-    }
+
+
 }
 
 #[cfg(test)]
