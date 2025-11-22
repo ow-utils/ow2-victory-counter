@@ -20,3 +20,6 @@ uv.lock
 packages/obs-victory-counter/victory-detector/data/
 packages/obs-victory-counter/victory-detector/dataset/
 packages/obs-victory-counter/victory-detector/data_backup/
+packages/poc-victory-counter/victory-detector/data/
+packages/poc-victory-counter/victory-detector/dataset/
+packages/poc-victory-counter/victory-detector/data_backup/
