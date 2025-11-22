@@ -12,6 +12,7 @@ dependencies = [
     "onnx>=1.16.0",
     "onnxruntime>=1.16.0",
     "pillow>=10.0.0",
+    "onnxscript>=0.5.6",
 ]
 
 [dependency-groups]
