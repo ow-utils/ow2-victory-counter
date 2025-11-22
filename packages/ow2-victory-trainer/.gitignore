@@ -10,7 +10,6 @@ __pycache__/
 
 # 環境関連
 .venv/
-uv.lock
 
 # エディタ関連
 .vscode/
