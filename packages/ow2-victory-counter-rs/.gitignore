@@ -7,11 +7,18 @@
 
 # Node.js / Frontend
 frontend/node_modules/
-frontend/dist/
+frontend/dist/*
+!frontend/dist/obs.html
+!frontend/dist/user.css
+!frontend/dist/user.js
 frontend/.vite/
 # frontend/pnpm-lock.yaml
 # frontend/package-lock.json
 # frontend/yarn.lock
+# CDN版Vueで配信するサンプルHTML/カスタムファイルはバイナリ配布用に含める
+!frontend/dist/obs.html
+!frontend/dist/user.css
+!frontend/dist/user.js
 
 # IDE
 .vscode/

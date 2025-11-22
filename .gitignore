@@ -1,6 +1,10 @@
 # Node.js
 node_modules/
 dist/
+!packages/ow2-victory-counter-rs/frontend/dist/
+!packages/ow2-victory-counter-rs/frontend/dist/obs.html
+!packages/ow2-victory-counter-rs/frontend/dist/user.css
+!packages/ow2-victory-counter-rs/frontend/dist/user.js
 
 # Python
 __pycache__/
@@ -14,4 +18,3 @@ __pycache__/
 .env
 
 /.serena/
-

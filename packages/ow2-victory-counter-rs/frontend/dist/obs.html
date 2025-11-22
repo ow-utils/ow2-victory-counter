@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OW2 Victory Counter - OBS</title>
+  <!-- 必要に応じて同ディレクトリの user.css で自由にスタイルを上書きできます -->
+  <link rel="stylesheet" href="./user.css" />
+  <style>
+    :root {
+      --bg: transparent;
+      --text: #ffffff;
+      --victory: #4caf50;
+      --defeat: #f44336;
+      --shadow: 0 0 12px rgba(0, 0, 0, 0.75);
+      --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --value-size: 72px;
+      --label-size: 26px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .overlay {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 32px;
+      box-sizing: border-box;
+    }
+
+    .counter-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 32px;
+    }
+
+    .card {
+      text-align: center;
+      text-shadow: var(--shadow);
+    }
+
+    .label {
+      font-size: var(--label-size);
+      letter-spacing: 0.04em;
+      opacity: 0.9;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: var(--value-size);
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .card.victory .label,
+    .card.victory .value {
+      color: var(--victory);
+    }
+
+    .card.defeat .label,
+    .card.defeat .value {
+      color: var(--defeat);
+    }
+
+    .last-update {
+      font-size: 18px;
+      opacity: 0.9;
+      text-shadow: var(--shadow);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.35);
+      box-shadow: var(--shadow);
+      font-size: 16px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #8bc34a;
+      box-shadow: 0 0 0 4px rgba(139, 195, 74, 0.35);
+    }
+
+    .dot.error {
+      background: #ff9800;
+      box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <!-- このHTML/CSS/JSはビルド不要で直接編集できます -->
+  <div id="app">
+    <div class="overlay">
+      <div class="counter-row">
+        <div class="card victory">
+          <div class="label">Victory</div>
+          <div class="value">{{ victories }}</div>
+        </div>
+        <div class="card defeat">
+          <div class="label">Defeat</div>
+          <div class="value">{{ defeats }}</div>
+        </div>
+      </div>
+
+      <div class="last-update">
+        {{ formattedLastUpdate }}
+      </div>
+
+      <div class="status">
+        <span class="dot" :class="{ error: !connected }"></span>
+        <span>{{ statusText }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CDN版 Vue (ビルド不要) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script type="module">
+    const { createApp, ref, computed, onMounted, onBeforeUnmount } = Vue;
+
+    createApp({
+      setup() {
+        const victories = ref(0);
+        const defeats = ref(0);
+        const lastOutcome = ref(null);
+        const lastUpdated = ref(null);
+        const connected = ref(false);
+
+        const formattedLastUpdate = computed(() => {
+          if (!lastUpdated.value || !lastOutcome.value) return "更新なし";
+          const date = new Date(lastUpdated.value * 1000);
+          const outcomeText = lastOutcome.value === "victory" ? "Victory" : "Defeat";
+          return `${date.toLocaleString("ja-JP")} - ${outcomeText}`;
+        });
+
+        const statusText = computed(() =>
+          connected.value ? "接続中 (SSE)" : "再接続待ち..."
+        );
+
+        let es = null;
+
+        const connect = () => {
+          if (es) {
+            es.close();
+            es = null;
+          }
+          es = new EventSource("/events");
+          es.addEventListener("open", () => {
+            connected.value = true;
+          });
+          es.addEventListener("counter-update", (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              victories.value = data.victories ?? 0;
+              defeats.value = data.defeats ?? 0;
+              lastOutcome.value = data.last_outcome ?? null;
+              lastUpdated.value = data.timestamp ?? null;
+            } catch (err) {
+              console.error("Failed to parse counter-update", err);
+            }
+          });
+          es.onerror = () => {
+            connected.value = false;
+            // 簡易リトライ
+            setTimeout(connect, 2000);
+          };
+        };
+
+        onMounted(connect);
+        onBeforeUnmount(() => {
+          if (es) es.close();
+        });
+
+        return {
+          victories,
+          defeats,
+          formattedLastUpdate,
+          statusText,
+          connected,
+        };
+      },
+    }).mount("#app");
+  </script>
+
+  <!-- ユーザー独自のJSがあれば user.js を配置（任意） -->
+  <script type="module" src="./user.js"></script>
+</body>
+</html>
