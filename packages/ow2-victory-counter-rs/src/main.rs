@@ -223,7 +223,7 @@ async fn detection_loop(
         };
 
         // 2. 前処理（クロップ）
-        let processed_image = match obs_capture.preprocess(image.clone(), crop_rect) {
+        let processed_image = match OBSCapture::preprocess(image.clone(), crop_rect) {
             Ok(img) => img,
             Err(e) => {
                 warn!("Failed to preprocess image: {}", e);

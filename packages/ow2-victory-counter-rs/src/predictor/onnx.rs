@@ -181,7 +181,7 @@ impl VictoryPredictor {
             (class_idx, confidence, predicted_class, probabilities)
         };
 
-        let outcome = self.class_to_outcome(&predicted_class);
+        let outcome = Self::class_to_outcome(&predicted_class);
 
         debug!(
             "Prediction: class={}, outcome={}, confidence={:.4}",
@@ -238,7 +238,7 @@ impl VictoryPredictor {
     }
 
     /// クラス名を outcome に変換
-    fn class_to_outcome(&self, class: &str) -> String {
+    fn class_to_outcome(class: &str) -> String {
         match class {
             "victory_text" | "victory_progressbar" => "victory".to_string(),
             "defeat_text" | "defeat_progressbar" => "defeat".to_string(),
@@ -252,18 +252,14 @@ impl VictoryPredictor {
 mod tests {
     use super::*;
 
+
     #[test]
     fn test_class_to_outcome() {
-        let predictor = VictoryPredictor {
-            session: unsafe { std::mem::zeroed() }, // テスト用ダミー
-            label_map: HashMap::new(),
-        };
-
-        assert_eq!(predictor.class_to_outcome("victory_text"), "victory");
-        assert_eq!(predictor.class_to_outcome("victory_progressbar"), "victory");
-        assert_eq!(predictor.class_to_outcome("defeat_text"), "defeat");
-        assert_eq!(predictor.class_to_outcome("defeat_progressbar"), "defeat");
-        assert_eq!(predictor.class_to_outcome("none"), "none");
-        assert_eq!(predictor.class_to_outcome("unknown"), "none");
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_text"), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar"), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text"), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar"), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("none"), "none");
+        assert_eq!(VictoryPredictor::class_to_outcome("unknown"), "none");
     }
 }

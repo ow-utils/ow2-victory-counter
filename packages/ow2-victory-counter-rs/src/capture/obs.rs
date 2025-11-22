@@ -116,7 +116,6 @@ impl OBSCapture {
 
     /// 画像の前処理 (クロップ)
     pub fn preprocess(
-        &self,
         image: DynamicImage,
         crop_rect: (u32, u32, u32, u32),
     ) -> Result<DynamicImage, CaptureError> {
@@ -159,23 +158,18 @@ impl OBSCapture {
 mod tests {
     use super::*;
 
+
     #[test]
     fn test_crop_validation() {
         // テスト用のダミー画像を作成
         let dummy_image = DynamicImage::new_rgb8(1920, 1080);
-        let capture = OBSCapture {
-            client: unsafe { std::mem::zeroed() }, // テスト用ダミー
-            source_name: "test".to_string(),
-            width: 1920,
-            height: 1080,
-        };
 
         // 有効なクロップ
-        let result = capture.preprocess(dummy_image.clone(), (0, 0, 100, 100));
+        let result = OBSCapture::preprocess(dummy_image.clone(), (0, 0, 100, 100));
         assert!(result.is_ok());
 
         // 無効なクロップ (範囲外)
-        let result = capture.preprocess(dummy_image.clone(), (1900, 1000, 100, 100));
+        let result = OBSCapture::preprocess(dummy_image.clone(), (1900, 1000, 100, 100));
         assert!(result.is_err());
     }
 }
