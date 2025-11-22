@@ -35,6 +35,7 @@ pub fn app(state: AppState) -> Router {
         .route("/api/initialize", post(initialize))
         .route("/api/adjust", post(adjust))
         .nest_service("/assets", ServeDir::new("frontend/dist/assets"))
+        .fallback_service(ServeDir::new("frontend/dist"))
         .with_state(state);
 
     // 開発モード: Vite dev server が静的ファイルを提供
@@ -53,7 +54,7 @@ pub fn app(state: AppState) -> Router {
 }
 
 async fn serve_obs_ui() -> Html<String> {
-    // 開発モード: Viteプロキシ経由、本番モード: バイナリー組み込み
+    // 開発モード: Viteプロキシ経由、本番モード: ファイルシステムから配信
     #[cfg(debug_assertions)]
     {
         Html(
@@ -78,13 +79,14 @@ async fn serve_obs_ui() -> Html<String> {
 
     #[cfg(not(debug_assertions))]
     {
-        // 本番モード: フロントエンドビルド成果物を組み込み
-        Html(include_str!("../../frontend/dist/obs.html").to_string())
+        let html = std::fs::read_to_string("frontend/dist/obs.html")
+            .unwrap_or_else(|_| "<h1>obs.html not found</h1>".to_string());
+        Html(html)
     }
 }
 
 async fn serve_admin_ui() -> Html<String> {
-    // 開発モード: Viteプロキシ経由、本番モード: バイナリー組み込み
+    // 開発モード: Viteプロキシ経由、本番モード: ファイルシステムから配信
     #[cfg(debug_assertions)]
     {
         Html(
@@ -109,8 +111,9 @@ async fn serve_admin_ui() -> Html<String> {
 
     #[cfg(not(debug_assertions))]
     {
-        // 本番モード: フロントエンドビルド成果物を組み込み
-        Html(include_str!("../../frontend/dist/admin.html").to_string())
+        let html = std::fs::read_to_string("frontend/dist/admin.html")
+            .unwrap_or_else(|_| "<h1>admin.html not found</h1>".to_string());
+        Html(html)
     }
 }
 
