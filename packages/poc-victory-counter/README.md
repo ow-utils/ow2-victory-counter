@@ -2,6 +2,9 @@
 
 このディレクトリーには Overwatch 2 の勝敗カウンター関連プロジェクトをまとめています。
 
+PoCとしてPythonで実装を行ったものです。
+正式なものとしては [ow2-victory-trainer](../ow2-victory-trainer/README.md), [ow2-victory-counter-rs](../ow2-victory-counter-rs/README.md) に引き継いでおり、このプロジェクトはもはや更新されません。
+
 ## プロジェクト構成
 
 - `victory-detector/`  
