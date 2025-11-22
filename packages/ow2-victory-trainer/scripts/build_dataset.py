@@ -84,7 +84,8 @@ def _process_structured_samples(
         if not label_dir.is_dir():
             continue
         label = label_dir.name
-        for image_path in sorted(label_dir.glob("*.png")):
+        # サブディレクトリも含めて PNG を収集
+        for image_path in sorted(label_dir.rglob("*.png")):
             image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
             if image is None:
                 continue
@@ -104,12 +105,15 @@ def _process_structured_samples(
             w = max(1, min(w, width - x))
             h = max(1, min(h, height - y))
 
+            # ラベル配下での相対パスを保持して出力先を決定
+            rel_path = image_path.relative_to(label_dir)
+
             _write_sample(
                 image=image,
                 crop=(x, y, w, h),
                 output_root=output_root,
                 label=label,
-                file_name=image_path.name,
+                rel_path=rel_path,
                 size=size,
                 mask_regions=mask_regions,
             )
@@ -139,7 +143,7 @@ def _write_sample(
     crop: tuple[int, int, int, int],
     output_root: Path,
     label: str,
-    file_name: str,
+    rel_path: Path,
     size: int | None,
     mask_regions: list[tuple[int, int, int, int]] | None = None,
 ) -> None:
@@ -166,9 +170,9 @@ def _write_sample(
         processed = cropped
         size_info = f"original=({processed.shape[1]},{processed.shape[0]})"
 
-    output_dir = output_root / label
+    output_dir = output_root / label / rel_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / file_name
+    output_path = output_dir / rel_path.name
     cv2.imwrite(str(output_path), processed)
     print(f"[INFO] {output_path} を出力しました。 (crop=({x},{y},{w},{h}), {size_info})")
 

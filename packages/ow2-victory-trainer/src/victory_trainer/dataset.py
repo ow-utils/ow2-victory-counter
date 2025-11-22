@@ -27,7 +27,8 @@ class VictoryDataset(Dataset):
 
         for label_name, label_idx in self.label_map.items():
             label_dir = root / label_name
-            for path in label_dir.glob("*.png"):
+            # サブディレクトリも含めてPNGを収集
+            for path in sorted(label_dir.rglob("*.png")):
                 self.samples.append((path, label_idx))
 
         if not self.samples:
