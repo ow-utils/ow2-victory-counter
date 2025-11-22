@@ -1,0 +1,58 @@
+# ow2-victory-detector 設定ファイル
+# このファイルを config.toml にコピーして使用してください
+
+[obs]
+# OBS WebSocket接続設定
+host = "localhost"
+port = 4455
+# password = "your-password"  # パスワードが設定されている場合のみ
+source_name = "ゲームキャプチャ" # OW2をキャプチャしているOBSのソース名
+
+[model]
+# 推論モデル設定
+model_path = "models/victory_classifier.onnx"
+label_map_path = "models/victory_classifier.label_map.json"
+
+[preprocessing]
+# 画像前処理設定
+# クロップ領域: [x, y, width, height]
+# 1920x1080 解像度での勝敗表示の標準的な位置
+crop_rect = [460, 378, 995, 550]
+
+# 注意: 解像度が異なる場合や、勝敗表示の位置が異なる場合は調整が必要です
+# フル画面を使用する場合:
+# crop_rect = [0, 0, 1920, 1080]
+
+[state]
+# 状態管理設定
+# クールダウン時間（秒）: 勝敗判定後、次の判定までの待機時間
+cooldown_seconds = 10
+
+# 連続検知必要回数: 誤検知防止のため、何回連続で同じ結果を検知したらカウントするか
+required_consecutive = 3
+
+[server]
+# HTTPサーバー設定
+host = "127.0.0.1"
+port = 3000
+
+[detection]
+# 検知ループ設定
+# 検知間隔（ミリ秒）: 画像キャプチャと推論の実行間隔
+interval_ms = 1000
+
+[screenshot]
+# スクリーンショット保存設定
+# 勝敗判定時にスクリーンショットを保存する機能
+# 誤検知の分析やモデル改善に活用できます
+enabled = false
+save_dir = "screenshots"  # 保存先ディレクトリ（相対パスまたは絶対パス）
+
+[debug]
+# デバッグ機能（開発・検証用）
+# 推論時の画像と結果を保存してPoC比較や問題の可視化に活用
+enabled = false
+save_dir = "debug"
+save_cropped = true        # クロップ後の元画像を保存
+save_preprocessed = false  # 前処理後（リサイズ後）の画像を保存（未実装）
+save_results = true        # 推論結果JSONを保存

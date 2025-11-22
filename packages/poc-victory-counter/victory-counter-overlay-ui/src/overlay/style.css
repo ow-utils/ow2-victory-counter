@@ -1,0 +1,127 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.overlay-body {
+  margin: 0;
+  padding: 12px;
+  transform-origin: top left;
+}
+
+.overlay-root {
+  display: grid;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.overlay-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.overlay-card {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.7);
+  text-align: center;
+  border-left: 4px solid transparent;
+  color: inherit;
+}
+
+.overlay-card__label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.overlay-card__value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.overlay-card--victory {
+  border-color: #38bdf8;
+}
+
+.overlay-card--defeat {
+  border-color: #f87171;
+}
+
+.overlay-card--draw {
+  border-color: #94a3b8;
+}
+
+.overlay-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.overlay-history__item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.overlay-history__item--victory {
+  border-left: 4px solid #38bdf8;
+}
+
+.overlay-history__item--defeat {
+  border-left: 4px solid #f87171;
+}
+
+.overlay-history__item--draw {
+  border-left: 4px solid #94a3b8;
+}
+
+.overlay-history__time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}
+
+.overlay-history__value {
+  letter-spacing: 0.04em;
+}
+
+.overlay-history__delta {
+  font-weight: 600;
+}
+
+.overlay-history__note {
+  grid-column: 2 / span 2;
+  font-size: 0.7rem;
+  opacity: 0.65;
+}
+
+.overlay-theme--dark {
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.overlay-theme--light {
+  color: #1f2937;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.overlay-theme--transparent {
+  color: #f8fafc;
+  background: transparent;
+}

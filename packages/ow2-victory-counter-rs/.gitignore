@@ -1,0 +1,38 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Node.js / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+# frontend/pnpm-lock.yaml
+# frontend/package-lock.json
+# frontend/yarn.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# ONNX models (large files)
+# models/*.onnx
+# models/*.onnx.label_map.json
+
+# Custom config (user-specific)
+# templates/custom.css
+# config/ui-config.json

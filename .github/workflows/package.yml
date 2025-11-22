@@ -1,0 +1,127 @@
+name: 配布パッケージ生成
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  package:
+    name: Windows配布ビルド
+    runs-on: windows-latest
+
+    steps:
+      - name: リポジトリーをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: pnpmをセットアップ
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: フロントエンド依存関係をインストール
+        working-directory: packages/ow2-victory-counter-rs/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: フロントエンドをビルド
+        working-directory: packages/ow2-victory-counter-rs/frontend
+        run: pnpm build
+
+      - name: Rustツールチェーンをセットアップ
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargoビルドキャッシュを有効化
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: packages/ow2-victory-counter-rs
+          shared-key: windows-stable
+
+      - name: リリースビルドを実行
+        working-directory: packages/ow2-victory-counter-rs
+        run: cargo build --release --locked
+
+      - name: pandocをインストール
+        shell: pwsh
+        run: choco install pandoc -y --no-progress
+
+      - name: 配布フォルダーを作成
+        shell: pwsh
+        working-directory: packages/ow2-victory-counter-rs
+        run: |
+          $ErrorActionPreference = "Stop"
+          $distRoot = Join-Path (Resolve-Path ".") "dist"
+          $packageRoot = Join-Path $distRoot "ow2-victory-counter-rs"
+
+          if (Test-Path $packageRoot) {
+            Remove-Item $packageRoot -Recurse -Force
+          }
+
+          if (-not (Test-Path $distRoot)) {
+            New-Item -ItemType Directory -Path $distRoot | Out-Null
+          }
+
+          New-Item -ItemType Directory -Path $packageRoot | Out-Null
+
+          Copy-Item "target/release/ow2-victory-detector.exe" $packageRoot -Force
+          Get-ChildItem "target/release" -Filter "*.dll" -ErrorAction SilentlyContinue | Copy-Item -Destination $packageRoot -Force
+
+          Copy-Item "models" -Destination $packageRoot -Recurse -Force
+          Copy-Item "templates" -Destination $packageRoot -Recurse -Force
+          # フロントエンド成果物は frontend/dist 配下に配置（サーバーは frontend/dist/assets を参照）
+          $frontendDest = Join-Path $packageRoot "frontend/dist"
+          New-Item -ItemType Directory -Path $frontendDest -Force | Out-Null
+          Copy-Item "frontend/dist/*" -Destination $frontendDest -Recurse -Force
+
+          if (Test-Path "config") {
+            Copy-Item "config" -Destination $packageRoot -Recurse -Force
+          }
+          if (Test-Path "config.example.toml") {
+            Copy-Item "config.example.toml" (Join-Path $packageRoot "config.example.toml") -Force
+          }
+
+          Copy-Item "README.md" -Destination $packageRoot -Force
+          Copy-Item "debug.bat" -Destination $packageRoot -Force
+
+          $docsDest = Join-Path $packageRoot "docs/usage"
+          New-Item -ItemType Directory -Path $docsDest -Force | Out-Null
+          Copy-Item "..\\..\\docs\\usage\\run.md" -Destination $docsDest -Force
+
+          # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
+          $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
+          $htmlDest = Join-Path $packageRoot "利用方法.html"
+          $header = Join-Path (Resolve-Path "..\\..\\docs\\assets\\pandoc") "header.html"
+          pandoc $mdSource -f gfm -t html5 -s --include-in-header=$header -o $htmlDest
+
+      - name: リリースZIPを作成
+        shell: pwsh
+        working-directory: packages/ow2-victory-counter-rs
+        run: |
+          $ErrorActionPreference = "Stop"
+          $distRoot = Join-Path (Resolve-Path ".") "dist"
+          $packageRoot = Join-Path $distRoot "ow2-victory-counter-rs"
+          $zipPath = Join-Path $distRoot "ow2-victory-counter-rs.zip"
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+          Compress-Archive -Path $packageRoot -DestinationPath $zipPath -Force
+
+      - name: アーティファクトをアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: ow2-victory-counter-rs-${{ github.ref_name }}
+          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs
+          if-no-files-found: error
+
+      - name: GitHub Release作成＆アセット添付
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs.zip
+          draft: false
+          prerelease: false

@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# uv lockfile (generated per環境)
+uv.lock
+.uv-cache/
+.venv/
+
+# Env files
+.env
+
+/.serena/
+
+# Data and models (large binary files)
+packages/obs-victory-counter/victory-detector/data/
+packages/obs-victory-counter/victory-detector/dataset/
+packages/obs-victory-counter/victory-detector/data_backup/
+packages/poc-victory-counter/victory-detector/data/
+packages/poc-victory-counter/victory-detector/dataset/
+packages/poc-victory-counter/victory-detector/data_backup/
