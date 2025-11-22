@@ -1,0 +1,28 @@
+[project]
+name = "ow2-victory-trainer"
+version = "0.1.0"
+description = "Overwatch 2 勝敗判定モデルの学習プロジェクト"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.3.4",
+    "opencv-python>=4.11.0.86",
+    "torch>=2.9.0",
+    "torchvision>=0.24.0",
+    "onnx>=1.16.0",
+    "onnxruntime>=1.16.0",
+    "pillow>=10.0.0",
+    "onnxscript>=0.5.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/victory_trainer"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

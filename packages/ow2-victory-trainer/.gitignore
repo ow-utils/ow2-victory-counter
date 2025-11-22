@@ -1,0 +1,19 @@
+# 学習データ（大容量）
+data/
+dataset/
+data_backup/
+
+# Python関連
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 環境関連
+.venv/
+
+# エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

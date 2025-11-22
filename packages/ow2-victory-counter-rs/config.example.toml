@@ -12,12 +12,18 @@ source_name = "ゲームキャプチャ" # OW2をキャプチャしているOBS�
 # 推論モデル設定
 model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
+# クラス名→outcome のマッピング（省略時はクラス名に victory/defeat を含むかで判定し、それ以外は none）
+# victory/defeat/none 以外の値も設定可能だが、通常は以下の3種類を使用
+# class_map = { victory_progressbar = "victory", defeat_progressbar = "defeat", none = "none" }
 
 [preprocessing]
 # 画像前処理設定
 # クロップ領域: [x, y, width, height]
 # 1920x1080 解像度での勝敗表示の標準的な位置
-crop_rect = [460, 378, 995, 550]
+crop_rect = [36, 123, 248, 92]
+# モデル入力サイズ（ONNXエクスポート時の height/width と一致させる）
+resize_width = 248
+resize_height = 92
 
 # 注意: 解像度が異なる場合や、勝敗表示の位置が異なる場合は調整が必要です
 # フル画面を使用する場合:
@@ -46,13 +52,13 @@ interval_ms = 1000
 # 勝敗判定時にスクリーンショットを保存する機能
 # 誤検知の分析やモデル改善に活用できます
 enabled = false
-save_dir = "screenshots"  # 保存先ディレクトリ（相対パスまたは絶対パス）
+save_dir = "screenshots" # 保存先ディレクトリ（相対パスまたは絶対パス）
 
 [debug]
 # デバッグ機能（開発・検証用）
 # 推論時の画像と結果を保存してPoC比較や問題の可視化に活用
 enabled = false
 save_dir = "debug"
-save_cropped = true        # クロップ後の元画像を保存
-save_preprocessed = false  # 前処理後（リサイズ後）の画像を保存（未実装）
-save_results = true        # 推論結果JSONを保存
+save_cropped = true       # クロップ後の元画像を保存
+save_preprocessed = false # 前処理後（リサイズ後）の画像を保存（未実装）
+save_results = true       # 推論結果JSONを保存

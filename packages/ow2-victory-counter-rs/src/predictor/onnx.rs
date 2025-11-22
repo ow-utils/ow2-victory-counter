@@ -65,11 +65,20 @@ where
 pub struct VictoryPredictor {
     session: Session,
     label_map: HashMap<usize, String>,
+    class_map: HashMap<String, String>,
+    target_width: u32,
+    target_height: u32,
 }
 
 impl VictoryPredictor {
     /// ONNX モデルとラベルマップを読み込んで VictoryPredictor を作成
-    pub fn new(model_path: &str, label_map_path: &str) -> Result<Self, PredictionError> {
+    pub fn new(
+        model_path: &str,
+        label_map_path: &str,
+        class_map: HashMap<String, String>,
+        target_width: u32,
+        target_height: u32,
+    ) -> Result<Self, PredictionError> {
         info!("Loading ONNX model from: {}", model_path);
 
         // ONNX Session の初期化
@@ -96,6 +105,9 @@ impl VictoryPredictor {
         Ok(Self {
             session,
             label_map,
+            class_map,
+            target_width,
+            target_height,
         })
     }
 
@@ -181,7 +193,7 @@ impl VictoryPredictor {
             (class_idx, confidence, predicted_class, probabilities)
         };
 
-        let outcome = Self::class_to_outcome(&predicted_class);
+        let outcome = Self::class_to_outcome(&predicted_class, &self.class_map);
 
         debug!(
             "Prediction: class={}, outcome={}, confidence={:.4}",
@@ -197,20 +209,20 @@ impl VictoryPredictor {
     }
 
     /// 画像を NCHW テンソルに変換 (N=1, C=3, H=height, W=width)
-    /// ONNXモデルが期待するサイズ（283x512）にリサイズする
+    /// ONNXモデルが期待するサイズにリサイズする
     fn image_to_tensor(&self, image: &DynamicImage) -> Result<Array4<f32>, PredictionError> {
-        const TARGET_WIDTH: u32 = 512;
-        const TARGET_HEIGHT: u32 = 283;
-
         debug!(
             "Original image size: {}x{}, resizing to {}x{}",
-            image.width(), image.height(), TARGET_WIDTH, TARGET_HEIGHT
+            image.width(),
+            image.height(),
+            self.target_width,
+            self.target_height
         );
 
         // モデルが期待するサイズにリサイズ
         let resized = image.resize_exact(
-            TARGET_WIDTH,
-            TARGET_HEIGHT,
+            self.target_width,
+            self.target_height,
             image::imageops::FilterType::Triangle,
         );
 
@@ -218,15 +230,16 @@ impl VictoryPredictor {
 
         debug!(
             "Converting image to tensor: {}x{} RGB",
-            TARGET_WIDTH, TARGET_HEIGHT
+            self.target_width, self.target_height
         );
 
         // NCHW 形式のテンソルを作成
-        let mut tensor = Array4::<f32>::zeros((1, 3, TARGET_HEIGHT as usize, TARGET_WIDTH as usize));
+        let mut tensor =
+            Array4::<f32>::zeros((1, 3, self.target_height as usize, self.target_width as usize));
 
         // HWC (image) → CHW (tensor) 変換 + 正規化 (0-255 → 0-1)
-        for y in 0..TARGET_HEIGHT {
-            for x in 0..TARGET_WIDTH {
+        for y in 0..self.target_height {
+            for x in 0..self.target_width {
                 let pixel = rgb_image.get_pixel(x, y);
                 tensor[[0, 0, y as usize, x as usize]] = pixel[0] as f32 / 255.0; // R
                 tensor[[0, 1, y as usize, x as usize]] = pixel[1] as f32 / 255.0; // G
@@ -238,12 +251,18 @@ impl VictoryPredictor {
     }
 
     /// クラス名を outcome に変換
-    fn class_to_outcome(class: &str) -> String {
-        match class {
-            "victory_text" | "victory_progressbar" => "victory".to_string(),
-            "defeat_text" | "defeat_progressbar" => "defeat".to_string(),
-            "none" => "none".to_string(),
-            _ => "none".to_string(),
+    fn class_to_outcome(class: &str, class_map: &HashMap<String, String>) -> String {
+        if let Some(mapped) = class_map.get(class) {
+            return mapped.clone();
+        }
+
+        let lower = class.to_lowercase();
+        if lower.contains("victory") {
+            "victory".to_string()
+        } else if lower.contains("defeat") {
+            "defeat".to_string()
+        } else {
+            "none".to_string()
         }
     }
 }
@@ -255,11 +274,26 @@ mod tests {
 
     #[test]
     fn test_class_to_outcome() {
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_text"), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar"), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text"), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar"), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("none"), "none");
-        assert_eq!(VictoryPredictor::class_to_outcome("unknown"), "none");
+        let empty_map: HashMap<String, String> = HashMap::new();
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &empty_map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &empty_map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text", &empty_map), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &empty_map), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("none", &empty_map), "none");
+        assert_eq!(VictoryPredictor::class_to_outcome("unknown", &empty_map), "none");
+    }
+
+    #[test]
+    fn test_class_to_outcome_with_config_map() {
+        let mut map = HashMap::new();
+        map.insert("victory_progressbar".to_string(), "v".to_string());
+        map.insert("defeat_progressbar".to_string(), "d".to_string());
+        map.insert("none".to_string(), "n".to_string());
+
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &map), "v");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &map), "d");
+        // マップに無いクラスはフォールバックで判定
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("unknown", &map), "none");
     }
 }

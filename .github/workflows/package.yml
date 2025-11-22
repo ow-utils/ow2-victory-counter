@@ -18,12 +18,12 @@ jobs:
       - name: Node.jsをセットアップ
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: pnpmをセットアップ
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: フロントエンド依存関係をインストール
         working-directory: packages/ow2-victory-counter-rs/frontend

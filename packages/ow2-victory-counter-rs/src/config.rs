@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,12 +42,21 @@ pub struct ModelConfig {
     pub model_path: PathBuf,
     /// ラベルマップJSONファイルのパス
     pub label_map_path: PathBuf,
+    /// クラス名→outcome のマッピング（未指定時はフォールバックロジックを使用）
+    #[serde(default = "default_class_map")]
+    pub class_map: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreprocessingConfig {
     /// クロップ領域 [x, y, width, height]
     pub crop_rect: [u32; 4],
+    /// 推論モデルに入力するリサイズ後の幅
+    #[serde(default = "default_resize_width")]
+    pub resize_width: u32,
+    /// 推論モデルに入力するリサイズ後の高さ
+    #[serde(default = "default_resize_height")]
+    pub resize_height: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,6 +144,14 @@ fn default_detection_interval_ms() -> u64 {
     1000
 }
 
+fn default_resize_width() -> u32 {
+    512
+}
+
+fn default_resize_height() -> u32 {
+    283
+}
+
 fn default_screenshot_enabled() -> bool {
     false
 }
@@ -162,6 +180,10 @@ fn default_debug_save_results() -> bool {
     true
 }
 
+fn default_class_map() -> HashMap<String, String> {
+    HashMap::new()
+}
+
 impl Config {
     /// TOMLファイルから設定を読み込む
     pub fn from_file(path: &str) -> Result<Self, ConfigError> {
@@ -187,9 +209,12 @@ impl Config {
             model: ModelConfig {
                 model_path: model_path.clone(),
                 label_map_path: model_path.with_extension("label_map.json"),
+                class_map: default_class_map(),
             },
             preprocessing: PreprocessingConfig {
                 crop_rect: [0, 0, 1920, 1080], // フル画面
+                resize_width: default_resize_width(),
+                resize_height: default_resize_height(),
             },
             state: StateConfig {
                 cooldown_seconds: default_cooldown_seconds(),
