@@ -12,6 +12,9 @@ source_name = "ゲームキャプチャ" # OW2をキャプチャしているOBS�
 # 推論モデル設定
 model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
+# クラス名→outcome のマッピング（省略時はクラス名に victory/defeat を含むかで判定し、それ以外は none）
+# victory/defeat/none 以外の値も設定可能だが、通常は以下の3種類を使用
+# class_map = { victory_progressbar = "victory", defeat_progressbar = "defeat", none = "none" }
 
 [preprocessing]
 # 画像前処理設定

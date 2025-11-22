@@ -116,6 +116,7 @@ async fn run_server(config_path: String) -> Result<(), Box<dyn std::error::Error
     let predictor = VictoryPredictor::new(
         config.model.model_path.to_str().unwrap(),
         config.model.label_map_path.to_str().unwrap(),
+        config.model.class_map.clone(),
     )?;
     info!("ONNX model loaded successfully");
 
@@ -370,6 +371,7 @@ async fn run_predict(
     let mut predictor = VictoryPredictor::new(
         model_path.to_str().unwrap(),
         label_map_path.to_str().unwrap(),
+        std::collections::HashMap::new(),
     )?;
     info!("ONNX model loaded successfully");
 

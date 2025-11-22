@@ -65,11 +65,16 @@ where
 pub struct VictoryPredictor {
     session: Session,
     label_map: HashMap<usize, String>,
+    class_map: HashMap<String, String>,
 }
 
 impl VictoryPredictor {
     /// ONNX モデルとラベルマップを読み込んで VictoryPredictor を作成
-    pub fn new(model_path: &str, label_map_path: &str) -> Result<Self, PredictionError> {
+    pub fn new(
+        model_path: &str,
+        label_map_path: &str,
+        class_map: HashMap<String, String>,
+    ) -> Result<Self, PredictionError> {
         info!("Loading ONNX model from: {}", model_path);
 
         // ONNX Session の初期化
@@ -96,6 +101,7 @@ impl VictoryPredictor {
         Ok(Self {
             session,
             label_map,
+            class_map,
         })
     }
 
@@ -181,7 +187,7 @@ impl VictoryPredictor {
             (class_idx, confidence, predicted_class, probabilities)
         };
 
-        let outcome = Self::class_to_outcome(&predicted_class);
+        let outcome = Self::class_to_outcome(&predicted_class, &self.class_map);
 
         debug!(
             "Prediction: class={}, outcome={}, confidence={:.4}",
@@ -238,12 +244,18 @@ impl VictoryPredictor {
     }
 
     /// クラス名を outcome に変換
-    fn class_to_outcome(class: &str) -> String {
-        match class {
-            "victory_text" | "victory_progressbar" => "victory".to_string(),
-            "defeat_text" | "defeat_progressbar" => "defeat".to_string(),
-            "none" => "none".to_string(),
-            _ => "none".to_string(),
+    fn class_to_outcome(class: &str, class_map: &HashMap<String, String>) -> String {
+        if let Some(mapped) = class_map.get(class) {
+            return mapped.clone();
+        }
+
+        let lower = class.to_lowercase();
+        if lower.contains("victory") {
+            "victory".to_string()
+        } else if lower.contains("defeat") {
+            "defeat".to_string()
+        } else {
+            "none".to_string()
         }
     }
 }
@@ -255,11 +267,26 @@ mod tests {
 
     #[test]
     fn test_class_to_outcome() {
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_text"), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar"), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text"), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar"), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("none"), "none");
-        assert_eq!(VictoryPredictor::class_to_outcome("unknown"), "none");
+        let empty_map: HashMap<String, String> = HashMap::new();
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &empty_map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &empty_map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text", &empty_map), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &empty_map), "defeat");
+        assert_eq!(VictoryPredictor::class_to_outcome("none", &empty_map), "none");
+        assert_eq!(VictoryPredictor::class_to_outcome("unknown", &empty_map), "none");
+    }
+
+    #[test]
+    fn test_class_to_outcome_with_config_map() {
+        let mut map = HashMap::new();
+        map.insert("victory_progressbar".to_string(), "v".to_string());
+        map.insert("defeat_progressbar".to_string(), "d".to_string());
+        map.insert("none".to_string(), "n".to_string());
+
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &map), "v");
+        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &map), "d");
+        // マップに無いクラスはフォールバックで判定
+        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &map), "victory");
+        assert_eq!(VictoryPredictor::class_to_outcome("unknown", &map), "none");
     }
 }
