@@ -12,7 +12,6 @@
   let victoryValueEl: HTMLDivElement | null = null;
   let defeatValueEl: HTMLDivElement | null = null;
   let lastUpdateEl: HTMLDivElement | null = null;
-  let winrateFillEl: HTMLDivElement | null = null;
 
   // Web Animations API で確実に再生させる
   const playBump = (el: HTMLElement | null) => {
@@ -117,10 +116,10 @@
     <div class="winrate">
       <div class="winrate-header">
         <span class="winrate-label">Winrate</span>
-        <span class="winrate-value">{winrate}%</span>
+        <span class="winrate-value">{winrate()}%</span>
       </div>
       <div class="winrate-bar">
-        <div class="winrate-fill" bind:this={winrateFillEl} style={`width: ${winrate}%;`}></div>
+        <div class="winrate-fill" style={`width: ${winrate()}%;`}></div>
       </div>
     </div>
 
