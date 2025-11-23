@@ -35,7 +35,7 @@ resize_height = 92
 cooldown_seconds = 10
 
 # 連続検知必要回数: 誤検知防止のため、何回連続で同じ結果を検知したらカウントするか
-required_consecutive = 3
+required_consecutive = 1
 
 [server]
 # HTTPサーバー設定
@@ -45,7 +45,7 @@ port = 3000
 [detection]
 # 検知ループ設定
 # 検知間隔（ミリ秒）: 画像キャプチャと推論の実行間隔
-interval_ms = 1000
+interval_ms = 250
 
 [screenshot]
 # スクリーンショット保存設定
