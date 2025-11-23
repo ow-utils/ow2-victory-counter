@@ -136,7 +136,7 @@
     --victory-color: #7bf36b;
     --defeat-color: #ff5f8d;
     --font-size: clamp(52px, 8vw, 96px);
-    --gap: clamp(16px, 4vw, 48px);
+    --gap: clamp(12px, 3vw, 28px);
 
     display: grid;
     grid-template-columns: repeat(2, minmax(200px, 1fr));
