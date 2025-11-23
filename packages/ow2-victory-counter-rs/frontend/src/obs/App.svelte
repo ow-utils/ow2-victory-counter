@@ -12,6 +12,7 @@
   let victoryValueEl: HTMLDivElement | null = null;
   let defeatValueEl: HTMLDivElement | null = null;
   let lastUpdateEl: HTMLDivElement | null = null;
+  let winrateFillEl: HTMLDivElement | null = null;
 
   // Web Animations API で確実に再生させる
   const playBump = (el: HTMLElement | null) => {
@@ -45,6 +46,13 @@
     const formatted = date.toLocaleString('ja-JP');
     const outcomeText = lastOutcome === 'victory' ? 'Victory' : 'Defeat';
     return `最終更新: ${formatted} - ${outcomeText}`;
+  });
+
+  // 勝率（0除算ガード）
+  let winrate = $derived(() => {
+    const total = victories + defeats;
+    if (total === 0) return 0;
+    return Math.round((victories / total) * 100);
   });
 
   // onMount で SSE接続を確立
@@ -93,23 +101,33 @@
   });
 </script>
 
-<div class="counter-container">
-  <div class="counter-grid">
-    <div class="counter-item victory">
-      <div class="label">Victory</div>
-      <div class="value" bind:this={victoryValueEl}>{victories}</div>
+  <div class="counter-container">
+    <div class="counter-grid">
+      <div class="counter-item victory">
+        <div class="label">Victory</div>
+        <div class="value" bind:this={victoryValueEl}>{victories}</div>
     </div>
 
     <div class="counter-item defeat">
       <div class="label">Defeat</div>
       <div class="value" bind:this={defeatValueEl}>{defeats}</div>
     </div>
-  </div>
+    </div>
 
-  <div class="last-update" bind:this={lastUpdateEl}>
-    {formattedLastUpdate()}
+    <div class="winrate">
+      <div class="winrate-header">
+        <span class="winrate-label">Winrate</span>
+        <span class="winrate-value">{winrate}%</span>
+      </div>
+      <div class="winrate-bar">
+        <div class="winrate-fill" bind:this={winrateFillEl} style={`width: ${winrate}%;`}></div>
+      </div>
+    </div>
+
+    <div class="last-update" bind:this={lastUpdateEl}>
+      {formattedLastUpdate()}
+    </div>
   </div>
-</div>
 
 <style>
   :global(body) {
@@ -126,7 +144,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 48px;
+    padding: 48px 32px;
     box-sizing: border-box;
     color: #f5f8ff;
     background: transparent;
@@ -142,7 +160,7 @@
     grid-template-columns: repeat(2, minmax(200px, 320px));
     justify-content: center;
     gap: var(--gap);
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     width: min(900px, 92vw);
   }
 
@@ -212,5 +230,54 @@
     border-radius: 999px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+
+  .winrate {
+    width: min(720px, 92vw);
+    margin-bottom: 16px;
+  }
+
+  .winrate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    color: #e8edff;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+  }
+
+  .winrate-label {
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+
+  .winrate-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #b3ffd0;
+  }
+
+  .winrate-bar {
+    position: relative;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .winrate-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6cf3a4, #60ffc6);
+    box-shadow: 0 0 18px rgba(96, 255, 198, 0.5);
+    transition: width 280ms ease;
   }
 </style>
