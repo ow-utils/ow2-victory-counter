@@ -13,13 +13,29 @@
   let defeatValueEl: HTMLDivElement | null = null;
   let lastUpdateEl: HTMLDivElement | null = null;
 
-  // 更新時のワンショットアニメーション用
-  const triggerPulse = (el: HTMLElement | null, className: string) => {
+  // Web Animations API で確実に再生させる
+  const playBump = (el: HTMLElement | null) => {
     if (!el) return;
-    el.classList.remove(className);
-    // reflow で強制的にアニメーションをリセット
-    void el.offsetWidth;
-    el.classList.add(className);
+    el.animate(
+      [
+        { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(255,255,255,0.2))' },
+        { transform: 'scale(1.2)', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.5))' },
+        { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(255,255,255,0.2))' },
+      ],
+      { duration: 520, easing: 'ease' }
+    );
+  };
+
+  const playFlash = (el: HTMLElement | null) => {
+    if (!el) return;
+    el.animate(
+      [
+        { opacity: 0.4 },
+        { opacity: 1 },
+        { opacity: 0.9 },
+      ],
+      { duration: 600, easing: 'ease' }
+    );
   };
 
   // 最終更新情報のフォーマット
@@ -57,21 +73,21 @@
   // 値の変化を監視してアニメーションを走らせる
   $effect(() => {
     if (prevVictories !== null && victories !== prevVictories) {
-      triggerPulse(victoryValueEl, 'bump');
+      playBump(victoryValueEl);
     }
     prevVictories = victories;
   });
 
   $effect(() => {
     if (prevDefeats !== null && defeats !== prevDefeats) {
-      triggerPulse(defeatValueEl, 'bump');
+      playBump(defeatValueEl);
     }
     prevDefeats = defeats;
   });
 
   $effect(() => {
     if (prevUpdated !== null && lastUpdated !== prevUpdated) {
-      triggerPulse(lastUpdateEl, 'flash');
+      playFlash(lastUpdateEl);
     }
     prevUpdated = lastUpdated;
   });
@@ -147,27 +163,7 @@
     font-weight: bold;
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
     display: inline-block;
-  }
-  .value.bump {
-    animation: bump 520ms ease;
-  }
-
-  @keyframes bump {
-    0% {
-      transform: scale(1);
-      filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.2));
-      color: inherit;
-    }
-    35% {
-      transform: scale(1.18);
-      filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
-      color: #f4f4f4;
-    }
-    100% {
-      transform: scale(1);
-      filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.2));
-      color: inherit;
-    }
+    will-change: transform, filter;
   }
 
   .last-update {
@@ -175,20 +171,5 @@
     color: #ffffff;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
     opacity: 0.9;
-  }
-  .last-update.flash {
-    animation: flash 600ms ease;
-  }
-
-  @keyframes flash {
-    0% {
-      opacity: 0.4;
-    }
-    40% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0.9;
-    }
   }
 </style>
