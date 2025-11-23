@@ -166,8 +166,8 @@
   .counter-item {
     position: relative;
     text-align: center;
-    padding: clamp(14px, 3vw, 24px);
-    border-radius: 16px;
+    padding: clamp(10px, 2.6vw, 18px);
+    border-radius: 14px;
     background: rgba(12, 14, 28, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
@@ -182,7 +182,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 16px;
+    border-radius: 14px;
     background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.12), transparent 45%),
       radial-gradient(circle at 80% 15%, rgba(255, 255, 255, 0.08), transparent 50%);
     pointer-events: none;
