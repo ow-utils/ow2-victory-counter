@@ -115,12 +115,11 @@
   :global(body) {
     margin: 0;
     padding: 0;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 138, 0, 0.12), transparent 35%),
-      radial-gradient(circle at 80% 30%, rgba(106, 90, 249, 0.18), transparent 40%),
-      radial-gradient(circle at 50% 80%, rgba(255, 61, 119, 0.14), transparent 35%),
-      #050510;
-    font-family: 'Bebas Neue', 'Arial Black', 'Arial', sans-serif;
-    letter-spacing: 0.02em;
+    background: radial-gradient(circle at 20% 20%, rgba(116, 198, 255, 0.12), transparent 35%),
+      radial-gradient(circle at 75% 25%, rgba(255, 188, 143, 0.14), transparent 40%),
+      linear-gradient(145deg, #0f1729, #0c1222 45%, #0d111d);
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    letter-spacing: 0.01em;
   }
 
   .counter-container {
@@ -135,10 +134,10 @@
   }
 
   .counter-grid {
-    --victory-color: #7bf36b;
-    --defeat-color: #ff5f8d;
-    --font-size: clamp(52px, 8vw, 96px);
-    --gap: clamp(16px, 4vw, 48px);
+    --victory-color: #a3ffcb;
+    --defeat-color: #ffb3c7;
+    --font-size: clamp(52px, 8vw, 92px);
+    --gap: clamp(16px, 4vw, 44px);
 
     display: grid;
     grid-template-columns: repeat(2, minmax(200px, 1fr));
@@ -153,38 +152,35 @@
     border-radius: 18px;
     text-align: center;
     overflow: hidden;
-    background: #09091a;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
     box-shadow:
-      0 10px 40px rgba(0, 0, 0, 0.45),
-      inset 0 0 40px rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.08);
+      0 18px 48px rgba(0, 0, 0, 0.35),
+      inset 0 0 24px rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     isolation: isolate;
   }
 
   .counter-item::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: 20px;
-    padding: 2px;
-    background: linear-gradient(120deg, #ff8a00, #ff3d77, #6a5af9, #00e7ff);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    z-index: -1;
-    filter: blur(1px);
-    opacity: 0.9;
+    inset: 0;
+    border-radius: 18px;
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12), transparent 45%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 50%);
+    z-index: 0;
+    pointer-events: none;
   }
 
   .counter-item::after {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 16px;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 45%),
-      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04), transparent 45%);
+    border-radius: 18px;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
     z-index: 0;
+    mix-blend-mode: screen;
   }
 
   .counter-content {
@@ -195,22 +191,23 @@
   .victory .value {
     color: var(--victory-color);
     text-shadow:
-      0 0 12px rgba(123, 243, 107, 0.55),
-      0 0 28px rgba(123, 243, 107, 0.35);
+      0 4px 18px rgba(163, 255, 203, 0.55),
+      0 0 32px rgba(163, 255, 203, 0.35);
   }
 
   .defeat .value {
     color: var(--defeat-color);
     text-shadow:
-      0 0 12px rgba(255, 95, 141, 0.55),
-      0 0 28px rgba(255, 95, 141, 0.35);
+      0 4px 18px rgba(255, 179, 199, 0.55),
+      0 0 32px rgba(255, 179, 199, 0.35);
   }
 
   .label {
     font-size: clamp(18px, 3vw, 28px);
     opacity: 0.95;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
+    font-weight: 600;
   }
 
   .value {
@@ -222,15 +219,15 @@
   }
 
   .last-update {
-    font-size: 17px;
-    color: #d6dcff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
-    opacity: 0.9;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 16px;
+    color: #e7ecff;
+    text-shadow: 1px 2px 8px rgba(0, 0, 0, 0.65);
+    opacity: 0.95;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     padding: 10px 16px;
     border-radius: 999px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 </style>
