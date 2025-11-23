@@ -6,6 +6,9 @@
   let defeats = $state(0);
   let lastOutcome = $state<string | null>(null);
   let lastUpdated = $state<number | null>(null);
+  let prevVictories: number | null = null;
+  let prevDefeats: number | null = null;
+  let prevUpdated: number | null = null;
   let victoryValueEl: HTMLDivElement | null = null;
   let defeatValueEl: HTMLDivElement | null = null;
   let lastUpdateEl: HTMLDivElement | null = null;
@@ -35,21 +38,10 @@
 
     eventSource.addEventListener('counter-update', (e: MessageEvent) => {
       const data = JSON.parse(e.data);
-      const victoryChanged = data.victories !== victories;
-      const defeatChanged = data.defeats !== defeats;
-
       victories = data.victories;
       defeats = data.defeats;
       lastOutcome = data.last_outcome;
       lastUpdated = data.timestamp;
-
-      if (victoryChanged) {
-        triggerPulse(victoryValueEl, 'bump');
-      }
-      if (defeatChanged) {
-        triggerPulse(defeatValueEl, 'bump');
-      }
-      triggerPulse(lastUpdateEl, 'flash');
     });
 
     eventSource.onerror = () => {
@@ -60,6 +52,28 @@
     return () => {
       eventSource.close();
     };
+  });
+
+  // 値の変化を監視してアニメーションを走らせる
+  $effect(() => {
+    if (prevVictories !== null && victories !== prevVictories) {
+      triggerPulse(victoryValueEl, 'bump');
+    }
+    prevVictories = victories;
+  });
+
+  $effect(() => {
+    if (prevDefeats !== null && defeats !== prevDefeats) {
+      triggerPulse(defeatValueEl, 'bump');
+    }
+    prevDefeats = defeats;
+  });
+
+  $effect(() => {
+    if (prevUpdated !== null && lastUpdated !== prevUpdated) {
+      triggerPulse(lastUpdateEl, 'flash');
+    }
+    prevUpdated = lastUpdated;
   });
 </script>
 
@@ -132,23 +146,27 @@
     font-size: var(--font-size);
     font-weight: bold;
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+    display: inline-block;
   }
   .value.bump {
-    animation: bump 320ms ease;
+    animation: bump 520ms ease;
   }
 
   @keyframes bump {
     0% {
       transform: scale(1);
       filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.2));
+      color: inherit;
     }
     35% {
-      transform: scale(1.12);
-      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.35));
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+      color: #f4f4f4;
     }
     100% {
       transform: scale(1);
       filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.2));
+      color: inherit;
     }
   }
 
