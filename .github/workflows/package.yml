@@ -88,12 +88,7 @@ jobs:
             Copy-Item "config.example.toml" (Join-Path $packageRoot "config.example.toml") -Force
           }
 
-          Copy-Item "README.md" -Destination $packageRoot -Force
           Copy-Item "debug.bat" -Destination $packageRoot -Force
-
-          $docsDest = Join-Path $packageRoot "docs/usage"
-          New-Item -ItemType Directory -Path $docsDest -Force | Out-Null
-          Copy-Item "..\\..\\docs\\usage\\run.md" -Destination $docsDest -Force
 
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
           $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
