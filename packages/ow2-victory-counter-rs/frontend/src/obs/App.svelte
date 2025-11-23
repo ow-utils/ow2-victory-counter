@@ -115,10 +115,7 @@
   :global(body) {
     margin: 0;
     padding: 0;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 138, 0, 0.12), transparent 35%),
-      radial-gradient(circle at 80% 30%, rgba(106, 90, 249, 0.18), transparent 40%),
-      radial-gradient(circle at 50% 80%, rgba(255, 61, 119, 0.14), transparent 35%),
-      #050510;
+    background: transparent;
     font-family: 'Bebas Neue', 'Arial Black', 'Arial', sans-serif;
     letter-spacing: 0.02em;
   }
@@ -132,6 +129,7 @@
     padding: 48px;
     box-sizing: border-box;
     color: #f5f8ff;
+    background: transparent;
   }
 
   .counter-grid {
@@ -148,48 +146,9 @@
   }
 
   .counter-item {
-    position: relative;
-    padding: clamp(20px, 4vw, 36px);
-    border-radius: 18px;
     text-align: center;
-    overflow: hidden;
-    background: #09091a;
-    box-shadow:
-      0 10px 40px rgba(0, 0, 0, 0.45),
-      inset 0 0 40px rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    isolation: isolate;
-  }
-
-  .counter-item::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: 20px;
-    padding: 2px;
-    background: linear-gradient(120deg, #ff8a00, #ff3d77, #6a5af9, #00e7ff);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    z-index: -1;
-    filter: blur(1px);
-    opacity: 0.9;
-  }
-
-  .counter-item::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 45%),
-      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04), transparent 45%);
-    z-index: 0;
-  }
-
-  .counter-content {
-    position: relative;
-    z-index: 1;
+    background: transparent;
+    padding: clamp(12px, 3vw, 20px);
   }
 
   .victory .value {
@@ -226,11 +185,9 @@
     color: #d6dcff;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
     opacity: 0.9;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    border: none;
     padding: 10px 16px;
     border-radius: 999px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
   }
 </style>
