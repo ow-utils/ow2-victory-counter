@@ -136,19 +136,20 @@
     --victory-color: #7bf36b;
     --defeat-color: #ff5f8d;
     --font-size: clamp(52px, 8vw, 96px);
-    --gap: clamp(12px, 3vw, 28px);
+    --gap: clamp(16px, 4vw, 48px);
 
     display: grid;
-    grid-template-columns: repeat(2, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, minmax(200px, 320px));
+    justify-content: center;
     gap: var(--gap);
     margin-bottom: 28px;
-    width: min(1200px, 90vw);
+    width: min(900px, 92vw);
   }
 
   .counter-item {
     position: relative;
     text-align: center;
-    padding: clamp(18px, 3.5vw, 28px);
+    padding: clamp(14px, 3vw, 24px);
     border-radius: 16px;
     background: rgba(12, 14, 28, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
