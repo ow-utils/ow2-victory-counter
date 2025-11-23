@@ -146,9 +146,29 @@
   }
 
   .counter-item {
+    position: relative;
     text-align: center;
-    background: transparent;
-    padding: clamp(12px, 3vw, 20px);
+    padding: clamp(18px, 3.5vw, 28px);
+    border-radius: 16px;
+    background: rgba(12, 14, 28, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 12px 38px rgba(0, 0, 0, 0.4),
+      inset 0 0 18px rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+
+  .counter-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.12), transparent 45%),
+      radial-gradient(circle at 80% 15%, rgba(255, 255, 255, 0.08), transparent 50%);
+    pointer-events: none;
+    mix-blend-mode: screen;
   }
 
   .victory .value {
@@ -185,9 +205,11 @@
     color: #d6dcff;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
     opacity: 0.9;
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 10px 16px;
     border-radius: 999px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 </style>
