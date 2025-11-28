@@ -15,3 +15,7 @@
 ## 利用方法
 
 [for-enduser.md](docs/usage/for-enduser.ja.md) 参照。
+
+動作イメージは[こちら](https://www.youtube.com/watch?v=Qja2lJFxZhs):
+
+[![#オーバーウォッチ2 勝敗カウンター](https://img.youtube.com/vi/Qja2lJFxZhs/0.jpg)](https://www.youtube.com/watch?v=Qja2lJFxZhs)
