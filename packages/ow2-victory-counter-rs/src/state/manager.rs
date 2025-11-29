@@ -34,13 +34,19 @@ pub struct StateManager {
     draws: u32,
     cooldown_seconds: u64,
     required_consecutive: usize,
+    required_none_after_cooldown: usize,
     consecutive_detections: Vec<String>,
     last_event_time: Option<Instant>,
+    none_count_after_cooldown: usize,
     broadcast_tx: broadcast::Sender<CounterUpdate>,
 }
 
 impl StateManager {
-    pub fn new(cooldown_seconds: u64, required_consecutive: usize) -> Self {
+    pub fn new(
+        cooldown_seconds: u64,
+        required_consecutive: usize,
+        required_none_after_cooldown: usize,
+    ) -> Self {
         let (broadcast_tx, _) = broadcast::channel(100);
 
         Self {
@@ -50,8 +56,10 @@ impl StateManager {
             draws: 0,
             cooldown_seconds,
             required_consecutive,
+            required_none_after_cooldown,
             consecutive_detections: Vec::new(),
             last_event_time: None,
+            none_count_after_cooldown: 0,
             broadcast_tx,
         }
     }
@@ -94,18 +102,14 @@ impl StateManager {
             State::Cooldown => {
                 if let Some(last_time) = self.last_event_time {
                     if last_time.elapsed().as_secs() >= self.cooldown_seconds {
-                        if outcome != "none" {
-                            self.state = State::WaitingForNone;
-                        } else {
-                            self.state = State::Ready;
-                        }
+                        self.state = State::WaitingForNone;
+                        self.none_count_after_cooldown = 0;
+                        self.handle_waiting_for_none(outcome);
                     }
                 }
             }
             State::WaitingForNone => {
-                if outcome == "none" {
-                    self.state = State::Ready;
-                }
+                self.handle_waiting_for_none(outcome);
             }
         }
 
@@ -164,5 +168,45 @@ impl StateManager {
                 .unwrap()
                 .as_secs_f64(),
         }
+    }
+
+    fn handle_waiting_for_none(&mut self, outcome: &str) {
+        if outcome == "none" {
+            self.none_count_after_cooldown += 1;
+            if self.none_count_after_cooldown >= self.required_none_after_cooldown {
+                self.state = State::Ready;
+                self.none_count_after_cooldown = 0;
+            }
+        } else {
+            self.none_count_after_cooldown = 0;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn waits_for_configured_none_count_after_cooldown() {
+        let mut manager = StateManager::new(1, 1, 2);
+
+        // クールダウン経過済みの状態をセット
+        manager.state = State::Cooldown;
+        manager.last_event_time = Some(Instant::now() - Duration::from_secs(2));
+
+        // クールダウン明け直後: none 以外なら WaitingForNone のまま
+        let result = manager.record_detection("victory");
+        assert!(!result.event_triggered);
+        assert_eq!(manager.state, State::WaitingForNone);
+
+        // 1回目の none では Ready に戻らない
+        manager.record_detection("none");
+        assert_eq!(manager.state, State::WaitingForNone);
+
+        // 2回連続 none で Ready に戻る
+        manager.record_detection("none");
+        assert_eq!(manager.state, State::Ready);
     }
 }

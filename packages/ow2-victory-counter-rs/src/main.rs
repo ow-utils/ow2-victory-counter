@@ -122,6 +122,7 @@ async fn run_server(config_path: String) -> Result<(), Box<dyn std::error::Error
     let state_manager = Arc::new(Mutex::new(StateManager::new(
         config.state.cooldown_seconds,
         config.state.required_consecutive,
+        config.state.required_none_after_cooldown,
     )));
 
     // AppState作成
