@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use tokio::sync::broadcast;
+use tracing::{debug, info};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum State {
@@ -87,6 +88,10 @@ impl StateManager {
                     if self.consecutive_detections.len() >= self.required_consecutive {
                         // カウント確定
                         self.increment_counter(outcome);
+                        debug!(
+                            "Enter cooldown: duration={}s, outcome={}",
+                            self.cooldown_seconds, outcome
+                        );
                         self.state = State::Cooldown;
                         self.last_event_time = Some(Instant::now());
                         self.consecutive_detections.clear();
@@ -102,6 +107,10 @@ impl StateManager {
             State::Cooldown => {
                 if let Some(last_time) = self.last_event_time {
                     if last_time.elapsed().as_secs() >= self.cooldown_seconds {
+                        info!(
+                            "Cooldown finished: waiting for {} consecutive none",
+                            self.required_none_after_cooldown
+                        );
                         self.state = State::WaitingForNone;
                         self.none_count_after_cooldown = 0;
                         self.handle_waiting_for_none(outcome);
@@ -173,11 +182,22 @@ impl StateManager {
     fn handle_waiting_for_none(&mut self, outcome: &str) {
         if outcome == "none" {
             self.none_count_after_cooldown += 1;
+            debug!(
+                "WaitingForNone: none count {}/{}",
+                self.none_count_after_cooldown, self.required_none_after_cooldown
+            );
             if self.none_count_after_cooldown >= self.required_none_after_cooldown {
                 self.state = State::Ready;
                 self.none_count_after_cooldown = 0;
+                debug!("WaitingForNone: none threshold reached; back to Ready");
             }
         } else {
+            if self.none_count_after_cooldown > 0 {
+                debug!(
+                    "WaitingForNone: got '{}', reset none counter",
+                    outcome
+                );
+            }
             self.none_count_after_cooldown = 0;
         }
     }
