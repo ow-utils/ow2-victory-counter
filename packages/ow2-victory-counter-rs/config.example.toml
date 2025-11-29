@@ -32,7 +32,7 @@ resize_height = 92
 [state]
 # 状態管理設定
 # クールダウン時間（秒）: 勝敗判定後、次の判定までの待機時間
-cooldown_seconds = 10
+cooldown_seconds = 180
 
 # 連続検知必要回数: 誤検知防止のため、何回連続で同じ結果を検知したらカウントするか
 required_consecutive = 1

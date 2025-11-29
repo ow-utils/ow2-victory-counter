@@ -125,7 +125,7 @@ fn default_obs_port() -> u16 {
 }
 
 fn default_cooldown_seconds() -> u64 {
-    10
+    180
 }
 
 fn default_required_consecutive() -> usize {
@@ -294,7 +294,7 @@ mod tests {
         assert_eq!(config.obs.host, "localhost");
         assert_eq!(config.obs.port, 4455);
         assert_eq!(config.obs.source_name, "OBS Source");
-        assert_eq!(config.state.cooldown_seconds, 10);
+        assert_eq!(config.state.cooldown_seconds, 180);
         assert_eq!(config.state.required_consecutive, 3);
         assert_eq!(config.server.port, 3000);
     }
