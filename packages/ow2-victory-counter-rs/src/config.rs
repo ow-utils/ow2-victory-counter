@@ -67,6 +67,9 @@ pub struct StateConfig {
     /// 連続検知必要回数
     #[serde(default = "default_required_consecutive")]
     pub required_consecutive: usize,
+    /// クールダウン明けに Ready に戻すために必要な none の連続回数
+    #[serde(default = "default_required_none_after_cooldown")]
+    pub required_none_after_cooldown: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,11 +128,15 @@ fn default_obs_port() -> u16 {
 }
 
 fn default_cooldown_seconds() -> u64 {
-    10
+    180
 }
 
 fn default_required_consecutive() -> usize {
     3
+}
+
+fn default_required_none_after_cooldown() -> usize {
+    100
 }
 
 fn default_server_host() -> String {
@@ -219,6 +226,7 @@ impl Config {
             state: StateConfig {
                 cooldown_seconds: default_cooldown_seconds(),
                 required_consecutive: default_required_consecutive(),
+                required_none_after_cooldown: default_required_none_after_cooldown(),
             },
             server: ServerConfig {
                 host: default_server_host(),
@@ -294,8 +302,9 @@ mod tests {
         assert_eq!(config.obs.host, "localhost");
         assert_eq!(config.obs.port, 4455);
         assert_eq!(config.obs.source_name, "OBS Source");
-        assert_eq!(config.state.cooldown_seconds, 10);
+        assert_eq!(config.state.cooldown_seconds, 180);
         assert_eq!(config.state.required_consecutive, 3);
+        assert_eq!(config.state.required_none_after_cooldown, 100);
         assert_eq!(config.server.port, 3000);
     }
 
