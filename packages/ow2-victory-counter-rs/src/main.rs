@@ -9,7 +9,7 @@ use chrono::Local;
 use clap::{Parser, Subcommand};
 use config::Config;
 use predictor::VictoryPredictor;
-use server::{app, AppState};
+use server::{AppState, app};
 use state::StateManager;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -56,8 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ログ初期化（環境変数 RUST_LOG で制御可能、デフォルトは info）
     tracing_subscriber::fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info"))
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
 
@@ -66,17 +65,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // サブコマンドに応じて実行モードを切り替え
     match args.command {
-        Some(Commands::Server { config }) => {
-            run_server(config).await
-        }
+        Some(Commands::Server { config }) => run_server(config).await,
         Some(Commands::Predict {
             image,
             config: config_path,
             output,
             no_crop,
-        }) => {
-            run_predict(image, config_path, output, no_crop).await
-        }
+        }) => run_predict(image, config_path, output, no_crop).await,
         None => {
             // サブコマンドが指定されていない場合はデフォルトでサーバーモード
             run_server("config.toml".to_string()).await
@@ -277,7 +272,12 @@ async fn detection_loop(
             });
             let filename = format!("result-{}.json", timestamp);
             let filepath = config.debug.save_dir.join(&filename);
-            if let Err(e) = tokio::fs::write(&filepath, serde_json::to_string_pretty(&result_json).unwrap()).await {
+            if let Err(e) = tokio::fs::write(
+                &filepath,
+                serde_json::to_string_pretty(&result_json).unwrap(),
+            )
+            .await
+            {
                 warn!("Failed to save result: {}", e);
             }
         }
@@ -331,8 +331,7 @@ async fn run_predict(
         std::process::exit(1);
     }
 
-    let image = image::open(&image_path)
-        .map_err(|e| format!("Failed to load image: {}", e))?;
+    let image = image::open(&image_path).map_err(|e| format!("Failed to load image: {}", e))?;
 
     info!("Image loaded: {}x{} (WxH)", image.width(), image.height());
 
@@ -352,9 +351,7 @@ async fn run_predict(
 
         // クロップパラメータの検証
         if x + width > image.width() || y + height > image.height() {
-            warn!(
-                "Crop region exceeds image dimensions, using full image instead"
-            );
+            warn!("Crop region exceeds image dimensions, using full image instead");
             image
         } else {
             image.crop_imm(x, y, width, height)
@@ -403,11 +400,7 @@ async fn run_predict(
     // 6. 出力
     // 7. 出力
     if let Some(output_path) = output_path {
-        tokio::fs::write(
-            &output_path,
-            serde_json::to_string_pretty(&result)?,
-        )
-        .await?;
+        tokio::fs::write(&output_path, serde_json::to_string_pretty(&result)?).await?;
         info!("Result saved to: {:?}", output_path);
     } else {
         println!("{}", serde_json::to_string_pretty(&result)?);

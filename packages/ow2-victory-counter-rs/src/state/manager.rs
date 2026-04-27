@@ -193,10 +193,7 @@ impl StateManager {
             }
         } else {
             if self.none_count_after_cooldown > 0 {
-                debug!(
-                    "WaitingForNone: got '{}', reset none counter",
-                    outcome
-                );
+                debug!("WaitingForNone: got '{}', reset none counter", outcome);
             }
             self.none_count_after_cooldown = 0;
         }
