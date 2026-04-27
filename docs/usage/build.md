@@ -255,6 +255,9 @@ ow2-victory-counter-rs/
 ├── models/
 │   ├── victory_classifier.onnx
 │   └── victory_classifier.label_map.json
+├── assets/                      ← カスタマイズ時に自分で作成
+│   ├── counter.html
+│   └── counter.css
 ├── templates/
 │   ├── counter.html
 │   └── counter.css

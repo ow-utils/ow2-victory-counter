@@ -217,10 +217,10 @@ diff rust_result.json poc_result.json
 
 ビルド環境なしで、次の 2 ファイルを編集して OBS 表示をカスタマイズできます。
 
-- `templates/counter.html`
-- `templates/counter.css`
+- `assets/counter.html`
+- `assets/counter.css`
 
-`counter.html` でレイアウトを、`counter.css` で配色や装飾を変更します。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/customize-counter.md) を参照してください。
+最初に `templates/counter.html` と `templates/counter.css` を `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウトを、`counter.css` で配色や装飾を変更します。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/customize-counter.md) を参照してください。
 
 ### スクリーンショット保存機能
 

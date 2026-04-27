@@ -4,28 +4,31 @@
 
 編集するファイルは次の 2 つです。
 
-- `templates/counter.html`
-- `templates/counter.css`
+- `assets/counter.html`
+- `assets/counter.css`
 
 どちらもテキストエディターで編集できます。Node.js やフロントエンドのビルドは不要です。
 
+編集前に、ひな形ファイルを `templates/` から `assets/` へコピーしてください。
+
 ## 仕組み
 
-- `counter.html`
+- `assets/counter.html`
   - OBS に表示する HTML の本文です
   - レイアウトや要素の並びを変更できます
-- `counter.css`
-  - `counter.html` に対して適用されるスタイルです
+- `assets/counter.css`
+  - `assets/counter.html` に対して適用されるスタイルです
   - 色、余白、フォント、サイズ、配置などを変更できます
 
-アプリケーション本体は `http://localhost:3000/` にアクセスされたとき、これらのファイルを読み込みます。  
+アプリケーション本体は `http://localhost:3000/` にアクセスされたとき、`assets/` 配下のこれらのファイルを読み込みます。  
 ファイルを編集したあとは、OBS のブラウザーソースを再読込すると反映されます。
 
 ## 基本手順
 
-1. `templates/counter.html` または `templates/counter.css` を開く
-2. 見た目や配置を編集する
-3. OBS でブラウザーソースを再読込する
+1. `templates/counter.html` と `templates/counter.css` を `assets/` にコピーする
+2. `assets/counter.html` または `assets/counter.css` を開く
+3. 見た目や配置を編集する
+4. OBS でブラウザーソースを再読込する
 
 OBS では次のどちらかで再読込できます。
 
@@ -123,8 +126,8 @@ body {
 
 ## 壊したときの戻し方
 
-- `templates/counter.html`
-- `templates/counter.css`
+- `assets/counter.html`
+- `assets/counter.css`
 
 を配布時の内容に戻してください。  
-どちらか片方だけ壊しても、もう片方が残っていればアプリ自体は動作します。
+元に戻したいときは、`templates/` にあるひな形を再度 `assets/` にコピーしてください。どちらか片方だけ壊しても、もう片方が残っていればアプリ自体は動作します。

@@ -57,7 +57,7 @@ pub fn app(state: AppState) -> Router {
 }
 
 async fn serve_obs_ui() -> Html<String> {
-    let body = read_customizable_file("templates/counter.html", DEFAULT_COUNTER_HTML).await;
+    let body = read_customizable_file("assets/counter.html", DEFAULT_COUNTER_HTML).await;
     Html(render_obs_document(&body))
 }
 
@@ -94,7 +94,7 @@ async fn serve_admin_ui() -> Html<String> {
 }
 
 async fn serve_counter_css() -> Result<Response, StatusCode> {
-    let css = read_customizable_file("templates/counter.css", DEFAULT_COUNTER_CSS).await;
+    let css = read_customizable_file("assets/counter.css", DEFAULT_COUNTER_CSS).await;
     Ok(Response::builder()
         .header("Content-Type", "text/css; charset=utf-8")
         .body(css.into())

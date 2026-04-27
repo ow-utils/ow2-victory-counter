@@ -84,7 +84,7 @@ Overwatch 2 の勝敗判定を自動で行い、カウントを配信画面に�
 - **用途**: 配信画面へのオーバーレイ表示
 - **機能**: カウンター表示のみ（読み取り専用）
 - **永続化**: なし（SSE 受信時に UI 更新のみ）
-- **カスタマイズ**: counter.html、counter.css
+- **カスタマイズ**: templates/counter.html を assets/counter.html へコピーして編集、counter.css も同様
 
 #### 管理画面 (GET /admin)
 
@@ -186,8 +186,8 @@ READY
 **UI 配信方式**:
 
 - OBS 用 UI はサーバーが HTML を動的に組み立てる
-- 本文は `templates/counter.html` を優先して読み込む
-- スタイルは `templates/counter.css` を優先して読み込む
+- 組み込みデフォルトは `templates/counter.html` / `templates/counter.css`
+- 実行時は `assets/counter.html` / `assets/counter.css` を優先して読み込む
 - 管理画面 UI は Svelte のビルド成果物を配信する
 
 ### 5. フロントエンド
@@ -200,7 +200,7 @@ READY
 
 - SSE で勝敗数受信
 - `data-counter` / `data-meta` 属性に値を反映
-- `counter.html` / `counter.css` の編集だけでカスタマイズ可能
+- `templates/` のひな形を `assets/` へコピーして編集するだけでカスタマイズ可能
 
 #### 管理画面 UI (Svelte)
 
@@ -244,7 +244,7 @@ OBS 用カウンター表示 UI を提供。
 
 **動作**:
 
-1. `templates/counter.css` が存在すればそれを返す
+1. `assets/counter.css` が存在すればそれを返す
 2. なければ組み込みデフォルト CSS を返す
 
 ### GET /events
@@ -469,7 +469,7 @@ SSE でリアルタイム通知。
 
 ### レベル 1: HTML / CSS 編集
 
-`templates/counter.html` と `templates/counter.css` を編集して配置:
+`templates/counter.html` と `templates/counter.css` を `assets/` にコピーしてから編集:
 
 ```css
 /* 色を変更 */
@@ -646,6 +646,9 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 ├── models/
 │   ├── victory_classifier.onnx
 │   └── victory_classifier.label_map.json
+├── assets/                      # カスタマイズ結果（任意）
+│   ├── counter.html
+│   └── counter.css
 ├── config/
 │   └── ui-config.json           # 管理画面向け設定（必要なら将来利用）
 ├── templates/
@@ -676,6 +679,7 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 ### ファイルアクセス
 
 - 読み取り専用: `templates/`, `models/`, `config/`
+- ユーザー編集対象: `assets/`
 - パストラバーサル対策
 
 ### API 認証
