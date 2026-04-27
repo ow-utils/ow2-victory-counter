@@ -2,7 +2,7 @@
 
 Overwatch 2 の勝敗を自動カウントして OBS に表示するツールです。CNN（深層学習）で勝敗画面を検知し、リアルタイムでカウントを更新します。
 
-CSSの知識があればある程度デザインをカスタマイズすることが可能です。
+HTML と CSS を編集できれば、ビルド環境なしで表示内容をカスタマイズできます。
 
 ## リンク
 
@@ -83,29 +83,15 @@ password = "your-password"  # パスワード設定時のみ
 
 ※ 本機能は開発中であり、未テストです。また、仕様も今後大きく変わる可能性があります。
 
-### CSS でスタイル変更
+### HTML / CSS でカスタマイズ
 
-`templates/custom.css` を編集して見た目をカスタマイズできます：
+次の 2 ファイルを編集すると、OBS のカウンター表示を変更できます。
 
-```css
-/* 色を変更 */
-.counter-grid {
-  --victory-color: #00ff00;
-  --defeat-color: #ff0000;
-  --font-size: 96px;
-}
+- `templates/counter.html`
+- `templates/counter.css`
 
-/* グロー効果 */
-.value {
-  text-shadow: 0 0 20px currentColor;
-}
-```
-
-OBS のブラウザーソースで `カスタムCSS` に以下を追加:
-
-```css
-@import url("http://localhost:3000/custom.css");
-```
+`counter.html` はレイアウト、`counter.css` は色や装飾を担当します。  
+詳しい説明は [OBS カウンターのカスタマイズ](./customize-counter.md) を参照してください。
 
 ## トラブルシューティング
 

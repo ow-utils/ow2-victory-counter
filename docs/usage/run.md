@@ -119,7 +119,7 @@ cargo run --release
 cargo run --release -- --config my-config.toml
 ```
 
-**注意**: `cargo run` （`--release` なし）を使用すると、開発モードで起動し、`http://localhost:5173` へリダイレクトされます。開発モードを使用する場合は、別のターミナルで `pnpm -C frontend dev` を先に起動してください。通常の使用では **`cargo run --release`** を推奨します。
+**注意**: `cargo run` （`--release` なし）でも OBS 用 UI はそのまま `http://127.0.0.1:3000/` で確認できます。管理画面の開発を行う場合だけ、別のターミナルで `pnpm -C frontend dev` を起動してください。通常の使用では **`cargo run --release`** を推奨します。
 
 ---
 
@@ -303,9 +303,15 @@ crop_rect = [56, 208, 327, 144]
 
 ## 8. カスタマイズ
 
-### 8.1 CSS のカスタマイズ
+### 8.1 HTML / CSS のカスタマイズ
 
-`templates/custom.css` を編集して、カウンターの見た目を変更できます。
+次の 2 ファイルを編集して、OBS カウンターの見た目とレイアウトを変更できます。
+
+- `templates/counter.html`
+- `templates/counter.css`
+
+`counter.html` は表示構造、`counter.css` は見た目を担当します。  
+変更後はブラウザーまたは OBS のブラウザーソースを再読込すると反映されます。
 
 **例: 色を変更**:
 
@@ -328,18 +334,7 @@ crop_rect = [56, 208, 327, 144]
 }
 ```
 
-変更後、ブラウザーを更新（F5）すると反映されます。
-
----
-
-### 8.2 OBS ブラウザーソースでカスタム CSS を適用
-
-1. OBS でブラウザーソースを右クリック → **プロパティ**
-2. **カスタム CSS** に以下を追加：
-   ```css
-   @import url("http://127.0.0.1:3000/custom.css");
-   ```
-3. **OK** をクリック
+詳しい手順は [OBS カウンターのカスタマイズ](./customize-counter.md) を参照してください。
 
 ---
 

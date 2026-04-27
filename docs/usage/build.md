@@ -256,7 +256,8 @@ ow2-victory-counter-rs/
 │   ├── victory_classifier.onnx
 │   └── victory_classifier.label_map.json
 ├── templates/
-│   └── custom.css
+│   ├── counter.html
+│   └── counter.css
 └── config.toml  ← 設定ファイル（自分で作成）
 ```
 

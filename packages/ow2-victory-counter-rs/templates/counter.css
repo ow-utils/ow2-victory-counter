@@ -1,0 +1,125 @@
+:root {
+  color-scheme: dark;
+  font-family: "Bebas Neue", "Arial Black", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: transparent;
+  color: #f5f7ff;
+}
+
+.counter-root {
+  display: grid;
+  gap: 18px;
+  align-content: center;
+  justify-items: center;
+  min-height: 100vh;
+  padding: 48px 32px;
+  box-sizing: border-box;
+}
+
+.counter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 280px));
+  gap: 18px;
+  width: min(980px, 100%);
+}
+
+.counter-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  text-align: center;
+  background: rgba(13, 18, 32, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 16px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.counter-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 55%);
+  pointer-events: none;
+}
+
+.counter-card--victory {
+  color: #7bf36b;
+}
+
+.counter-card--defeat {
+  color: #ff6c9a;
+}
+
+.counter-card--draw {
+  color: #ffc14d;
+}
+
+.counter-label {
+  font-size: clamp(20px, 2.5vw, 28px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f2f4ff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.counter-value {
+  font-size: clamp(64px, 10vw, 120px);
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-shadow:
+    0 0 18px currentColor,
+    0 0 40px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.counter-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 14px;
+  width: min(980px, 100%);
+}
+
+.counter-pill {
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: rgba(7, 10, 20, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.counter-pill--wide {
+  grid-column: span 1;
+}
+
+.counter-pill__label {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(235, 239, 255, 0.72);
+}
+
+.counter-pill__value {
+  font-size: clamp(20px, 2.4vw, 30px);
+  color: #ffffff;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .counter-grid,
+  .counter-meta {
+    grid-template-columns: 1fr;
+  }
+}

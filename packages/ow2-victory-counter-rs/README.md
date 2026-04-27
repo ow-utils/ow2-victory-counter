@@ -213,29 +213,14 @@ diff rust_result.json poc_result.json
 
 ## カスタマイズ
 
-### CSS でスタイル変更
+### HTML / CSS でカスタマイズ
 
-`templates/custom.css` を編集して見た目をカスタマイズできます：
+ビルド環境なしで、次の 2 ファイルを編集して OBS 表示をカスタマイズできます。
 
-```css
-/* 色を変更 */
-.counter-grid {
-  --victory-color: #00ff00;
-  --defeat-color: #ff0000;
-  --font-size: 96px;
-}
+- `templates/counter.html`
+- `templates/counter.css`
 
-/* グロー効果 */
-.value {
-  text-shadow: 0 0 20px currentColor;
-}
-```
-
-OBS のブラウザーソースで `カスタムCSS` に以下を追加:
-
-```css
-@import url("http://127.0.0.1:3000/custom.css");
-```
+`counter.html` でレイアウトを、`counter.css` で配色や装飾を変更します。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/customize-counter.md) を参照してください。
 
 ### スクリーンショット保存機能
 
@@ -375,12 +360,12 @@ Vite が `http://localhost:5173` で起動します。
 cargo run
 ```
 
-デバッグモード（`cargo run`）では、ブラウザーが自動的に Vite 開発サーバーへリダイレクトされ、フロントエンドの変更がホットリロードされます。
+デバッグモード（`cargo run`）でも、OBS 用 UI は Rust サーバーが直接配信します。Vite 開発サーバーは管理画面の開発に使います。
 
 **注意**:
 
-- `cargo run` （デバッグ）= Vite 開発サーバー（localhost:5173）へリダイレクト
-- `cargo run --release` （リリース）= ビルド済みファイル（frontend/dist/）を配信
+- `cargo run` （デバッグ）= OBS 用 UI はそのまま利用可能、管理画面は Vite 開発サーバー（localhost:5173）へリダイレクト
+- `cargo run --release` （リリース）= 管理画面はビルド済みファイル（frontend/dist/）を配信
 
 通常の使用では **`cargo run --release`** を推奨します。
 

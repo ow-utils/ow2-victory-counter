@@ -1,22 +1,25 @@
 use crate::state::{CounterUpdate, StateManager};
 use axum::{
+    Json, Router,
     extract::State,
     http::StatusCode,
     response::{
-        sse::{Event, KeepAlive, Sse},
         Html, Response,
+        sse::{Event, KeepAlive, Sse},
     },
     routing::{get, post},
-    Json, Router,
 };
 use serde::Deserialize;
 use std::convert::Infallible;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use tokio_stream::{wrappers::BroadcastStream, StreamExt};
+use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 #[cfg(not(debug_assertions))]
 use tower_http::services::ServeDir;
+
+const DEFAULT_COUNTER_HTML: &str = include_str!("../../templates/counter.html");
+const DEFAULT_COUNTER_CSS: &str = include_str!("../../templates/counter.css");
 
 #[derive(Clone)]
 pub struct AppState {
@@ -29,7 +32,7 @@ pub fn app(state: AppState) -> Router {
     let router = Router::new()
         .route("/", get(serve_obs_ui))
         .route("/admin", get(serve_admin_ui))
-        .route("/custom.css", get(serve_custom_css))
+        .route("/counter.css", get(serve_counter_css))
         .route("/events", get(sse_handler))
         .route("/api/status", get(get_status))
         .route("/api/initialize", post(initialize))
@@ -43,7 +46,7 @@ pub fn app(state: AppState) -> Router {
     let router = Router::new()
         .route("/", get(serve_obs_ui))
         .route("/admin", get(serve_admin_ui))
-        .route("/custom.css", get(serve_custom_css))
+        .route("/counter.css", get(serve_counter_css))
         .route("/events", get(sse_handler))
         .route("/api/status", get(get_status))
         .route("/api/initialize", post(initialize))
@@ -54,35 +57,8 @@ pub fn app(state: AppState) -> Router {
 }
 
 async fn serve_obs_ui() -> Html<String> {
-    // 開発モード: Viteプロキシ経由、本番モード: ファイルシステムから配信
-    #[cfg(debug_assertions)]
-    {
-        Html(
-            r#"<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OBS Victory Counter</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module">
-    // 開発モードではVite dev server (localhost:5173) へリダイレクト
-    window.location.href = 'http://localhost:5173/obs.html';
-  </script>
-</body>
-</html>"#
-                .to_string(),
-        )
-    }
-
-    #[cfg(not(debug_assertions))]
-    {
-        let html = std::fs::read_to_string("frontend/dist/obs.html")
-            .unwrap_or_else(|_| "<h1>obs.html not found</h1>".to_string());
-        Html(html)
-    }
+    let body = read_customizable_file("templates/counter.html", DEFAULT_COUNTER_HTML).await;
+    Html(render_obs_document(&body))
 }
 
 async fn serve_admin_ui() -> Html<String> {
@@ -117,20 +93,107 @@ async fn serve_admin_ui() -> Html<String> {
     }
 }
 
-async fn serve_custom_css() -> Result<Response, StatusCode> {
-    // 外部ファイル優先（カスタマイズ用）
-    if let Ok(css) = tokio::fs::read_to_string("templates/custom.css").await {
-        return Ok(Response::builder()
-            .header("Content-Type", "text/css")
-            .body(css.into())
-            .unwrap());
-    }
-
-    // デフォルトは空CSS
+async fn serve_counter_css() -> Result<Response, StatusCode> {
+    let css = read_customizable_file("templates/counter.css", DEFAULT_COUNTER_CSS).await;
     Ok(Response::builder()
-        .header("Content-Type", "text/css")
-        .body("".into())
+        .header("Content-Type", "text/css; charset=utf-8")
+        .body(css.into())
         .unwrap())
+}
+
+async fn read_customizable_file(path: &str, fallback: &str) -> String {
+    tokio::fs::read_to_string(path)
+        .await
+        .unwrap_or_else(|_| fallback.to_string())
+}
+
+fn render_obs_document(body: &str) -> String {
+    format!(
+        r#"<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OW2 Victory Counter</title>
+  <link rel="stylesheet" href="/counter.css" />
+</head>
+<body>
+  {body}
+  <script>
+    (() => {{
+      const outcomeLabels = {{
+        victory: "Victory",
+        defeat: "Defeat",
+        draw: "Draw",
+      }};
+
+      const setText = (attrName, key, value) => {{
+        document.querySelectorAll(`[${{attrName}}="${{key}}"]`).forEach((element) => {{
+          element.textContent = value;
+        }});
+      }};
+
+      const formatTimestamp = (timestamp, lastOutcome) => {{
+        if (!lastOutcome) {{
+          return "更新なし";
+        }}
+        const milliseconds = Number(timestamp) * 1000;
+        if (!Number.isFinite(milliseconds)) {{
+          return "更新なし";
+        }}
+        return new Date(milliseconds).toLocaleString("ja-JP");
+      }};
+
+      const applyCounterUpdate = (payload) => {{
+        const victories = Number(payload.victories ?? 0);
+        const defeats = Number(payload.defeats ?? 0);
+        const draws = Number(payload.draws ?? 0);
+        const lastOutcome = (payload.last_outcome ?? "").toString();
+        const total = victories + defeats;
+        const winrate = total > 0 ? Math.round((victories / total) * 100) : 0;
+
+        setText("data-counter", "victories", String(victories));
+        setText("data-counter", "defeats", String(defeats));
+        setText("data-counter", "draws", String(draws));
+        setText("data-meta", "winrate", `${{winrate}}%`);
+        setText("data-meta", "last-updated", formatTimestamp(payload.timestamp, lastOutcome));
+        setText("data-meta", "last-outcome", outcomeLabels[lastOutcome] ?? "");
+
+        document.body.dataset.lastOutcome = lastOutcome;
+      }};
+
+      const fetchStatus = async () => {{
+        const response = await fetch("/api/status");
+        if (!response.ok) {{
+          throw new Error(`status request failed: ${{response.status}}`);
+        }}
+        applyCounterUpdate(await response.json());
+      }};
+
+      const connectEvents = () => {{
+        const eventSource = new EventSource("/events");
+        eventSource.addEventListener("counter-update", (event) => {{
+          applyCounterUpdate(JSON.parse(event.data));
+        }});
+        eventSource.onerror = () => {{
+          console.error("SSE connection error");
+        }};
+      }};
+
+      fetchStatus()
+        .catch((error) => {{
+          console.error("initial status fetch failed", error);
+        }})
+        .finally(() => {{
+          connectEvents();
+        }});
+    }})();
+  </script>
+</body>
+</html>
+"#,
+        body = body
+    )
 }
 
 async fn sse_handler(
@@ -200,4 +263,26 @@ async fn adjust(
     let mut manager = state.state_manager.lock().await;
     manager.adjust(&data.outcome, data.delta);
     Json(manager.summary())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rendered_obs_document_uses_counter_css_and_bindings() {
+        let html = render_obs_document(r#"<div data-counter="victories">0</div>"#);
+
+        assert!(html.contains(r#"<link rel="stylesheet" href="/counter.css" />"#));
+        assert!(html.contains(r#"data-counter="victories""#));
+        assert!(html.contains(r#"new EventSource("/events")"#));
+        assert!(html.contains(r#"fetch("/api/status")"#));
+    }
+
+    #[test]
+    fn bundled_defaults_expose_template_bindings() {
+        assert!(DEFAULT_COUNTER_HTML.contains(r#"data-counter="victories""#));
+        assert!(DEFAULT_COUNTER_HTML.contains(r#"data-meta="winrate""#));
+        assert!(DEFAULT_COUNTER_CSS.contains(".counter-root"));
+    }
 }
