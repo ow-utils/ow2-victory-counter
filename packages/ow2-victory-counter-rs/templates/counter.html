@@ -1,31 +1,29 @@
-<main class="counter-root">
-  <section class="counter-grid">
-    <div class="counter-card counter-card--victory">
-      <span class="counter-label">Victory</span>
-      <span class="counter-value" data-counter="victories">0</span>
+<div class="counter-container">
+  <div class="counter-grid">
+    <div class="counter-item victory">
+      <div class="label">Victory</div>
+      <div class="value" data-counter="victories">0</div>
     </div>
-    <div class="counter-card counter-card--defeat">
-      <span class="counter-label">Defeat</span>
-      <span class="counter-value" data-counter="defeats">0</span>
-    </div>
-    <div class="counter-card counter-card--draw">
-      <span class="counter-label">Draw</span>
-      <span class="counter-value" data-counter="draws">0</span>
-    </div>
-  </section>
 
-  <section class="counter-meta">
-    <div class="counter-pill">
-      <span class="counter-pill__label">Winrate</span>
-      <span class="counter-pill__value" data-meta="winrate">0%</span>
+    <div class="counter-item defeat">
+      <div class="label">Defeat</div>
+      <div class="value" data-counter="defeats">0</div>
     </div>
-    <div class="counter-pill">
-      <span class="counter-pill__label">Last</span>
-      <span class="counter-pill__value" data-meta="last-outcome"></span>
+  </div>
+
+  <div class="winrate">
+    <div class="winrate-header">
+      <span class="winrate-label">Winrate</span>
+      <span class="winrate-value" data-meta="winrate">0%</span>
     </div>
-    <div class="counter-pill counter-pill--wide">
-      <span class="counter-pill__label">Updated</span>
-      <span class="counter-pill__value" data-meta="last-updated">更新なし</span>
+    <div class="winrate-bar">
+      <div
+        class="winrate-fill"
+        data-style="winrate-width"
+        style="width: 0%"
+      ></div>
     </div>
-  </section>
-</main>
+  </div>
+
+  <div class="last-update" data-meta="last-updated">更新なし</div>
+</div>

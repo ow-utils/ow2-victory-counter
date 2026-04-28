@@ -133,6 +133,12 @@ fn render_obs_document(body: &str) -> String {
         }});
       }};
 
+      const setWinrateWidth = (value) => {{
+        document.querySelectorAll('[data-style="winrate-width"]').forEach((element) => {{
+          element.style.width = value;
+        }});
+      }};
+
       const formatTimestamp = (timestamp, lastOutcome) => {{
         if (!lastOutcome) {{
           return "更新なし";
@@ -141,7 +147,7 @@ fn render_obs_document(body: &str) -> String {
         if (!Number.isFinite(milliseconds)) {{
           return "更新なし";
         }}
-        return new Date(milliseconds).toLocaleString("ja-JP");
+        return `最終更新: ${{new Date(milliseconds).toLocaleString("ja-JP")}} - ${{outcomeLabels[lastOutcome] ?? ""}}`;
       }};
 
       const applyCounterUpdate = (payload) => {{
@@ -158,6 +164,7 @@ fn render_obs_document(body: &str) -> String {
         setText("data-meta", "winrate", `${{winrate}}%`);
         setText("data-meta", "last-updated", formatTimestamp(payload.timestamp, lastOutcome));
         setText("data-meta", "last-outcome", outcomeLabels[lastOutcome] ?? "");
+        setWinrateWidth(`${{winrate}}%`);
 
         document.body.dataset.lastOutcome = lastOutcome;
       }};
@@ -283,6 +290,7 @@ mod tests {
     fn bundled_defaults_expose_template_bindings() {
         assert!(DEFAULT_COUNTER_HTML.contains(r#"data-counter="victories""#));
         assert!(DEFAULT_COUNTER_HTML.contains(r#"data-meta="winrate""#));
-        assert!(DEFAULT_COUNTER_CSS.contains(".counter-root"));
+        assert!(DEFAULT_COUNTER_HTML.contains(r#"data-style="winrate-width""#));
+        assert!(DEFAULT_COUNTER_CSS.contains(".counter-container"));
     }
 }
