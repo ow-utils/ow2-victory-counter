@@ -91,7 +91,7 @@ password = "your-password"  # パスワード設定時のみ
 - `assets/counter.css`
 
 まず `templates/counter.html` と `templates/counter.css` を `assets/` にコピーしてから、そのコピーを編集してください。`counter.html` はレイアウト、`counter.css` は色や装飾を担当します。  
-詳しい説明は [OBS カウンターのカスタマイズ](./customize-counter.md) を参照してください。
+詳しい説明は [OBS カウンターのカスタマイズ](./how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ## トラブルシューティング
 

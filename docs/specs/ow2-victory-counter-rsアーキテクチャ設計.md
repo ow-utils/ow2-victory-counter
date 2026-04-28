@@ -654,6 +654,7 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 ├── templates/
 │   ├── counter.html             # カウンター本文テンプレート
 │   └── counter.css              # カウンターCSS
+├── how-to-customize-counter.md  # カウンター表示のカスタマイズ手順
 └── README.md
 ```
 

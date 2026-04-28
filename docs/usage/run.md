@@ -334,7 +334,7 @@ crop_rect = [56, 208, 327, 144]
 }
 ```
 
-詳しい手順は [OBS カウンターのカスタマイズ](./customize-counter.md) を参照してください。
+詳しい手順は [OBS カウンターのカスタマイズ](./how-to-customize-counter.md) を参照してください。
 
 ---
 

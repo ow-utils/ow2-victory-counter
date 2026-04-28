@@ -261,6 +261,7 @@ ow2-victory-counter-rs/
 ├── templates/
 │   ├── counter.html
 │   └── counter.css
+├── how-to-customize-counter.md  ← カウンター表示のカスタマイズ手順
 └── config.toml  ← 設定ファイル（自分で作成）
 ```
 
