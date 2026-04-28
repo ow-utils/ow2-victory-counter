@@ -257,10 +257,12 @@ ow2-victory-counter-rs/
 │   └── victory_classifier.label_map.json
 ├── assets/                      ← カスタマイズ時に自分で作成
 │   ├── counter.html
-│   └── counter.css
+│   ├── counter.css
+│   └── counter.js
 ├── templates/
 │   ├── counter.html
-│   └── counter.css
+│   ├── counter.css
+│   └── counter.js
 ├── how-to-customize-counter.md  ← カウンター表示のカスタマイズ手順
 └── config.toml  ← 設定ファイル（自分で作成）
 ```

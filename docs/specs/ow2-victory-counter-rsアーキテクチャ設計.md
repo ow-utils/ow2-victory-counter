@@ -35,6 +35,7 @@ Overwatch 2 の勝敗判定を自動で行い、カウントを配信画面に�
 │  │  ├─ GET  /              (OBS用UI: 読み取り専用)     │  │
 │  │  ├─ GET  /admin         (管理画面UI)                │  │
 │  │  ├─ GET  /counter.css   (カウンターCSS)             │  │
+│  │  ├─ GET  /counter.js    (カウンターJavaScript)      │  │
 │  │  ├─ GET  /events        (SSE: リアルタイム通知)     │  │
 │  │  ├─ GET  /api/status    (REST: 状態取得)            │  │
 │  │  ├─ POST /api/initialize (初期化)                   │  │
@@ -84,7 +85,7 @@ Overwatch 2 の勝敗判定を自動で行い、カウントを配信画面に�
 - **用途**: 配信画面へのオーバーレイ表示
 - **機能**: カウンター表示のみ（読み取り専用）
 - **永続化**: なし（SSE 受信時に UI 更新のみ）
-- **カスタマイズ**: templates/counter.html を assets/counter.html へコピーして編集、counter.css も同様
+- **カスタマイズ**: templates/counter.html / counter.css / counter.js を assets/ へコピーして編集
 
 #### 管理画面 (GET /admin)
 
@@ -178,6 +179,7 @@ READY
 - GET /: OBS 用 UI 配信
 - GET /admin: 管理画面 UI 配信
 - GET /counter.css: カウンター CSS 配信
+- GET /counter.js: カウンター JavaScript 配信
 - GET /events: SSE ストリーム
 - GET /api/status: 現在の状態取得
 - POST /api/initialize: 勝敗数初期化
@@ -186,8 +188,8 @@ READY
 **UI 配信方式**:
 
 - OBS 用 UI はサーバーが HTML を動的に組み立てる
-- 組み込みデフォルトは `templates/counter.html` / `templates/counter.css`
-- 実行時は `assets/counter.html` / `assets/counter.css` を優先して読み込む
+- 組み込みデフォルトは `templates/counter.html` / `templates/counter.css` / `templates/counter.js`
+- 実行時は `assets/counter.html` / `assets/counter.css` / `assets/counter.js` を優先して読み込む
 - 管理画面 UI は Svelte のビルド成果物を配信する
 
 ### 5. フロントエンド
@@ -246,6 +248,20 @@ OBS 用カウンター表示 UI を提供。
 
 1. `assets/counter.css` が存在すればそれを返す
 2. なければ組み込みデフォルト CSS を返す
+
+### GET /counter.js
+
+カスタマイズ用 JavaScript を提供。
+
+**レスポンス**:
+
+- Content-Type: `application/javascript`
+- Body: JavaScript ファイル
+
+**動作**:
+
+1. `assets/counter.js` が存在すればそれを返す
+2. なければ組み込みデフォルト JavaScript を返す
 
 ### GET /events
 
@@ -469,7 +485,7 @@ SSE でリアルタイム通知。
 
 ### レベル 1: HTML / CSS 編集
 
-`templates/counter.html` と `templates/counter.css` を `assets/` にコピーしてから編集:
+`templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてから編集:
 
 ```css
 /* 色を変更 */
@@ -648,12 +664,14 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 │   └── victory_classifier.label_map.json
 ├── assets/                      # カスタマイズ結果（任意）
 │   ├── counter.html
-│   └── counter.css
+│   ├── counter.css
+│   └── counter.js
 ├── config/
 │   └── ui-config.json           # 管理画面向け設定（必要なら将来利用）
 ├── templates/
 │   ├── counter.html             # カウンター本文テンプレート
-│   └── counter.css              # カウンターCSS
+│   ├── counter.css              # カウンターCSS
+│   └── counter.js               # カウンターJavaScript
 ├── how-to-customize-counter.md  # カウンター表示のカスタマイズ手順
 └── README.md
 ```

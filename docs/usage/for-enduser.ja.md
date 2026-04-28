@@ -85,12 +85,13 @@ password = "your-password"  # パスワード設定時のみ
 
 ### HTML / CSS でカスタマイズ
 
-次の 2 ファイルを編集すると、OBS のカウンター表示を変更できます。
+次の 3 ファイルを編集すると、OBS のカウンター表示を変更できます。
 
 - `assets/counter.html`
 - `assets/counter.css`
+- `assets/counter.js`
 
-まず `templates/counter.html` と `templates/counter.css` を `assets/` にコピーしてから、そのコピーを編集してください。`counter.html` はレイアウト、`counter.css` は色や装飾を担当します。  
+まず `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてから、そのコピーを編集してください。`counter.html` はレイアウト、`counter.css` は色や装飾、`counter.js` は値更新やアニメーションを担当します。  
 詳しい説明は [OBS カウンターのカスタマイズ](./how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ## トラブルシューティング

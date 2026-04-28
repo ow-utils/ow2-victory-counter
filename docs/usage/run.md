@@ -305,12 +305,13 @@ crop_rect = [56, 208, 327, 144]
 
 ### 8.1 HTML / CSS のカスタマイズ
 
-次の 2 ファイルを編集して、OBS カウンターの見た目とレイアウトを変更できます。
+次の 3 ファイルを編集して、OBS カウンターの見た目、レイアウト、動きを変更できます。
 
 - `assets/counter.html`
 - `assets/counter.css`
+- `assets/counter.js`
 
-編集前に `templates/counter.html` と `templates/counter.css` を `assets/` にコピーしてください。`counter.html` は表示構造、`counter.css` は見た目を担当します。  
+編集前に `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてください。`counter.html` は表示構造、`counter.css` は見た目、`counter.js` は値更新やアニメーションを担当します。  
 変更後はブラウザーまたは OBS のブラウザーソースを再読込すると反映されます。
 
 **例: 色を変更**:

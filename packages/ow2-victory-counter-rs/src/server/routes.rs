@@ -20,6 +20,7 @@ use tower_http::services::ServeDir;
 
 const DEFAULT_COUNTER_HTML: &str = include_str!("../../templates/counter.html");
 const DEFAULT_COUNTER_CSS: &str = include_str!("../../templates/counter.css");
+const DEFAULT_COUNTER_JS: &str = include_str!("../../templates/counter.js");
 
 #[derive(Clone)]
 pub struct AppState {
@@ -33,6 +34,7 @@ pub fn app(state: AppState) -> Router {
         .route("/", get(serve_obs_ui))
         .route("/admin", get(serve_admin_ui))
         .route("/counter.css", get(serve_counter_css))
+        .route("/counter.js", get(serve_counter_js))
         .route("/events", get(sse_handler))
         .route("/api/status", get(get_status))
         .route("/api/initialize", post(initialize))
@@ -47,6 +49,7 @@ pub fn app(state: AppState) -> Router {
         .route("/", get(serve_obs_ui))
         .route("/admin", get(serve_admin_ui))
         .route("/counter.css", get(serve_counter_css))
+        .route("/counter.js", get(serve_counter_js))
         .route("/events", get(sse_handler))
         .route("/api/status", get(get_status))
         .route("/api/initialize", post(initialize))
@@ -101,6 +104,14 @@ async fn serve_counter_css() -> Result<Response, StatusCode> {
         .unwrap())
 }
 
+async fn serve_counter_js() -> Result<Response, StatusCode> {
+    let js = read_customizable_file("assets/counter.js", DEFAULT_COUNTER_JS).await;
+    Ok(Response::builder()
+        .header("Content-Type", "application/javascript; charset=utf-8")
+        .body(js.into())
+        .unwrap())
+}
+
 async fn read_customizable_file(path: &str, fallback: &str) -> String {
     tokio::fs::read_to_string(path)
         .await
@@ -119,83 +130,7 @@ fn render_obs_document(body: &str) -> String {
 </head>
 <body>
   {body}
-  <script>
-    (() => {{
-      const outcomeLabels = {{
-        victory: "Victory",
-        defeat: "Defeat",
-        draw: "Draw",
-      }};
-
-      const setText = (attrName, key, value) => {{
-        document.querySelectorAll(`[${{attrName}}="${{key}}"]`).forEach((element) => {{
-          element.textContent = value;
-        }});
-      }};
-
-      const setWinrateWidth = (value) => {{
-        document.querySelectorAll('[data-style="winrate-width"]').forEach((element) => {{
-          element.style.width = value;
-        }});
-      }};
-
-      const formatTimestamp = (timestamp, lastOutcome) => {{
-        if (!lastOutcome) {{
-          return "更新なし";
-        }}
-        const milliseconds = Number(timestamp) * 1000;
-        if (!Number.isFinite(milliseconds)) {{
-          return "更新なし";
-        }}
-        return `最終更新: ${{new Date(milliseconds).toLocaleString("ja-JP")}} - ${{outcomeLabels[lastOutcome] ?? ""}}`;
-      }};
-
-      const applyCounterUpdate = (payload) => {{
-        const victories = Number(payload.victories ?? 0);
-        const defeats = Number(payload.defeats ?? 0);
-        const draws = Number(payload.draws ?? 0);
-        const lastOutcome = (payload.last_outcome ?? "").toString();
-        const total = victories + defeats;
-        const winrate = total > 0 ? Math.round((victories / total) * 100) : 0;
-
-        setText("data-counter", "victories", String(victories));
-        setText("data-counter", "defeats", String(defeats));
-        setText("data-counter", "draws", String(draws));
-        setText("data-meta", "winrate", `${{winrate}}%`);
-        setText("data-meta", "last-updated", formatTimestamp(payload.timestamp, lastOutcome));
-        setText("data-meta", "last-outcome", outcomeLabels[lastOutcome] ?? "");
-        setWinrateWidth(`${{winrate}}%`);
-
-        document.body.dataset.lastOutcome = lastOutcome;
-      }};
-
-      const fetchStatus = async () => {{
-        const response = await fetch("/api/status");
-        if (!response.ok) {{
-          throw new Error(`status request failed: ${{response.status}}`);
-        }}
-        applyCounterUpdate(await response.json());
-      }};
-
-      const connectEvents = () => {{
-        const eventSource = new EventSource("/events");
-        eventSource.addEventListener("counter-update", (event) => {{
-          applyCounterUpdate(JSON.parse(event.data));
-        }});
-        eventSource.onerror = () => {{
-          console.error("SSE connection error");
-        }};
-      }};
-
-      fetchStatus()
-        .catch((error) => {{
-          console.error("initial status fetch failed", error);
-        }})
-        .finally(() => {{
-          connectEvents();
-        }});
-    }})();
-  </script>
+  <script src="/counter.js"></script>
 </body>
 </html>
 "#,
@@ -281,9 +216,8 @@ mod tests {
         let html = render_obs_document(r#"<div data-counter="victories">0</div>"#);
 
         assert!(html.contains(r#"<link rel="stylesheet" href="/counter.css" />"#));
+        assert!(html.contains(r#"<script src="/counter.js"></script>"#));
         assert!(html.contains(r#"data-counter="victories""#));
-        assert!(html.contains(r#"new EventSource("/events")"#));
-        assert!(html.contains(r#"fetch("/api/status")"#));
     }
 
     #[test]
@@ -292,5 +226,7 @@ mod tests {
         assert!(DEFAULT_COUNTER_HTML.contains(r#"data-meta="winrate""#));
         assert!(DEFAULT_COUNTER_HTML.contains(r#"data-style="winrate-width""#));
         assert!(DEFAULT_COUNTER_CSS.contains(".counter-container"));
+        assert!(DEFAULT_COUNTER_JS.contains(r#"new EventSource("/events")"#));
+        assert!(DEFAULT_COUNTER_JS.contains(r#"fetch("/api/status")"#));
     }
 }
