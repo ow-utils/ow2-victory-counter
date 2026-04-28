@@ -88,6 +88,99 @@ OBS では次のどちらかで再読込できます。
 
 アニメーションだけ変えたい場合は、まず `playBump` の中身を調整してください。
 
+## AI に編集してもらう場合
+
+HTML / CSS / JavaScript に詳しくない場合でも、Claude Desktop や ChatGPT などの AI に依頼してカスタマイズできます。
+
+Claude Desktop や Claude Code Desktop など、ローカルファイルを直接編集できる AI ツールを使う場合は、配布フォルダーをワークスペースとして開き、`assets/` 内のファイルだけを編集対象にしてください。無料プランで使える範囲やローカルファイル編集の可否はサービス側で変わることがあるため、使っている AI ツールの画面や公式案内で確認してください。
+
+ローカルファイルを直接編集できない AI ツールを使う場合は、このセクションの依頼文にファイル内容を貼り付け、AI が出した内容を自分で `assets/` のファイルへ反映してください。
+
+### 先にやること
+
+まず、ひな形を `assets/` にコピーします。
+
+- `templates/counter.html` → `assets/counter.html`
+- `templates/counter.css` → `assets/counter.css`
+- `templates/counter.js` → `assets/counter.js`
+
+AI には、基本的に `assets/` 側のファイルを編集してもらいます。
+
+ローカルファイルを直接編集できる AI ツールに依頼する場合は、次の点を伝えてください。
+
+- 配布フォルダーをワークスペースとして開いていること
+- 編集してよいのは `assets/counter.html`、`assets/counter.css`、`assets/counter.js` だけであること
+- `templates/` は復旧用のひな形なので編集しないこと
+
+### AI に伝える内容
+
+AI に依頼するときは、次の情報を渡すと意図が伝わりやすくなります。
+
+- どういう見た目にしたいか
+- 画面のどこに表示したいか
+- 色、サイズ、余白、フォントの希望
+- アニメーションを変えたいか
+- 変更してよいファイル
+- 現在の `counter.html` / `counter.css` / 必要なら `counter.js` の内容
+
+### 依頼文の例
+
+```text
+OBS のブラウザーソースで表示する勝敗カウンターをカスタマイズしたいです。
+
+変更してよいファイルは次の3つです。
+- assets/counter.html
+- assets/counter.css
+- assets/counter.js
+
+条件:
+- ビルド環境は使いません
+- assets/ 以外のファイルは変更しないでください
+- templates/ は復旧用のひな形なので編集しないでください
+- counter.html は body の中身だけです。html/head/body タグは書かないでください
+- data-counter="victories" と data-counter="defeats" は残してください
+- data-meta="winrate" は勝率表示に使います
+- data-style="winrate-width" は勝率バーの幅更新に使います
+- JavaScript を変更する場合も /api/status と /events の取得処理は壊さないでください
+
+やりたいこと:
+- ここに希望を書く
+- 例: カウンターを画面左下に小さく表示したい
+- 例: 数値が増えたときに一瞬光るようにしたい
+
+以下が現在のファイル内容です。
+
+--- counter.html ---
+ここに assets/counter.html の内容を貼る
+
+--- counter.css ---
+ここに assets/counter.css の内容を貼る
+
+--- counter.js ---
+動きを変えたい場合だけ、ここに assets/counter.js の内容を貼る
+```
+
+ローカルファイルを直接編集できない AI ツールに依頼する場合は、必ず「変更後のファイル全体を出してください」と伝えてください。  
+一部分だけの差分だと、貼り付ける場所を間違えやすくなります。
+
+おすすめの依頼:
+
+```text
+変更後の counter.html、counter.css、必要なら counter.js を、それぞれファイル全体で出してください。
+説明は短くてよいです。
+```
+
+### 反映手順
+
+1. AI が出した内容を `assets/counter.html`、`assets/counter.css`、`assets/counter.js` に反映する
+2. OBS のブラウザーソースを再読込する
+3. 表示が崩れていないか確認する
+4. 管理画面でカウントを増減して、値更新やアニメーションを確認する
+
+### 壊れた場合
+
+表示されない、値が更新されない、画面が真っ白になる場合は、`templates/` のひな形を `assets/` にコピーし直してください。
+
 ## レイアウト変更例
 
 縦並びにしたい場合の例です。
