@@ -20,10 +20,10 @@ label_map_path = "models/victory_classifier.label_map.json"
 # 画像前処理設定
 # クロップ領域: [x, y, width, height]
 # 1920x1080 解像度での勝敗表示の標準的な位置
-crop_rect = [36, 123, 248, 92]
+crop_rect = [42, 156, 245, 108]
 # モデル入力サイズ（ONNXエクスポート時の height/width と一致させる）
-resize_width = 248
-resize_height = 92
+resize_width = 245
+resize_height = 108
 
 # 注意: 解像度が異なる場合や、勝敗表示の位置が異なる場合は調整が必要です
 # フル画面を使用する場合:
