@@ -109,10 +109,16 @@ jobs:
           }
           Compress-Archive -Path $packageRoot -DestinationPath $zipPath -Force
 
+      - name: アーティファクト名を設定
+        shell: pwsh
+        run: |
+          $safeRefName = "${{ github.ref_name }}" -replace '[\\/:*?"<>|]', '-'
+          "ARTIFACT_NAME=ow2-victory-counter-rs-$safeRefName" >> $env:GITHUB_ENV
+
       - name: アーティファクトをアップロード
         uses: actions/upload-artifact@v4
         with:
-          name: ow2-victory-counter-rs-${{ github.ref_name }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs
           if-no-files-found: error
 
