@@ -345,7 +345,7 @@ pnpm build
      --output ../ow2-victory-counter-rs/models/victory_classifier.onnx \
      --width 245 \
      --height 108 \
-     --opset 23
+     --opset 22
    ```
 
 3. 生成されたファイルを Windows 側にコピー

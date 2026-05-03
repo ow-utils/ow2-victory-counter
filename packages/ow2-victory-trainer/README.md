@@ -78,7 +78,7 @@ uv run python scripts/retrain.py --clean-dataset
 - `--crop`: クロップ領域（デフォルト: `42,156,245,108`）
 - `--height`: ONNX 入力画像の高さ（デフォルト: 108）
 - `--width`: ONNX 入力画像の幅（デフォルト: 245）
-- `--opset`: ONNX オペレーターセットのバージョン（デフォルト: 23）
+- `--opset`: ONNX オペレーターセットのバージョン（デフォルト: 22）
 
 ### 1. データセット構築
 
@@ -175,7 +175,7 @@ uv run python scripts/convert_to_onnx.py \
   --output ../ow2-victory-counter-rs/models/victory_classifier.onnx \
   --height 108 \
   --width 245 \
-  --opset 23
+  --opset 22
 ```
 
 **オプション:**
@@ -184,7 +184,7 @@ uv run python scripts/convert_to_onnx.py \
 - `--output`: 出力先ONNXファイルのパス
 - `--height`: 入力画像の高さ（デフォルト: 108）
 - `--width`: 入力画像の幅（デフォルト: 245）
-- `--opset`: ONNXオペレーターセットのバージョン（デフォルト: 23）
+- `--opset`: ONNXオペレーターセットのバージョン（デフォルト: 22）
 
 変換時に以下のファイルが生成されます：
 

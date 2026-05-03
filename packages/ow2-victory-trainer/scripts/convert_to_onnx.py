@@ -46,8 +46,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--opset",
         type=int,
-        default=23,
-        help="ONNX opset version (default: 23)",
+        default=22,
+        help="ONNX opset version (default: 22)",
     )
     return parser.parse_args()
 
@@ -185,7 +185,9 @@ def main() -> int:
 
     print(f"\n[SUCCESS] ✅ Conversion completed successfully!")
     print(f"[INFO] ONNX model: {args.output}")
-    print(f"[INFO] Label map: {args.output.parent / f'{args.output.stem}.label_map.json'}")
+    print(
+        f"[INFO] Label map: {args.output.parent / f'{args.output.stem}.label_map.json'}"
+    )
 
     return 0
 
