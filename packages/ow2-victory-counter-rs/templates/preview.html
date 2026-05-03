@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Counter Preview</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="counter.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #1a1c2a;
+    }
+    .preview-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 24px;
+      border-radius: 14px;
+      background: rgba(30, 34, 56, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      font-family: system-ui, sans-serif;
+      z-index: 100;
+    }
+    .preview-controls button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .preview-controls button:hover { opacity: 0.85; }
+    .btn-victory { background: #F9A825; color: #1a1c2a; }
+    .btn-defeat { background: #E44848; color: #fff; }
+    .btn-reset { background: rgba(255,255,255,0.12); color: #ccc; }
+    .bg-selector {
+      display: flex;
+      gap: 6px;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 1px solid rgba(255,255,255,0.15);
+    }
+    .bg-selector button {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 2px solid rgba(255,255,255,0.2);
+      padding: 0;
+      cursor: pointer;
+      font-size: 0;
+    }
+    .bg-selector button.active { border-color: #F9A825; }
+    .bg-dark { background: #1a1c2a; }
+    .bg-game1 { background: linear-gradient(135deg, #2c3e50, #1a252f); }
+    .bg-game2 { background: linear-gradient(135deg, #4a2c1a, #1a1210); }
+    .bg-bright { background: #8fa4b8; }
+  </style>
+</head>
+<body>
+  <div class="counter-container">
+    <div class="scoreboard">
+      <div class="scoreboard-labels">
+        <span class="label label-victory">Victory</span>
+        <span class="label-spacer" aria-hidden="true"></span>
+        <span class="label label-defeat">Defeat</span>
+      </div>
+      <div class="scoreboard-score">
+        <span class="value value-victory" data-counter="victories">0</span>
+        <span class="separator">—</span>
+        <span class="value value-defeat" data-counter="defeats">0</span>
+      </div>
+      <div class="scoreboard-winrate">
+        <div class="winrate-bar">
+          <div class="winrate-fill" data-style="winrate-width" style="width: 0%"></div>
+        </div>
+        <div class="winrate-meta">
+          <span class="winrate-label">Winrate</span>
+          <span class="winrate-value" data-meta="winrate">0%</span>
+        </div>
+      </div>
+      <div class="last-update" data-meta="last-updated">Standby</div>
+    </div>
+  </div>
+
+  <div class="preview-controls">
+    <button class="btn-victory" onclick="addVictory()">+ Victory</button>
+    <button class="btn-defeat" onclick="addDefeat()">+ Defeat</button>
+    <button class="btn-reset" onclick="resetAll()">Reset</button>
+    <div class="bg-selector">
+      <button class="bg-dark active" title="Dark" onclick="setBg(this, '#1a1c2a')"></button>
+      <button class="bg-game1" title="Cool game" onclick="setBg(this, 'linear-gradient(135deg, #2c3e50, #1a252f)')"></button>
+      <button class="bg-game2" title="Warm game" onclick="setBg(this, 'linear-gradient(135deg, #4a2c1a, #1a1210)')"></button>
+      <button class="bg-bright" title="Bright" onclick="setBg(this, '#8fa4b8')"></button>
+    </div>
+  </div>
+
+  <!-- Mock: counter.js より先にロードし、fetch と EventSource を差し替える -->
+  <script>
+    let victories = 0;
+    let defeats = 0;
+    let _fakeEventSource = null;
+
+    const _OriginalEventSource = window.EventSource;
+    window.EventSource = class FakeEventSource extends EventTarget {
+      constructor() {
+        super();
+        _fakeEventSource = this;
+        this.readyState = 1;
+      }
+      close() { this.readyState = 2; }
+    };
+
+    const _originalFetch = window.fetch;
+    window.fetch = (url, opts) => {
+      if (typeof url === "string" && url.includes("/api/status")) {
+        return Promise.resolve(new Response(JSON.stringify({
+          victories: 0, defeats: 0, draws: 0,
+          last_outcome: "", timestamp: 0,
+        }), { status: 200, headers: { "Content-Type": "application/json" } }));
+      }
+      return _originalFetch(url, opts);
+    };
+
+    function fireUpdate(outcome) {
+      const data = JSON.stringify({
+        victories, defeats, draws: 0,
+        last_outcome: outcome,
+        timestamp: Math.floor(Date.now() / 1000),
+      });
+      if (_fakeEventSource) {
+        const event = new MessageEvent("counter-update", { data });
+        _fakeEventSource.dispatchEvent(event);
+      }
+    }
+
+    function addVictory() { victories++; fireUpdate("victory"); }
+    function addDefeat()  { defeats++;  fireUpdate("defeat"); }
+    function resetAll()   { victories = 0; defeats = 0; fireUpdate(""); }
+
+    function setBg(btn, value) {
+      document.querySelectorAll(".bg-selector button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.body.style.background = value;
+    }
+  </script>
+  <!-- 本物の counter.js: モック済みの fetch/EventSource を使って初期化される -->
+  <script src="counter.js"></script>
+</body>
+</html>

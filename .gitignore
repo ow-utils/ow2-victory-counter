@@ -15,3 +15,6 @@ __pycache__/
 
 /.serena/
 /.codex
+
+# Claude Code
+.claude/settings.local.json
