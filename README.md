@@ -16,6 +16,8 @@
 
 [for-enduser.md](docs/usage/for-enduser.ja.md) 参照。
 
+OBS に表示するカウンター UI を変更したい場合は、[OBS カウンターのカスタマイズ](docs/usage/how-to-customize-counter.md) を参照。
+
 動作イメージは[こちら](https://www.youtube.com/watch?v=Qja2lJFxZhs):
 
 [![#オーバーウォッチ2 勝敗カウンター](https://img.youtube.com/vi/Qja2lJFxZhs/0.jpg)](https://www.youtube.com/watch?v=Qja2lJFxZhs)
