@@ -1,29 +1,31 @@
 <div class="counter-container">
-  <div class="counter-grid">
-    <div class="counter-item victory">
-      <div class="label">Victory</div>
-      <div class="value" data-counter="victories">0</div>
+  <div class="scoreboard">
+    <div class="scoreboard-labels">
+      <span class="label label-victory">Victory</span>
+      <span class="label-spacer" aria-hidden="true"></span>
+      <span class="label label-defeat">Defeat</span>
     </div>
 
-    <div class="counter-item defeat">
-      <div class="label">Defeat</div>
-      <div class="value" data-counter="defeats">0</div>
+    <div class="scoreboard-score">
+      <span class="value value-victory" data-counter="victories">0</span>
+      <span class="separator">—</span>
+      <span class="value value-defeat" data-counter="defeats">0</span>
     </div>
+
+    <div class="scoreboard-winrate">
+      <div class="winrate-bar">
+        <div
+          class="winrate-fill"
+          data-style="winrate-width"
+          style="width: 0%"
+        ></div>
+      </div>
+      <div class="winrate-meta">
+        <span class="winrate-label">Winrate</span>
+        <span class="winrate-value" data-meta="winrate">0%</span>
+      </div>
+    </div>
+
+    <div class="last-update" data-meta="last-updated">更新なし</div>
   </div>
-
-  <div class="winrate">
-    <div class="winrate-header">
-      <span class="winrate-label">Winrate</span>
-      <span class="winrate-value" data-meta="winrate">0%</span>
-    </div>
-    <div class="winrate-bar">
-      <div
-        class="winrate-fill"
-        data-style="winrate-width"
-        style="width: 0%"
-      ></div>
-    </div>
-  </div>
-
-  <div class="last-update" data-meta="last-updated">更新なし</div>
 </div>
