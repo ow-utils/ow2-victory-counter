@@ -34,20 +34,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--height",
         type=int,
-        default=550,
-        help="Input image height (default: 550)",
+        default=108,
+        help="Input image height (default: 108)",
     )
     parser.add_argument(
         "--width",
         type=int,
-        default=995,
-        help="Input image width (default: 995)",
+        default=245,
+        help="Input image width (default: 245)",
     )
     parser.add_argument(
         "--opset",
         type=int,
-        default=17,
-        help="ONNX opset version (default: 17)",
+        default=22,
+        help="ONNX opset version (default: 22)",
     )
     return parser.parse_args()
 
@@ -185,7 +185,9 @@ def main() -> int:
 
     print(f"\n[SUCCESS] ✅ Conversion completed successfully!")
     print(f"[INFO] ONNX model: {args.output}")
-    print(f"[INFO] Label map: {args.output.parent / f'{args.output.stem}.label_map.json'}")
+    print(
+        f"[INFO] Label map: {args.output.parent / f'{args.output.stem}.label_map.json'}"
+    )
 
     return 0
 

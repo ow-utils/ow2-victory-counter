@@ -29,10 +29,12 @@ class DetectionResult:
         return self.outcome != "unknown" and self.confidence >= threshold
 
 
-# 5クラス分類結果から勝敗へのマッピング
+# 現行3分類結果から勝敗へのマッピング。旧詳細クラス名も後方互換で扱う。
 CLASS_TO_OUTCOME: dict[str, Outcome] = {
+    "victory": "victory",
     "victory_text": "victory",
     "victory_progressbar": "victory",
+    "defeat": "defeat",
     "defeat_text": "defeat",
     "defeat_progressbar": "defeat",
     "none": "unknown",  # 検知なし
@@ -65,7 +67,7 @@ class VictoryPredictor:
         self,
         model_path: Path,
         device: str = "auto",
-        crop_region: tuple[int, int, int, int] = (460, 378, 995, 550),
+        crop_region: tuple[int, int, int, int] = (42, 156, 245, 108),
         image_size: int | None = None,
         mask_regions: list[tuple[int, int, int, int]] | None = None,
     ) -> None:
@@ -152,7 +154,7 @@ class VictoryPredictor:
         return tensor.unsqueeze(0)
 
     def _map_class_to_outcome(self, class_name: str) -> Outcome:
-        """5クラス分類結果を勝敗結果にマッピングする。
+        """分類結果を勝敗結果にマッピングする。
 
         Args:
             class_name: 分類クラス名
@@ -184,7 +186,7 @@ class VictoryPredictor:
         confidence = probabilities[predicted_idx].item()
         class_name = self.idx_to_label[predicted_idx]
 
-        # 6クラス→3種類マッピング
+        # 分類クラスを勝敗結果へマッピング
         outcome = self._map_class_to_outcome(class_name)
 
         # DetectionResult作成

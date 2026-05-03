@@ -26,6 +26,7 @@
 4. **OK** をクリック
 
 **確認方法**:
+
 - OBS 下部のステータスバーに「WebSocket サーバー実行中」と表示されます
 
 ---
@@ -58,11 +59,14 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [465, 530, 512, 283]  # 勝敗表示の領域（1920x1080 の場合）
+crop_rect = [42, 156, 245, 108]  # 勝敗表示の領域（1920x1080 の場合）
+resize_width = 245
+resize_height = 108
 
 [state]
-cooldown_seconds = 10  # 勝敗判定後のクールダウン時間（秒）
+cooldown_seconds = 180  # 勝敗判定後のクールダウン時間（秒）
 required_consecutive = 3  # 連続検知が必要な回数
+required_none_after_cooldown = 100  # クールダウン後に通常画面へ戻ったとみなす連続 none 回数
 
 [server]
 host = "127.0.0.1"
@@ -75,12 +79,14 @@ interval_ms = 1000  # 検知間隔（ミリ秒）
 ### 2.2 重要な設定項目
 
 #### source_name
+
 - **OBS のソース名と完全に一致**させる必要があります
 - 大文字・小文字、スペースも区別されます
 
 #### crop_rect
+
 - 勝敗表示の領域を指定します（`[x, y, width, height]`）
-- **デフォルト**: `[465, 530, 512, 283]` （1920x1080 の画面用）
+- **デフォルト**: `[42, 156, 245, 108]` （1920x1080 の画面用）
 - 画面解像度が異なる場合は調整が必要です（後述）
 
 ---
@@ -90,21 +96,25 @@ interval_ms = 1000  # 検知間隔（ミリ秒）
 ### 3.1 PowerShell で起動
 
 **プロジェクトディレクトリに移動**:
+
 ```powershell
 cd path\to\ow2\packages\ow2-victory-counter-rs
 ```
 
 **リリースビルドで起動**（通常はこちらを使用）:
+
 ```powershell
 cargo run --release
 ```
 
 または、ビルド済みの実行ファイルを直接起動:
+
 ```powershell
 .\target\release\ow2-victory-detector.exe
 ```
 
 **カスタム設定ファイルを指定**:
+
 ```powershell
 cargo run --release -- --config my-config.toml
 ```
@@ -128,10 +138,11 @@ cargo run --release -- --config my-config.toml
  INFO    - OBS UI: http://127.0.0.1:3000/
  INFO    - Admin UI: http://127.0.0.1:3000/admin
  INFO    - SSE endpoint: http://127.0.0.1:3000/events
- INFO  Starting detection loop (interval: 1000ms, crop: (465, 530, 512, 283))
+ INFO  Starting detection loop (interval: 1000ms, crop: (42, 156, 245, 108))
 ```
 
 **重要なメッセージ**:
+
 - ✅ `OBS WebSocket connected successfully` - OBS との接続成功
 - ✅ `ONNX model loaded successfully` - モデル読み込み成功
 - ✅ `HTTP server listening on...` - Web サーバー起動成功
@@ -149,6 +160,7 @@ http://127.0.0.1:3000/
 ```
 
 **表示内容**:
+
 - 勝利カウント（緑色）
 - 敗北カウント（赤色）
 - 最終更新時刻
@@ -164,6 +176,7 @@ http://127.0.0.1:3000/admin
 ```
 
 **機能**:
+
 - 現在のカウント表示
 - **+** / **-** ボタンで手動調整
 - **リセット** ボタンで全カウントをゼロに
@@ -204,6 +217,7 @@ http://127.0.0.1:3000/admin
 3. カウンターが自動的に増加することを確認
 
 **確認ポイント**:
+
 - 勝利時: 緑色のカウントが +1
 - 敗北時: 赤色のカウントが +1
 - アプリケーションのログに `Event triggered: victory` や `Event triggered: defeat` が表示される
@@ -225,6 +239,7 @@ http://127.0.0.1:3000/admin
 **症状**: `Failed to capture image` エラーが表示される
 
 **解決策**:
+
 1. OBS でソース名を確認
 2. `config.toml` の `source_name` を一致させる
 3. アプリケーションを再起動
@@ -236,6 +251,7 @@ http://127.0.0.1:3000/admin
 **症状**: 勝敗画面が表示されるが、カウントが増えない
 
 **解決策**: `config.toml` の `required_consecutive` を減らす
+
 ```toml
 [state]
 required_consecutive = 2  # デフォルトは 3
@@ -259,6 +275,7 @@ required_consecutive = 2  # デフォルトは 3
    - **height**: 高さ
 
 5. `config.toml` の `crop_rect` を更新：
+
    ```toml
    [preprocessing]
    crop_rect = [x, y, width, height]
@@ -271,13 +288,15 @@ required_consecutive = 2  # デフォルトは 3
 ### 7.2 デフォルト値
 
 **1920x1080 の場合**:
+
 ```toml
-crop_rect = [465, 530, 512, 283]
+crop_rect = [42, 156, 245, 108]
 ```
 
 **2560x1440 の場合** （参考値、要調整）:
+
 ```toml
-crop_rect = [620, 707, 683, 377]
+crop_rect = [56, 208, 327, 144]
 ```
 
 ---
@@ -289,20 +308,23 @@ crop_rect = [620, 707, 683, 377]
 `templates/custom.css` を編集して、カウンターの見た目を変更できます。
 
 **例: 色を変更**:
+
 ```css
 .counter-grid {
-  --victory-color: #00ff00;  /* 勝利の色 */
-  --defeat-color: #ff0000;   /* 敗北の色 */
-  --font-size: 96px;         /* フォントサイズ */
+  --victory-color: #00ff00; /* 勝利の色 */
+  --defeat-color: #ff0000; /* 敗北の色 */
+  --font-size: 96px; /* フォントサイズ */
 }
 ```
 
 **例: グロー効果を追加**:
+
 ```css
 .value {
-  text-shadow: 0 0 20px currentColor,
-               0 0 40px currentColor,
-               0 0 60px currentColor;
+  text-shadow:
+    0 0 20px currentColor,
+    0 0 40px currentColor,
+    0 0 60px currentColor;
 }
 ```
 
@@ -326,18 +348,21 @@ crop_rect = [620, 707, 683, 377]
 詳細なログを表示したい場合、環境変数を設定します。
 
 **PowerShell**:
+
 ```powershell
 $env:RUST_LOG="debug"
 cargo run
 ```
 
 **コマンドプロンプト**:
+
 ```cmd
 set RUST_LOG=debug
 cargo run
 ```
 
 **ログレベル**:
+
 - `error`: エラーのみ
 - `warn`: 警告以上
 - `info`: 情報以上（デフォルト）
@@ -353,6 +378,7 @@ cargo run
 **原因**: OBS が起動していない、または WebSocket が無効
 
 **解決策**:
+
 1. OBS Studio を起動
 2. **ツール** → **WebSocket サーバー設定** で有効化
 3. ポート番号が `4455` であることを確認
@@ -365,6 +391,7 @@ cargo run
 **原因**: ソース名が一致していない
 
 **解決策**:
+
 1. OBS でソース名を確認（大文字・小文字、スペースも正確に）
 2. `config.toml` の `source_name` を修正
 3. アプリケーションを再起動
@@ -376,6 +403,7 @@ cargo run
 **原因**: ONNX モデルファイルが存在しない
 
 **解決策**:
+
 1. `models/` ディレクトリを確認：
    ```powershell
    dir models
@@ -389,6 +417,7 @@ cargo run
 **原因**: クールダウン時間が短すぎる、または連続検知回数が少なすぎる
 
 **解決策**: `config.toml` を調整
+
 ```toml
 [state]
 cooldown_seconds = 15  # クールダウンを延長

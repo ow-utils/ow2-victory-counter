@@ -5,7 +5,7 @@ label ごとに画像を配置するだけで処理できる。
 
 `--crop x,y,width,height` を指定すると、共通の矩形でクロップできる。
 値はピクセル、または 0〜1 の比率指定。未指定時は推奨クロップ領域
-460,378,995,550 が使用される。
+42,156,245,108 が使用される。
 
 出力は `dataset/<label>/` の構造で保存される。
 """
@@ -19,6 +19,7 @@ import cv2  # type: ignore
 
 DATASET_ROOT = Path("dataset")
 SAMPLES_ROOT = Path("data/samples")
+DEFAULT_CROP_RECT = (42, 156, 245, 108)
 
 
 def parse_args() -> argparse.Namespace:
@@ -30,7 +31,7 @@ def parse_args() -> argparse.Namespace:
         "--crop",
         type=str,
         default=None,
-        help="クロップ矩形を 'x,y,width,height' 形式で指定 (値はピクセルまたは 0〜1 の比率)",
+        help="クロップ矩形を 'x,y,width,height' 形式で指定 (値はピクセルまたは 0〜1 の比率、省略時: 42,156,245,108)",
     )
     parser.add_argument("--mask", nargs='?', const='0,534,1920,295', default=None, help="マスク領域 (x,y,width,height)。値を省略した場合はデフォルト: 0,534,1920,295")
     return parser.parse_args()
@@ -98,7 +99,7 @@ def _process_structured_samples(
                 h = int(round(ch * height)) if abs(ch) <= 1 else int(round(ch))
             else:
                 # fallback: 推奨クロップ領域を使用
-                x, y, w, h = 460, 378, 995, 550
+                x, y, w, h = DEFAULT_CROP_RECT
 
             x = max(0, min(x, width - 1))
             y = max(0, min(y, height - 1))

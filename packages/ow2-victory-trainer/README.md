@@ -18,6 +18,7 @@ ow2-victory-trainer/
 │           ├── __init__.py
 │           └── predictor.py
 ├── scripts/                       # 実行可能なスクリプト
+│   ├── retrain.py                # データセット構築・学習・ONNX変換の一括実行
 │   ├── build_dataset.py          # データセット構築
 │   ├── train_classifier.py       # 学習実行
 │   ├── convert_to_onnx.py        # ONNX変換
@@ -46,19 +47,53 @@ uv sync
 
 ## 使い方
 
+### 一括再学習
+
+データセット構築、モデル学習、ONNX 変換、`victory` / `defeat` / `none` 各クラスの推論確認をまとめて実行します。
+
+```bash
+uv run python scripts/retrain.py
+```
+
+既存の `dataset` を削除して作り直す場合は `--clean-dataset` を指定します。
+
+```bash
+uv run python scripts/retrain.py --clean-dataset
+```
+
+**主なオプション:**
+
+- `--samples`: サンプル画像のディレクトリ（デフォルト: `data/samples`）
+- `--dataset`: データセットの出力先・学習元ディレクトリ（デフォルト: `dataset`）
+- `--checkpoint`: PyTorch モデル保存先（デフォルト: `artifacts/models/victory_classifier.pth`）
+- `--onnx-output`: ONNX モデル保存先（デフォルト: `../ow2-victory-counter-rs/models/victory_classifier.onnx`）
+- `--clean-dataset`: データセット構築前に `--dataset` のディレクトリを削除する
+- `--skip-build`: データセット構築をスキップする
+- `--skip-convert`: ONNX 変換をスキップする
+- `--skip-verify`: ONNX 変換後の推論確認をスキップする
+- `--verify-samples`: 推論確認に使うサンプル画像ディレクトリ（デフォルト: `--samples` と同じ）
+- `--verify-count-per-class`: 推論確認で各クラスから使用する画像数（デフォルト: 1）
+- `--epochs`: エポック数（デフォルト: 30）
+- `--batch-size`: バッチサイズ（デフォルト: 32）
+- `--crop`: クロップ領域（デフォルト: `42,156,245,108`）
+- `--height`: ONNX 入力画像の高さ（デフォルト: 108）
+- `--width`: ONNX 入力画像の幅（デフォルト: 245）
+- `--opset`: ONNX オペレーターセットのバージョン（デフォルト: 22）
+
 ### 1. データセット構築
 
 学習用データセットを構築します。元のサンプル画像から、クロップ・リサイズ・マスク処理を行います。
 
 ```bash
-uv run python scripts/build_dataset.py --size 512 --mask
+uv run python scripts/build_dataset.py
 ```
 
 **オプション:**
+
 - `--samples`: サンプル画像のディレクトリ（デフォルト: `data/samples`）
 - `--output`: 出力先ディレクトリ（デフォルト: `dataset`）
 - `--size`: リサイズ後の画像サイズ（長辺、省略時はリサイズしない）
-- `--crop`: クロップ領域 `x,y,width,height`（省略時は推奨値 `460,378,995,550`）
+- `--crop`: クロップ領域 `x,y,width,height`（省略時は推奨値 `42,156,245,108`）
 - `--mask`: マスク領域（省略時はマスクなし、値を省略すると `0,534,1920,295`）
 
 ### 2. モデル学習
@@ -66,10 +101,11 @@ uv run python scripts/build_dataset.py --size 512 --mask
 データセットを使ってモデルを学習します。
 
 ```bash
-uv run python scripts/train_classifier.py --epochs 30 --batch-size 32
+uv run python scripts/train_classifier.py
 ```
 
 **オプション:**
+
 - `--data`: データセットのディレクトリ（デフォルト: `dataset`）
 - `--epochs`: エポック数（デフォルト: 30）
 - `--batch-size`: バッチサイズ（デフォルト: 32）
@@ -77,6 +113,7 @@ uv run python scripts/train_classifier.py --epochs 30 --batch-size 32
 - `--checkpoint`: モデル保存先（デフォルト: `artifacts/models/victory_classifier.pth`）
 
 学習済みモデルには以下が含まれます：
+
 - `model_state_dict`: モデルの重み
 - `label_map`: ラベル名→インデックスのマッピング
 - `idx_to_label`: インデックス→ラベル名のマッピング
@@ -95,18 +132,17 @@ uv run python scripts/inference_pytorch.py \
 ```
 
 **出力例:**
+
 ```json
 {
   "image": "path/to/test_image.png",
   "outcome": "victory",
   "confidence": 0.9876,
-  "predicted_class": "victory_text",
+  "predicted_class": "victory",
   "probabilities": [
-    {"class": "defeat_progressbar", "probability": 0.0012},
-    {"class": "defeat_text", "probability": 0.0034},
-    {"class": "none", "probability": 0.0078},
-    {"class": "victory_progressbar", "probability": 0.0123},
-    {"class": "victory_text", "probability": 0.9876}
+    { "class": "defeat", "probability": 0.0034 },
+    { "class": "none", "probability": 0.0078 },
+    { "class": "victory", "probability": 0.9876 }
   ]
 }
 ```
@@ -124,7 +160,9 @@ uv run python scripts/convert_to_onnx.py \
 # ONNX推論
 uv run python scripts/inference_onnx.py \
   --image path/to/test_image.png \
-  --model ../ow2-victory-counter-rs/models/victory_classifier.onnx
+  --model ../ow2-victory-counter-rs/models/victory_classifier.onnx \
+  --height 108 \
+  --width 245
 ```
 
 ### 4. ONNX変換
@@ -135,18 +173,21 @@ PyTorchモデルをONNX形式に変換します。変換後のモデルは Rust 
 uv run python scripts/convert_to_onnx.py \
   --input artifacts/models/victory_classifier.pth \
   --output ../ow2-victory-counter-rs/models/victory_classifier.onnx \
-  --height 550 \
-  --width 995
+  --height 108 \
+  --width 245 \
+  --opset 22
 ```
 
 **オプション:**
+
 - `--input`: PyTorchモデルのパス
 - `--output`: 出力先ONNXファイルのパス
-- `--height`: 入力画像の高さ（デフォルト: 550）
-- `--width`: 入力画像の幅（デフォルト: 995）
-- `--opset`: ONNXオペレーターセットのバージョン（デフォルト: 17）
+- `--height`: 入力画像の高さ（デフォルト: 108）
+- `--width`: 入力画像の幅（デフォルト: 245）
+- `--opset`: ONNXオペレーターセットのバージョン（デフォルト: 22）
 
 変換時に以下のファイルが生成されます：
+
 - `victory_classifier.onnx`: ONNXモデル
 - `victory_classifier.label_map.json`: クラスラベルマップ
 
@@ -155,17 +196,15 @@ uv run python scripts/convert_to_onnx.py \
 ### アーキテクチャ
 
 - **モデルタイプ**: CNN（畳み込みニューラルネットワーク）
-- **クラス数**: 5クラス
-  - `victory_text`: 勝利テキスト
-  - `victory_progressbar`: 勝利プログレスバー
-  - `defeat_text`: 敗北テキスト
-  - `defeat_progressbar`: 敗北プログレスバー
+- **クラス数**: 3クラス
+  - `victory`: 勝利
+  - `defeat`: 敗北
   - `none`: 検知なし
 
 ### 前処理
 
 1. マスク適用（オプション）
-2. クロップ（推奨: 460, 378, 995, 550）
+2. クロップ（推奨: 42, 156, 245, 108）
 3. アスペクト比維持リサイズ（オプション）
 4. BGR → RGB 変換
 5. 0-1 正規化
@@ -181,6 +220,7 @@ uv run python scripts/convert_to_onnx.py \
 学習したモデルを Rust 実装の推論エンジンで使用するには：
 
 1. ONNX変換を実行
+
    ```bash
    uv run python scripts/convert_to_onnx.py
    ```
