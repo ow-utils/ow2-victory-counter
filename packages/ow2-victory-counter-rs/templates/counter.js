@@ -6,27 +6,44 @@
   };
   const previousCounters = new Map();
 
-  const playBump = (element) => {
+  const playBump = (element, outcome) => {
     if (!element || typeof element.animate !== "function") {
       return;
     }
-    element.animate(
-      [
-        {
-          transform: "scale(1)",
-          filter: "drop-shadow(0 0 0 rgba(255,255,255,0.2))",
-        },
-        {
-          transform: "scale(1.2)",
-          filter: "drop-shadow(0 0 20px rgba(255,255,255,0.5))",
-        },
-        {
-          transform: "scale(1)",
-          filter: "drop-shadow(0 0 0 rgba(255,255,255,0.2))",
-        },
-      ],
-      { duration: 520, easing: "ease" },
-    );
+    if (outcome === "defeat") {
+      element.animate(
+        [
+          { transform: "translateX(0) scale(1)", filter: "drop-shadow(0 0 0 rgba(228,72,72,0))" },
+          { transform: "translateX(-8px) scale(1.3)", filter: "drop-shadow(0 0 28px rgba(228,72,72,0.9)) drop-shadow(0 0 56px rgba(228,72,72,0.5))" },
+          { transform: "translateX(6px) scale(1.15)", filter: "drop-shadow(0 0 18px rgba(228,72,72,0.6))" },
+          { transform: "translateX(-3px) scale(1.05)", filter: "drop-shadow(0 0 8px rgba(228,72,72,0.3))" },
+          { transform: "translateX(0) scale(1)", filter: "drop-shadow(0 0 0 rgba(228,72,72,0))" },
+        ],
+        { duration: 700, easing: "ease-out" },
+      );
+    } else {
+      element.animate(
+        [
+          { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(249,168,37,0))" },
+          { transform: "scale(1.45)", filter: "drop-shadow(0 0 32px rgba(249,168,37,0.9)) drop-shadow(0 0 60px rgba(255,255,255,0.4))" },
+          { transform: "scale(0.95)", filter: "drop-shadow(0 0 14px rgba(249,168,37,0.4))" },
+          { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(249,168,37,0))" },
+        ],
+        { duration: 700, easing: "cubic-bezier(.2,1.5,.4,1)" },
+      );
+    }
+  };
+
+  const flashPanel = (outcome) => {
+    const panel = document.querySelector(".scoreboard");
+    if (!panel) return;
+    panel.classList.remove("flash-victory", "flash-defeat");
+    void panel.offsetWidth;
+    if (outcome === "victory" || outcome === "defeat") {
+      const cls = `flash-${outcome}`;
+      panel.classList.add(cls);
+      panel.addEventListener("animationend", () => panel.classList.remove(cls), { once: true });
+    }
   };
 
   const setText = (attrName, key, value) => {
@@ -35,12 +52,12 @@
     });
   };
 
-  const setCounterText = (key, value) => {
+  const setCounterText = (key, value, outcome) => {
     const previousValue = previousCounters.get(key);
     document.querySelectorAll(`[data-counter="${key}"]`).forEach((element) => {
       element.textContent = value;
       if (previousValue !== undefined && previousValue !== value) {
-        playBump(element);
+        playBump(element, outcome);
       }
     });
     previousCounters.set(key, value);
@@ -82,9 +99,13 @@
     const total = victories + defeats;
     const winrate = total > 0 ? Math.round((victories / total) * 100) : 0;
 
-    setCounterText("victories", String(victories));
-    setCounterText("defeats", String(defeats));
-    setCounterText("draws", String(draws));
+    setCounterText("victories", String(victories), "victory");
+    setCounterText("defeats", String(defeats), "defeat");
+    setCounterText("draws", String(draws), "draw");
+
+    if (lastOutcome) {
+      flashPanel(lastOutcome);
+    }
     setText("data-meta", "winrate", `${winrate}%`);
     setText(
       "data-meta",
