@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,7 @@ DEFAULT_MASK = "0,534,1920,295"
 DEFAULT_HEIGHT = 108
 DEFAULT_WIDTH = 245
 DEFAULT_OPSET = 23
+VERIFY_LABELS = ("defeat", "none", "victory")
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +31,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     parser.add_argument("--onnx-output", type=Path, default=DEFAULT_ONNX_OUTPUT)
+    parser.add_argument(
+        "--verify-samples",
+        type=Path,
+        default=None,
+        help="推論確認に使うサンプル画像ディレクトリ（省略時は --samples と同じ）。",
+    )
 
     parser.add_argument("--crop", default=DEFAULT_CROP)
     parser.add_argument("--size", type=int, default=None)
@@ -62,6 +70,17 @@ def parse_args() -> argparse.Namespace:
         "--skip-convert",
         action="store_true",
         help="ONNX変換をスキップする。",
+    )
+    parser.add_argument(
+        "--skip-verify",
+        action="store_true",
+        help="ONNX変換後の victory/defeat/none 推論確認をスキップする。",
+    )
+    parser.add_argument(
+        "--verify-count-per-class",
+        type=int,
+        default=1,
+        help="推論確認で各クラスから使用する画像数。",
     )
 
     return parser.parse_args()
@@ -125,6 +144,81 @@ def convert_args(args: argparse.Namespace) -> list[str]:
     ]
 
 
+def inference_args(args: argparse.Namespace, image_path: Path) -> list[str]:
+    return [
+        sys.executable,
+        "scripts/inference_onnx.py",
+        "--image",
+        str(image_path),
+        "--model",
+        str(args.onnx_output),
+        "--height",
+        str(args.height),
+        "--width",
+        str(args.width),
+    ]
+
+
+def collect_verify_samples(
+    samples_root: Path,
+    count_per_class: int,
+) -> list[tuple[str, Path]]:
+    if count_per_class < 1:
+        raise ValueError("--verify-count-per-class は 1 以上を指定してください。")
+
+    verify_samples: list[tuple[str, Path]] = []
+    for label in VERIFY_LABELS:
+        label_dir = samples_root / label
+        if not label_dir.is_dir():
+            raise FileNotFoundError(f"検証用サンプルディレクトリが見つかりません: {label_dir}")
+
+        image_paths = sorted(label_dir.rglob("*.png"))
+        if len(image_paths) < count_per_class:
+            raise FileNotFoundError(
+                f"検証用サンプルが不足しています: {label_dir} "
+                f"(required={count_per_class}, found={len(image_paths)})"
+            )
+
+        verify_samples.extend((label, path) for path in image_paths[:count_per_class])
+
+    return verify_samples
+
+
+def verify_predictions(args: argparse.Namespace) -> None:
+    samples_root = args.verify_samples if args.verify_samples else args.samples
+    verify_samples = collect_verify_samples(samples_root, args.verify_count_per_class)
+
+    print("\n[STEP] 推論確認")
+    for expected_label, image_path in verify_samples:
+        command = inference_args(args, image_path)
+        print(f"[RUN] {' '.join(command)}")
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+
+        try:
+            prediction = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            print(result.stdout)
+            print(result.stderr, file=sys.stderr)
+            raise RuntimeError(f"推論結果JSONの読み込みに失敗しました: {exc}") from exc
+
+        predicted_class = prediction["predicted_class"]
+        confidence = float(prediction["confidence"])
+        outcome = prediction["outcome"]
+
+        print(
+            "[VERIFY] "
+            f"expected={expected_label} predicted={predicted_class} "
+            f"outcome={outcome} confidence={confidence:.4f} image={image_path}"
+        )
+
+        if predicted_class != expected_label:
+            raise RuntimeError(
+                "推論確認に失敗しました: "
+                f"expected={expected_label}, predicted={predicted_class}, "
+                f"confidence={confidence:.4f}, image={image_path}"
+            )
+
+
 def main() -> int:
     args = parse_args()
 
@@ -146,6 +240,25 @@ def main() -> int:
     except subprocess.CalledProcessError as exc:
         print(f"[ERROR] ステップが失敗しました: exit code {exc.returncode}")
         return exc.returncode
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        print(f"[ERROR] {exc}")
+        return 1
+
+    if args.skip_convert and not args.skip_verify:
+        print("[INFO] ONNX変換をスキップしたため、推論確認もスキップします。")
+    elif not args.skip_verify:
+        try:
+            verify_predictions(args)
+        except subprocess.CalledProcessError as exc:
+            print(f"[ERROR] 推論確認ステップが失敗しました: exit code {exc.returncode}")
+            if exc.stdout:
+                print(exc.stdout)
+            if exc.stderr:
+                print(exc.stderr, file=sys.stderr)
+            return exc.returncode
+        except (FileNotFoundError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
 
     print("\n[SUCCESS] 再学習手順が完了しました。")
     print(f"[INFO] PyTorch model: {args.checkpoint}")

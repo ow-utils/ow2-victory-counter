@@ -6,6 +6,8 @@ Usage:
     uv run python scripts/inference_onnx.py \
         --image path/to/image.png \
         --model ../ow2-victory-counter-rs/models/victory_classifier.onnx \
+        --height 108 \
+        --width 245 \
         [--output result.json]
 """
 
@@ -20,6 +22,8 @@ import onnxruntime as ort
 import torch
 
 DEFAULT_CROP_RECT = (42, 156, 245, 108)
+DEFAULT_HEIGHT = 108
+DEFAULT_WIDTH = 245
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,7 +32,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", type=Path, required=True, help="ONNXモデルファイルパス (.onnx)")
     parser.add_argument("--label-map", type=Path, help="label_map.json のパス（省略時は自動検出）")
     parser.add_argument("--output", type=Path, help="結果出力先JSON（オプション）")
-    parser.add_argument("--size", type=int, default=512, help="リサイズサイズ（デフォルト: 512）")
+    parser.add_argument("--height", type=int, default=DEFAULT_HEIGHT, help="入力画像の高さ（デフォルト: 108）")
+    parser.add_argument("--width", type=int, default=DEFAULT_WIDTH, help="入力画像の幅（デフォルト: 245）")
     parser.add_argument("--no-crop", action="store_true", help="クロップをスキップ")
     return parser.parse_args()
 
@@ -45,14 +50,16 @@ def load_label_map(label_map_path: Path) -> dict:
 def preprocess_image(
     image: np.ndarray,
     crop_region: tuple[int, int, int, int] | None,
-    image_size: int | None,
+    height: int,
+    width: int,
 ) -> np.ndarray:
     """画像を前処理してテンソルに変換する。
 
     Args:
         image: 入力画像 (H, W, C) BGR形式
         crop_region: クロップ領域 (x, y, width, height) または None
-        image_size: リサイズ後の画像サイズ（長辺）。Noneの場合はリサイズしない
+        height: リサイズ後の画像の高さ
+        width: リサイズ後の画像の幅
 
     Returns:
         前処理済みテンソル (1, C, H', W')
@@ -60,30 +67,20 @@ def preprocess_image(
     # 1. クロップ
     if crop_region:
         x, y, w, h = crop_region
-        height, width = image.shape[:2]
+        image_height, image_width = image.shape[:2]
 
         # クロップ領域のクリッピング
-        x = max(0, min(x, width - 1))
-        y = max(0, min(y, height - 1))
-        w = max(1, min(w, width - x))
-        h = max(1, min(h, height - y))
+        x = max(0, min(x, image_width - 1))
+        y = max(0, min(y, image_height - 1))
+        w = max(1, min(w, image_width - x))
+        h = max(1, min(h, image_height - y))
 
         cropped = image[y : y + h, x : x + w]
     else:
         cropped = image
 
-    # 2. アスペクト比維持リサイズ（image_size指定時のみ）
-    if image_size is not None:
-        h, w = cropped.shape[:2]
-        if h == 0 or w == 0:
-            resized = cropped
-        else:
-            scale = image_size / max(h, w)
-            new_w = max(1, int(w * scale))
-            new_h = max(1, int(h * scale))
-            resized = cv2.resize(cropped, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-    else:
-        resized = cropped
+    # 2. ONNXモデルの固定入力サイズにリサイズ
+    resized = cv2.resize(cropped, (width, height), interpolation=cv2.INTER_LINEAR)
 
     # 3. BGR -> RGB変換
     rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
@@ -133,7 +130,7 @@ def main() -> int:
 
     # 画像を前処理
     crop_region = None if args.no_crop else DEFAULT_CROP_RECT
-    input_tensor = preprocess_image(image, crop_region, args.size)
+    input_tensor = preprocess_image(image, crop_region, args.height, args.width)
 
     print(f"Input tensor shape: {input_tensor.shape}", file=sys.stderr)
 
@@ -156,7 +153,7 @@ def main() -> int:
         "defeat": "defeat",
         "defeat_text": "defeat",
         "defeat_progressbar": "defeat",
-        "none": "unknown",
+        "none": "none",
     }
     outcome = class_to_outcome.get(predicted_class, "unknown")
 

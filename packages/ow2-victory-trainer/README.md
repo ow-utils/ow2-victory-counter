@@ -49,7 +49,7 @@ uv sync
 
 ### 一括再学習
 
-データセット構築、モデル学習、ONNX 変換をまとめて実行します。
+データセット構築、モデル学習、ONNX 変換、`victory` / `defeat` / `none` 各クラスの推論確認をまとめて実行します。
 
 ```bash
 uv run python scripts/retrain.py
@@ -70,6 +70,9 @@ uv run python scripts/retrain.py --clean-dataset
 - `--clean-dataset`: データセット構築前に `--dataset` のディレクトリを削除する
 - `--skip-build`: データセット構築をスキップする
 - `--skip-convert`: ONNX 変換をスキップする
+- `--skip-verify`: ONNX 変換後の推論確認をスキップする
+- `--verify-samples`: 推論確認に使うサンプル画像ディレクトリ（デフォルト: `--samples` と同じ）
+- `--verify-count-per-class`: 推論確認で各クラスから使用する画像数（デフォルト: 1）
 - `--epochs`: エポック数（デフォルト: 30）
 - `--batch-size`: バッチサイズ（デフォルト: 32）
 - `--crop`: クロップ領域（デフォルト: `42,156,245,108`）
@@ -157,7 +160,9 @@ uv run python scripts/convert_to_onnx.py \
 # ONNX推論
 uv run python scripts/inference_onnx.py \
   --image path/to/test_image.png \
-  --model ../ow2-victory-counter-rs/models/victory_classifier.onnx
+  --model ../ow2-victory-counter-rs/models/victory_classifier.onnx \
+  --height 108 \
+  --width 245
 ```
 
 ### 4. ONNX変換
