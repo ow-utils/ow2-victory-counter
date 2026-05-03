@@ -18,6 +18,7 @@ ow2-victory-trainer/
 │           ├── __init__.py
 │           └── predictor.py
 ├── scripts/                       # 実行可能なスクリプト
+│   ├── retrain.py                # データセット構築・学習・ONNX変換の一括実行
 │   ├── build_dataset.py          # データセット構築
 │   ├── train_classifier.py       # 学習実行
 │   ├── convert_to_onnx.py        # ONNX変換
@@ -45,6 +46,36 @@ uv sync
 ```
 
 ## 使い方
+
+### 一括再学習
+
+データセット構築、モデル学習、ONNX 変換をまとめて実行します。
+
+```bash
+uv run python scripts/retrain.py
+```
+
+既存の `dataset` を削除して作り直す場合は `--clean-dataset` を指定します。
+
+```bash
+uv run python scripts/retrain.py --clean-dataset
+```
+
+**主なオプション:**
+
+- `--samples`: サンプル画像のディレクトリ（デフォルト: `data/samples`）
+- `--dataset`: データセットの出力先・学習元ディレクトリ（デフォルト: `dataset`）
+- `--checkpoint`: PyTorch モデル保存先（デフォルト: `artifacts/models/victory_classifier.pth`）
+- `--onnx-output`: ONNX モデル保存先（デフォルト: `../ow2-victory-counter-rs/models/victory_classifier.onnx`）
+- `--clean-dataset`: データセット構築前に `--dataset` のディレクトリを削除する
+- `--skip-build`: データセット構築をスキップする
+- `--skip-convert`: ONNX 変換をスキップする
+- `--epochs`: エポック数（デフォルト: 30）
+- `--batch-size`: バッチサイズ（デフォルト: 32）
+- `--crop`: クロップ領域（デフォルト: `42,156,245,108`）
+- `--height`: ONNX 入力画像の高さ（デフォルト: 108）
+- `--width`: ONNX 入力画像の幅（デフォルト: 245）
+- `--opset`: ONNX オペレーターセットのバージョン（デフォルト: 23）
 
 ### 1. データセット構築
 
