@@ -9,7 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 DEFAULT_SAMPLES = Path("data/samples")
 DEFAULT_DATASET = Path("dataset")
 DEFAULT_CHECKPOINT = Path("artifacts/models/victory_classifier.pth")
@@ -170,7 +169,9 @@ def collect_verify_samples(
     for label in VERIFY_LABELS:
         label_dir = samples_root / label
         if not label_dir.is_dir():
-            raise FileNotFoundError(f"検証用サンプルディレクトリが見つかりません: {label_dir}")
+            raise FileNotFoundError(
+                f"検証用サンプルディレクトリが見つかりません: {label_dir}"
+            )
 
         image_paths = sorted(label_dir.rglob("*.png"))
         if len(image_paths) < count_per_class:

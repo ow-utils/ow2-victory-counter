@@ -29,11 +29,25 @@ DEFAULT_WIDTH = 245
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="単発画像推論 (ONNX)")
     parser.add_argument("--image", type=Path, required=True, help="入力画像パス")
-    parser.add_argument("--model", type=Path, required=True, help="ONNXモデルファイルパス (.onnx)")
-    parser.add_argument("--label-map", type=Path, help="label_map.json のパス（省略時は自動検出）")
+    parser.add_argument(
+        "--model", type=Path, required=True, help="ONNXモデルファイルパス (.onnx)"
+    )
+    parser.add_argument(
+        "--label-map", type=Path, help="label_map.json のパス（省略時は自動検出）"
+    )
     parser.add_argument("--output", type=Path, help="結果出力先JSON（オプション）")
-    parser.add_argument("--height", type=int, default=DEFAULT_HEIGHT, help="入力画像の高さ（デフォルト: 108）")
-    parser.add_argument("--width", type=int, default=DEFAULT_WIDTH, help="入力画像の幅（デフォルト: 245）")
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=DEFAULT_HEIGHT,
+        help="入力画像の高さ（デフォルト: 108）",
+    )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=DEFAULT_WIDTH,
+        help="入力画像の幅（デフォルト: 245）",
+    )
     parser.add_argument("--no-crop", action="store_true", help="クロップをスキップ")
     return parser.parse_args()
 
