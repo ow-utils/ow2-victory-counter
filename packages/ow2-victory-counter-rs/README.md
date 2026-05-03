@@ -46,7 +46,7 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [460, 378, 995, 550]  # 1920x1080 での勝敗表示の標準的な位置
+crop_rect = [42, 156, 245, 108]  # 1920x1080 での勝敗表示の標準的な位置
 ```
 
 ### 3. OBS WebSocket の有効化
@@ -86,6 +86,7 @@ ow2-victory-detector.exe server
 ```
 
 起動時のログ:
+
 ```
 INFO  Starting ow2-victory-detector...
 INFO  Loading config from: config.toml
@@ -97,7 +98,7 @@ INFO  HTTP server listening on http://127.0.0.1:3000
 INFO    - OBS UI: http://127.0.0.1:3000/
 INFO    - Admin UI: http://127.0.0.1:3000/admin
 INFO    - SSE endpoint: http://127.0.0.1:3000/events
-INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
+INFO  Starting detection loop (interval: 1000ms, crop: (42, 156, 245, 108))
 ```
 
 #### 1.2 OBS にブラウザーソースを追加
@@ -119,6 +120,7 @@ INFO  Starting detection loop (interval: 1000ms, crop: (460, 378, 995, 550))
 ブラウザーで `http://127.0.0.1:3000/admin` を開くと、管理画面が表示されます。
 
 機能:
+
 - 現在のカウント表示
 - `+` / `-` ボタンで手動調整
 - `リセット` ボタンで全カウントをゼロに
@@ -145,13 +147,13 @@ ow2-victory-detector.exe predict ^
 
 #### 2.2 オプション
 
-| オプション | 短縮形 | 必須 | 説明 |
-|----------|--------|------|------|
-| `--image` | `-i` | ✅ | 入力画像のパス |
-| `--model` | `-m` | ✅ | ONNXモデルファイルのパス |
-| `--label-map` | `-l` | ✅ | ラベルマップJSONファイルのパス |
-| `--output` | `-o` | ❌ | 結果を保存するJSONファイルのパス（省略時は標準出力） |
-| `--no-crop` | - | ❌ | クロップをスキップ（デバッグ用） |
+| オプション    | 短縮形 | 必須 | 説明                                                 |
+| ------------- | ------ | ---- | ---------------------------------------------------- |
+| `--image`     | `-i`   | ✅   | 入力画像のパス                                       |
+| `--model`     | `-m`   | ✅   | ONNXモデルファイルのパス                             |
+| `--label-map` | `-l`   | ✅   | ラベルマップJSONファイルのパス                       |
+| `--output`    | `-o`   | ❌   | 結果を保存するJSONファイルのパス（省略時は標準出力） |
+| `--no-crop`   | -      | ❌   | クロップをスキップ（デバッグ用）                     |
 
 #### 2.3 出力例
 
@@ -160,13 +162,11 @@ ow2-victory-detector.exe predict ^
   "image": "path/to/image.png",
   "outcome": "victory",
   "confidence": 0.95,
-  "predicted_class": "victory_text",
+  "predicted_class": "victory",
   "probabilities": [
-    { "class": "defeat_progressbar", "probability": 0.01 },
-    { "class": "defeat_text", "probability": 0.02 },
+    { "class": "defeat", "probability": 0.03 },
     { "class": "none", "probability": 0.02 },
-    { "class": "victory_progressbar", "probability": 0.00 },
-    { "class": "victory_text", "probability": 0.95 }
+    { "class": "victory", "probability": 0.95 }
   ]
 }
 ```
@@ -252,18 +252,22 @@ save_dir = "screenshots"  # 保存先ディレクトリ
 ```
 
 **保存タイミング**:
+
 - 連続検知の**最初の1回のみ**保存（ストレージ節約）
 - victory, defeat のみ保存（none は保存しない）
 
 **ファイル名形式**:
+
 ```
-20251121-143025-123-victory_text-first.png
+20251121-143025-123-victory-first.png
 ```
+
 - タイムスタンプ（ミリ秒まで）
-- 詳細クラス名（victory_text, defeat_progressbar など）
+- 分類クラス名（victory, defeat など）
 - `-first` サフィックス（連続検知の最初の1回を示す）
 
 **保存される画像**:
+
 - OBSから取得した元画像（前処理前）
 - 解像度: OBS の出力サイズ（通常1920×1080）
 
@@ -275,10 +279,11 @@ save_dir = "screenshots"  # 保存先ディレクトリ
 [preprocessing]
 # [x, y, width, height]
 # 1920x1080 での標準的な位置
-crop_rect = [460, 378, 995, 550]
+crop_rect = [42, 156, 245, 108]
 ```
 
 調整方法:
+
 1. OBS でゲーム画面のスクリーンショットを撮る
 2. 画像編集ソフトで勝敗表示の位置・サイズを測定
 3. `crop_rect` を更新
@@ -290,6 +295,7 @@ crop_rect = [460, 378, 995, 550]
 **エラー**: `Failed to connect to OBS WebSocket`
 
 **解決策**:
+
 1. OBS Studio が起動しているか確認
 2. WebSocket サーバーが有効になっているか確認（ツール → WebSocket サーバー設定）
 3. ポート番号が一致しているか確認（デフォルト: 4455）
@@ -300,17 +306,20 @@ crop_rect = [460, 378, 995, 550]
 **エラー**: `Failed to read config file 'models/victory_classifier.onnx'`
 
 **解決策**:
+
 1. `models/` ディレクトリに ONNX モデルファイルがあるか確認
 2. `config.toml` の `model_path` が正しいか確認
 
 ### 勝敗が検知されない
 
 **原因**:
+
 - クロップ領域が正しくない
 - 画質が低い
 - 勝敗表示が見切れている
 
 **解決策**:
+
 1. `crop_rect` を調整して勝敗表示全体が含まれるようにする
 2. OBS の出力解像度を 1920x1080 にする
 3. ログで `confidence` スコアを確認（0.8以上が望ましい）
@@ -318,6 +327,7 @@ crop_rect = [460, 378, 995, 550]
 ### カウントが増えすぎる
 
 **原因**:
+
 - クールダウン時間が短すぎる
 - 連続検知回数が少なすぎる
 
@@ -351,6 +361,7 @@ cargo build --release
 フロントエンドの変更を開発しながらテストする場合:
 
 **1. Vite 開発サーバーを起動** （別のターミナルで）:
+
 ```bash
 cd frontend
 pnpm dev
@@ -359,6 +370,7 @@ pnpm dev
 Vite が `http://localhost:5173` で起動します。
 
 **2. Rust アプリケーションをデバッグモードで起動**:
+
 ```bash
 cargo run
 ```
@@ -366,6 +378,7 @@ cargo run
 デバッグモード（`cargo run`）では、ブラウザーが自動的に Vite 開発サーバーへリダイレクトされ、フロントエンドの変更がホットリロードされます。
 
 **注意**:
+
 - `cargo run` （デバッグ）= Vite 開発サーバー（localhost:5173）へリダイレクト
 - `cargo run --release` （リリース）= ビルド済みファイル（frontend/dist/）を配信
 

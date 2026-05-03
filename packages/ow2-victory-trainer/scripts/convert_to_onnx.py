@@ -34,20 +34,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--height",
         type=int,
-        default=550,
-        help="Input image height (default: 550)",
+        default=108,
+        help="Input image height (default: 108)",
     )
     parser.add_argument(
         "--width",
         type=int,
-        default=995,
-        help="Input image width (default: 995)",
+        default=245,
+        help="Input image width (default: 245)",
     )
     parser.add_argument(
         "--opset",
         type=int,
-        default=17,
-        help="ONNX opset version (default: 17)",
+        default=23,
+        help="ONNX opset version (default: 23)",
     )
     return parser.parse_args()
 

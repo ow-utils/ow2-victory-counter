@@ -19,6 +19,8 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
+DEFAULT_CROP_RECT = (42, 156, 245, 108)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="単発画像推論 (ONNX)")
@@ -130,7 +132,7 @@ def main() -> int:
     ort_session = ort.InferenceSession(str(args.model))
 
     # 画像を前処理
-    crop_region = None if args.no_crop else (460, 378, 995, 550)
+    crop_region = None if args.no_crop else DEFAULT_CROP_RECT
     input_tensor = preprocess_image(image, crop_region, args.size)
 
     print(f"Input tensor shape: {input_tensor.shape}", file=sys.stderr)
@@ -146,10 +148,12 @@ def main() -> int:
     confidence = float(probabilities[predicted_idx])
     predicted_class = idx_to_label[predicted_idx]
 
-    # 5クラス分類結果から勝敗へのマッピング
+    # 現行3分類結果から勝敗へのマッピング。旧詳細クラス名も後方互換で扱う。
     class_to_outcome = {
+        "victory": "victory",
         "victory_text": "victory",
         "victory_progressbar": "victory",
+        "defeat": "defeat",
         "defeat_text": "defeat",
         "defeat_progressbar": "defeat",
         "none": "unknown",

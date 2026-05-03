@@ -1,4 +1,4 @@
-"""Victory/Defeat/Draw 分類器の学習スクリプト。"""
+"""Victory/Defeat/None 分類器の学習スクリプト。"""
 
 from __future__ import annotations
 

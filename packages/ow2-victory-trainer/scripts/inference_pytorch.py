@@ -18,6 +18,8 @@ import cv2
 
 from victory_trainer.inference.predictor import VictoryPredictor
 
+DEFAULT_CROP_RECT = (42, 156, 245, 108)
+
 
 def main():
     parser = argparse.ArgumentParser(description="単発画像推論 (PyTorch)")
@@ -41,7 +43,7 @@ def main():
     print(f"Image loaded: {image.shape[1]}x{image.shape[0]} (WxH)", file=sys.stderr)
 
     # Predictor 初期化
-    crop_region = None if args.no_crop else (460, 378, 995, 550)
+    crop_region = None if args.no_crop else DEFAULT_CROP_RECT
     predictor = VictoryPredictor(
         model_path=args.model,
         crop_region=crop_region,

@@ -17,12 +17,14 @@
 3. デフォルト設定でインストール
 
 **確認コマンド**:
+
 ```powershell
 rustc --version
 cargo --version
 ```
 
 **期待される出力例**:
+
 ```
 rustc 1.83.0 (90b35a623 2024-11-26)
 cargo 1.83.0 (5ffbef321 2024-10-29)
@@ -38,11 +40,13 @@ cargo 1.83.0 (5ffbef321 2024-10-29)
 2. LTS 版（推奨）をダウンロードしてインストール
 
 **確認コマンド**:
+
 ```powershell
 node --version
 ```
 
 **期待される出力例**:
+
 ```
 v20.18.1
 ```
@@ -60,11 +64,13 @@ npm install -g pnpm
 ```
 
 **確認コマンド**:
+
 ```powershell
 pnpm --version
 ```
 
 **期待される出力例**:
+
 ```
 9.15.1
 ```
@@ -92,6 +98,7 @@ pnpm install
 ```
 
 **期待される出力**:
+
 ```
 Packages: +XXX
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -105,6 +112,7 @@ pnpm build
 ```
 
 **期待される出力**:
+
 ```
 vite v7.0.0 building for production...
 ✓ XXX modules transformed.
@@ -122,6 +130,7 @@ dir dist
 ```
 
 以下のファイルが生成されていることを確認：
+
 - `obs.html`
 - `admin.html`
 - `assets/` ディレクトリ（JS/CSS ファイル）
@@ -143,6 +152,7 @@ cargo build
 ```
 
 **期待される出力**:
+
 ```
    Compiling ow2-victory-detector v0.1.0
     Finished `dev` profile [unoptimized + debuginfo] target(s) in XXs
@@ -159,6 +169,7 @@ cargo build --release
 ```
 
 **期待される出力**:
+
 ```
    Compiling ow2-victory-detector v0.1.0
     Finished `release` profile [optimized] target(s) in XXs
@@ -177,6 +188,7 @@ dir models
 ```
 
 **必要なファイル**:
+
 - `models/victory_classifier.onnx` (約 407KB)
 - `models/victory_classifier.label_map.json`
 
@@ -208,10 +220,12 @@ model_path = "models/victory_classifier.onnx"
 label_map_path = "models/victory_classifier.label_map.json"
 
 [preprocessing]
-crop_rect = [465, 530, 512, 283]  # 勝敗表示の領域（要調整）
+crop_rect = [42, 156, 245, 108]  # 勝敗表示の領域（1920x1080 の標準値）
+resize_width = 245
+resize_height = 108
 
 [state]
-cooldown_seconds = 10
+cooldown_seconds = 180
 required_consecutive = 3
 
 [server]
@@ -257,6 +271,7 @@ ow2-victory-counter-rs/
 **原因**: Visual Studio Build Tools がインストールされていない
 
 **解決策**:
+
 1. [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/) をダウンロード
 2. 「C++ によるデスクトップ開発」をインストール
 3. PC を再起動
@@ -269,6 +284,7 @@ ow2-victory-counter-rs/
 **原因**: 間違ったディレクトリで実行している
 
 **解決策**:
+
 ```powershell
 cd packages/ow2-victory-counter-rs
 ```
@@ -282,6 +298,7 @@ cd packages/ow2-victory-counter-rs
 **原因**: pnpm がインストールされていない、またはPATHが通っていない
 
 **解決策**:
+
 ```powershell
 npm install -g pnpm
 ```
@@ -295,6 +312,7 @@ PowerShell を再起動して再実行
 **原因**: node_modules がインストールされていない
 
 **解決策**:
+
 ```powershell
 cd frontend
 pnpm install
@@ -312,17 +330,22 @@ pnpm build
 **解決策**:
 
 1. ファイルが存在するか確認：
+
    ```powershell
    dir models
    ```
 
 2. 存在しない場合は、PyTorch モデルから変換：
+
    ```bash
    # WSL2 または Linux 環境で実行
-   cd packages/obs-victory-counter/victory-detector
+   cd packages/ow2-victory-trainer
    uv run python scripts/convert_to_onnx.py \
      --input artifacts/models/victory_classifier.pth \
-     --output ../ow2-victory-counter-rs/models/victory_classifier.onnx
+     --output ../ow2-victory-counter-rs/models/victory_classifier.onnx \
+     --width 245 \
+     --height 108 \
+     --opset 23
    ```
 
 3. 生成されたファイルを Windows 側にコピー
