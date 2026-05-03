@@ -2,7 +2,7 @@
 
 Overwatch 2 の勝敗を自動カウントして OBS に表示するツールです。CNN（深層学習）で勝敗画面を検知し、リアルタイムでカウントを更新します。
 
-CSSの知識があればある程度デザインをカスタマイズすることが可能です。
+HTML と CSS を編集できれば、ビルド環境なしで表示内容をカスタマイズできます。
 
 ## リンク
 
@@ -60,8 +60,11 @@ password = "your-password"  # パスワード設定時のみ
 1. OBS で `ソース` → `+` → `ブラウザ` を選択
 2. 以下の設定を入力:
    - **URL**: `http://localhost:3000/`
-   - (幅、高さは適当に調整してください)
+   - **幅**: `1920`
+   - **高さ**: `1080`
    - ☑ **シーンがアクティブになったときにブラウザの表示を更新する**
+
+デフォルトレイアウトを使う場合、ブラウザーソースの内部サイズは `1920x1080` を推奨します。カウンターを小さく表示したい場合も、プロパティの幅を小さくするのではなく、`1920x1080` のまま追加してから OBS プレビュー上で赤い枠の角をドラッグして縮小してください。幅を `900px` 以下に設定すると、デフォルトデザインでは勝敗カウンターが縦並びになります。
 
 3. OKをクリック
 
@@ -83,29 +86,16 @@ password = "your-password"  # パスワード設定時のみ
 
 ※ 本機能は開発中であり、未テストです。また、仕様も今後大きく変わる可能性があります。
 
-### CSS でスタイル変更
+### HTML / CSS でカスタマイズ
 
-`templates/custom.css` を編集して見た目をカスタマイズできます：
+次の 3 ファイルを編集すると、OBS のカウンター表示を変更できます。
 
-```css
-/* 色を変更 */
-.counter-grid {
-  --victory-color: #00ff00;
-  --defeat-color: #ff0000;
-  --font-size: 96px;
-}
+- `assets/counter.html`
+- `assets/counter.css`
+- `assets/counter.js`
 
-/* グロー効果 */
-.value {
-  text-shadow: 0 0 20px currentColor;
-}
-```
-
-OBS のブラウザーソースで `カスタムCSS` に以下を追加:
-
-```css
-@import url("http://localhost:3000/custom.css");
-```
+まず `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてから、そのコピーを編集してください。`counter.html` はレイアウト、`counter.css` は色や装飾、`counter.js` は値更新やアニメーションを担当します。  
+詳しい説明は [OBS カウンターのカスタマイズ](./how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ## トラブルシューティング
 

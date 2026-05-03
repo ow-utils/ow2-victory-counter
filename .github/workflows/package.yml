@@ -91,6 +91,7 @@ jobs:
           }
 
           Copy-Item "debug.bat" -Destination $packageRoot -Force
+          Copy-Item "..\..\docs\usage\how-to-customize-counter.md" (Join-Path $packageRoot "how-to-customize-counter.md") -Force
 
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
           $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"

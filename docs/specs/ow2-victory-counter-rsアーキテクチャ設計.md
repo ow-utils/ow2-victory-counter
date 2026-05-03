@@ -34,7 +34,8 @@ Overwatch 2 の勝敗判定を自動で行い、カウントを配信画面に�
 │  │ HTTP サーバー (axum)                                 │  │
 │  │  ├─ GET  /              (OBS用UI: 読み取り専用)     │  │
 │  │  ├─ GET  /admin         (管理画面UI)                │  │
-│  │  ├─ GET  /custom.css    (カスタムCSS)               │  │
+│  │  ├─ GET  /counter.css   (カウンターCSS)             │  │
+│  │  ├─ GET  /counter.js    (カウンターJavaScript)      │  │
 │  │  ├─ GET  /events        (SSE: リアルタイム通知)     │  │
 │  │  ├─ GET  /api/status    (REST: 状態取得)            │  │
 │  │  ├─ POST /api/initialize (初期化)                   │  │
@@ -84,7 +85,7 @@ Overwatch 2 の勝敗判定を自動で行い、カウントを配信画面に�
 - **用途**: 配信画面へのオーバーレイ表示
 - **機能**: カウンター表示のみ（読み取り専用）
 - **永続化**: なし（SSE 受信時に UI 更新のみ）
-- **カスタマイズ**: custom.css、ui-config.json
+- **カスタマイズ**: templates/counter.html / counter.css / counter.js を assets/ へコピーして編集
 
 #### 管理画面 (GET /admin)
 
@@ -177,7 +178,8 @@ READY
 
 - GET /: OBS 用 UI 配信
 - GET /admin: 管理画面 UI 配信
-- GET /custom.css: カスタム CSS 配信
+- GET /counter.css: カウンター CSS 配信
+- GET /counter.js: カウンター JavaScript 配信
 - GET /events: SSE ストリーム
 - GET /api/status: 現在の状態取得
 - POST /api/initialize: 勝敗数初期化
@@ -185,20 +187,22 @@ READY
 
 **UI 配信方式**:
 
-- Svelte でビルドした HTML/JS/CSS をバイナリーに組み込み
-- `include_str!` マクロで埋め込み
+- OBS 用 UI はサーバーが HTML を動的に組み立てる
+- 組み込みデフォルトは `templates/counter.html` / `templates/counter.css` / `templates/counter.js`
+- 実行時は `assets/counter.html` / `assets/counter.css` / `assets/counter.js` を優先して読み込む
+- 管理画面 UI は Svelte のビルド成果物を配信する
 
 ### 5. フロントエンド
 
-#### OBS 用 UI (Svelte)
+#### OBS 用 UI (HTML + 軽量 JavaScript)
 
-**責務**: カウンター表示、アニメーション
+**責務**: カウンター表示、SSE 反映、外部テンプレート差し替え
 
 **主要機能**:
 
 - SSE で勝敗数受信
-- tweened ストアでカウントアップアニメーション
-- ui-config.json に基づいてコンポーネント表示制御
+- `data-counter` / `data-meta` 属性に値を反映
+- `templates/` のひな形を `assets/` へコピーして編集するだけでカスタマイズ可能
 
 #### 管理画面 UI (Svelte)
 
@@ -220,7 +224,7 @@ OBS 用カウンター表示 UI を提供。
 **レスポンス**:
 
 - Content-Type: `text/html`
-- Body: HTML ファイル（Svelte コンパイル済み、バイナリー組み込み）
+- Body: サーバーで組み立てた HTML
 
 ### GET /admin
 
@@ -231,7 +235,7 @@ OBS 用カウンター表示 UI を提供。
 - Content-Type: `text/html`
 - Body: HTML ファイル（Svelte コンパイル済み、バイナリー組み込み）
 
-### GET /custom.css
+### GET /counter.css
 
 カスタマイズ用 CSS を提供。
 
@@ -242,8 +246,22 @@ OBS 用カウンター表示 UI を提供。
 
 **動作**:
 
-1. `templates/custom.css` が存在すればそれを返す
-2. なければ空の CSS を返す
+1. `assets/counter.css` が存在すればそれを返す
+2. なければ組み込みデフォルト CSS を返す
+
+### GET /counter.js
+
+カスタマイズ用 JavaScript を提供。
+
+**レスポンス**:
+
+- Content-Type: `application/javascript`
+- Body: JavaScript ファイル
+
+**動作**:
+
+1. `assets/counter.js` が存在すればそれを返す
+2. なければ組み込みデフォルト JavaScript を返す
 
 ### GET /events
 
@@ -465,9 +483,9 @@ SSE でリアルタイム通知。
 
 何もしない。バイナリー単体で動作。
 
-### レベル 1: CSS 編集
+### レベル 1: HTML / CSS 編集
 
-`templates/custom.css` を作成して配置:
+`templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてから編集:
 
 ```css
 /* 色を変更 */
@@ -644,10 +662,17 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 ├── models/
 │   ├── victory_classifier.onnx
 │   └── victory_classifier.label_map.json
+├── assets/                      # カスタマイズ結果（任意）
+│   ├── counter.html
+│   ├── counter.css
+│   └── counter.js
 ├── config/
-│   └── ui-config.json           # UI設定（表示/非表示、レイアウト等）
+│   └── ui-config.json           # 管理画面向け設定（必要なら将来利用）
 ├── templates/
-│   └── custom.css               # カスタムCSS（サンプル）
+│   ├── counter.html             # カウンター本文テンプレート
+│   ├── counter.css              # カウンターCSS
+│   └── counter.js               # カウンターJavaScript
+├── how-to-customize-counter.md  # カウンター表示のカスタマイズ手順
 └── README.md
 ```
 
@@ -673,6 +698,7 @@ ow2-victory-counter-rs/          # 配布物ルート（任意のディレクト
 ### ファイルアクセス
 
 - 読み取り専用: `templates/`, `models/`, `config/`
+- ユーザー編集対象: `assets/`
 - パストラバーサル対策
 
 ### API 認証

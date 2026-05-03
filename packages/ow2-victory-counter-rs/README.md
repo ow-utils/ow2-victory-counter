@@ -111,6 +111,8 @@ INFO  Starting detection loop (interval: 1000ms, crop: (42, 156, 245, 108))
    - ☑ **ローカルファイル** のチェックを外す
    - ☑ **ソースが表示されたときにブラウザーの表示を更新する**
 
+デフォルトレイアウトを使う場合、ブラウザーソースの内部サイズは `1920x1080` を推奨します。カウンターを小さく表示したい場合も、プロパティの幅を小さくするのではなく、`1920x1080` のまま追加してから OBS プレビュー上で赤い枠の角をドラッグして縮小してください。幅を `900px` 以下に設定すると、デフォルトデザインでは勝敗カウンターが縦並びになります。
+
 3. OKをクリック
 
 カウンターが表示されます！
@@ -213,29 +215,15 @@ diff rust_result.json poc_result.json
 
 ## カスタマイズ
 
-### CSS でスタイル変更
+### HTML / CSS でカスタマイズ
 
-`templates/custom.css` を編集して見た目をカスタマイズできます：
+ビルド環境なしで、次の 3 ファイルを編集して OBS 表示をカスタマイズできます。
 
-```css
-/* 色を変更 */
-.counter-grid {
-  --victory-color: #00ff00;
-  --defeat-color: #ff0000;
-  --font-size: 96px;
-}
+- `assets/counter.html`
+- `assets/counter.css`
+- `assets/counter.js`
 
-/* グロー効果 */
-.value {
-  text-shadow: 0 0 20px currentColor;
-}
-```
-
-OBS のブラウザーソースで `カスタムCSS` に以下を追加:
-
-```css
-@import url("http://127.0.0.1:3000/custom.css");
-```
+最初に `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウト、`counter.css` で配色や装飾、`counter.js` で値更新やアニメーションを変更します。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ### スクリーンショット保存機能
 
@@ -375,12 +363,12 @@ Vite が `http://localhost:5173` で起動します。
 cargo run
 ```
 
-デバッグモード（`cargo run`）では、ブラウザーが自動的に Vite 開発サーバーへリダイレクトされ、フロントエンドの変更がホットリロードされます。
+デバッグモード（`cargo run`）でも、OBS 用 UI は Rust サーバーが直接配信します。Vite 開発サーバーは管理画面の開発に使います。
 
 **注意**:
 
-- `cargo run` （デバッグ）= Vite 開発サーバー（localhost:5173）へリダイレクト
-- `cargo run --release` （リリース）= ビルド済みファイル（frontend/dist/）を配信
+- `cargo run` （デバッグ）= OBS 用 UI はそのまま利用可能、管理画面は Vite 開発サーバー（localhost:5173）へリダイレクト
+- `cargo run --release` （リリース）= 管理画面はビルド済みファイル（frontend/dist/）を配信
 
 通常の使用では **`cargo run --release`** を推奨します。
 

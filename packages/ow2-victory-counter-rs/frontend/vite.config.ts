@@ -27,7 +27,7 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
-      "/custom.css": {
+      "/counter.css": {
         target: "http://localhost:3000",
         changeOrigin: true,
       },

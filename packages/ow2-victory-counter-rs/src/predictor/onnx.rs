@@ -1,7 +1,7 @@
 use image::DynamicImage;
 use ndarray::Array4;
 use ort::{
-    session::{builder::GraphOptimizationLevel, Session},
+    session::{Session, builder::GraphOptimizationLevel},
     value::Value,
 };
 use serde::Deserialize;
@@ -13,7 +13,6 @@ pub enum PredictionError {
     ModelLoad(String),
     LabelMapLoad(String),
     Inference(String),
-
 }
 
 impl std::fmt::Display for PredictionError {
@@ -22,7 +21,6 @@ impl std::fmt::Display for PredictionError {
             PredictionError::ModelLoad(e) => write!(f, "Model load error: {}", e),
             PredictionError::LabelMapLoad(e) => write!(f, "Label map load error: {}", e),
             PredictionError::Inference(e) => write!(f, "Inference error: {}", e),
-
         }
     }
 }
@@ -149,9 +147,9 @@ impl VictoryPredictor {
                 .map_err(|e| PredictionError::Inference(e.to_string()))?;
 
             // 4. 出力（logits）を取得
-            let output_tensor = outputs[0]
-                .try_extract_array::<f32>()
-                .map_err(|e| PredictionError::Inference(format!("Failed to extract tensor: {}", e)))?;
+            let output_tensor = outputs[0].try_extract_array::<f32>().map_err(|e| {
+                PredictionError::Inference(format!("Failed to extract tensor: {}", e))
+            })?;
 
             let logits = output_tensor.as_slice().ok_or_else(|| {
                 PredictionError::Inference("Failed to get tensor as slice".to_string())
@@ -165,9 +163,7 @@ impl VictoryPredictor {
                 .iter()
                 .enumerate()
                 .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .ok_or_else(|| {
-                    PredictionError::Inference("No predictions returned".to_string())
-                })?;
+                .ok_or_else(|| PredictionError::Inference("No predictions returned".to_string()))?;
 
             // クラス ID をラベルに変換
             let predicted_class = self
@@ -234,8 +230,12 @@ impl VictoryPredictor {
         );
 
         // NCHW 形式のテンソルを作成
-        let mut tensor =
-            Array4::<f32>::zeros((1, 3, self.target_height as usize, self.target_width as usize));
+        let mut tensor = Array4::<f32>::zeros((
+            1,
+            3,
+            self.target_height as usize,
+            self.target_width as usize,
+        ));
 
         // HWC (image) → CHW (tensor) 変換 + 正規化 (0-255 → 0-1)
         for y in 0..self.target_height {
@@ -271,16 +271,33 @@ impl VictoryPredictor {
 mod tests {
     use super::*;
 
-
     #[test]
     fn test_class_to_outcome() {
         let empty_map: HashMap<String, String> = HashMap::new();
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &empty_map), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &empty_map), "victory");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_text", &empty_map), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &empty_map), "defeat");
-        assert_eq!(VictoryPredictor::class_to_outcome("none", &empty_map), "none");
-        assert_eq!(VictoryPredictor::class_to_outcome("unknown", &empty_map), "none");
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("victory_text", &empty_map),
+            "victory"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("victory_progressbar", &empty_map),
+            "victory"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("defeat_text", &empty_map),
+            "defeat"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("defeat_progressbar", &empty_map),
+            "defeat"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("none", &empty_map),
+            "none"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("unknown", &empty_map),
+            "none"
+        );
     }
 
     #[test]
@@ -290,10 +307,19 @@ mod tests {
         map.insert("defeat_progressbar".to_string(), "d".to_string());
         map.insert("none".to_string(), "n".to_string());
 
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_progressbar", &map), "v");
-        assert_eq!(VictoryPredictor::class_to_outcome("defeat_progressbar", &map), "d");
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("victory_progressbar", &map),
+            "v"
+        );
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("defeat_progressbar", &map),
+            "d"
+        );
         // マップに無いクラスはフォールバックで判定
-        assert_eq!(VictoryPredictor::class_to_outcome("victory_text", &map), "victory");
+        assert_eq!(
+            VictoryPredictor::class_to_outcome("victory_text", &map),
+            "victory"
+        );
         assert_eq!(VictoryPredictor::class_to_outcome("unknown", &map), "none");
     }
 }
