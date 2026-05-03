@@ -1,8 +1,8 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use image::DynamicImage;
 use obws::{
-    requests::sources::{SourceId, TakeScreenshot},
     Client as ObsClient,
+    requests::sources::{SourceId, TakeScreenshot},
 };
 use tracing::{debug, info};
 
@@ -149,15 +149,11 @@ impl OBSCapture {
 
         Ok(cropped)
     }
-
-
-
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn test_crop_validation() {
