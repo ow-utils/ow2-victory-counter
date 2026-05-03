@@ -54,15 +54,22 @@
       });
   };
 
+  const timeFormatter = new Intl.DateTimeFormat("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
   const formatTimestamp = (timestamp, lastOutcome) => {
     if (!lastOutcome) {
-      return "更新なし";
+      return "Standby";
     }
     const milliseconds = Number(timestamp) * 1000;
     if (!Number.isFinite(milliseconds)) {
-      return "更新なし";
+      return "Standby";
     }
-    return `最終更新: ${new Date(milliseconds).toLocaleString("ja-JP")} - ${
+    return `Updated ${timeFormatter.format(new Date(milliseconds))} · ${
       outcomeLabels[lastOutcome] ?? ""
     }`;
   };
