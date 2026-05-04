@@ -163,7 +163,7 @@ body {
   border-radius: 999px;
   background: linear-gradient(90deg, #F99E1A, #FABD2F);
   box-shadow: 0 0 18px rgba(249, 158, 26, 0.50);
-  transition: width 280ms ease;
+  transition: width 500ms ease;
 }
 
 .winrate-meta {
@@ -243,11 +243,11 @@ body {
 }
 
 .scoreboard.flash-victory {
-  animation: flash-victory 800ms ease-out;
+  animation: flash-victory 1400ms ease-out;
 }
 
 .scoreboard.flash-defeat {
-  animation: flash-defeat 800ms ease-out;
+  animation: flash-defeat 1400ms ease-out;
 }
 
 @media (max-width: 600px) {
