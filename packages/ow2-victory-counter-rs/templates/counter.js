@@ -19,7 +19,7 @@
           { transform: "translateX(-3px) scale(1.05)", filter: "drop-shadow(0 0 8px rgba(228,72,72,0.3))" },
           { transform: "translateX(0) scale(1)", filter: "drop-shadow(0 0 0 rgba(228,72,72,0))" },
         ],
-        { duration: 700, easing: "ease-out" },
+        { duration: 1200, easing: "ease-out" },
       );
     } else {
       element.animate(
@@ -29,7 +29,7 @@
           { transform: "scale(0.95)", filter: "drop-shadow(0 0 14px rgba(249,168,37,0.4))" },
           { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(249,168,37,0))" },
         ],
-        { duration: 700, easing: "cubic-bezier(.2,1.5,.4,1)" },
+        { duration: 1200, easing: "cubic-bezier(.2,1.5,.4,1)" },
       );
     }
   };
