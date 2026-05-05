@@ -41,8 +41,17 @@ def main() -> int:
     val_len = total - train_len
     train_set, val_set = random_split(dataset, [train_len, val_len])
 
+    # クラスごとのサンプル数をカウントして逆頻度重みを計算
+    class_counts = torch.zeros(num_classes)
+    for _, label in dataset.samples:
+        class_counts[label] += 1
+    class_weights = (1.0 / class_counts)
+    class_weights = class_weights / class_weights.sum() * num_classes
+
     print(f"[INFO] Dataset loaded: {total} samples, {num_classes} classes")
     print(f"[INFO] Labels: {', '.join(sorted(dataset.label_map.keys()))}")
+    for name, idx in sorted(dataset.label_map.items(), key=lambda x: x[1]):
+        print(f"[INFO]   {name}: {int(class_counts[idx])} samples, weight={class_weights[idx]:.4f}")
     print(f"[INFO] Train: {train_len}, Val: {val_len}")
 
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_variable_size)
@@ -50,7 +59,7 @@ def main() -> int:
 
     model = VictoryClassifier(num_classes=num_classes).to(device)
     print(f"[INFO] Model initialized with {num_classes} classes on {device}")
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     for epoch in range(1, args.epochs + 1):
