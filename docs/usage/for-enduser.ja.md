@@ -17,7 +17,7 @@ HTML と CSS を編集できれば、ビルド環境なしで表示内容をカ�
 
 ### 実行ファイルのダウンロード
 
-[Releases](https://github.com/ow-utils/ow2-victory-counter/releases) から最新版のをダウンロードし、適当なディレクトリーに展開します。
+[Releases](https://github.com/ow-utils/ow2-victory-counter/releases) から最新版の `ow2-victory-counter-rs.zip` をダウンロードし、適当なディレクトリーに展開します。`[モデル]` と付いたリリースはモデル単体の更新用なので、初回インストール時は選ばないでください。
 
 ### 設定ファイルの準備
 
