@@ -13,6 +13,7 @@ jobs:
   package:
     name: Windows配布ビルド
     runs-on: windows-latest
+    if: ${{ !startsWith(github.ref_name, 'model-') }}
 
     steps:
       - name: リポジトリーをチェックアウト

@@ -1,0 +1,44 @@
+name: モデル配布
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "model-v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-model:
+    name: モデルリリース
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリーをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: モデルZIPを作成
+        working-directory: packages/ow2-victory-counter-rs
+        run: zip -r ../../victory-classifier-models.zip models/
+
+      - name: アーティファクト名を設定
+        run: |
+          SAFE_REF=$(echo "${{ github.ref_name }}" | tr '/:*?"<>|\\' '-')
+          echo "ARTIFACT_NAME=victory-classifier-models-${SAFE_REF}" >> "$GITHUB_ENV"
+
+      - name: アーティファクトをアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: victory-classifier-models.zip
+          if-no-files-found: error
+
+      - name: GitHub Release作成＆アセット添付
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "[モデル] victory_classifier ${{ github.ref_name }}"
+          files: victory-classifier-models.zip
+          draft: false
+          prerelease: false
