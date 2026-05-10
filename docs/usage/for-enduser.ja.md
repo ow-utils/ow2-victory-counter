@@ -97,6 +97,17 @@ password = "your-password"  # パスワード設定時のみ
 まず `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` にコピーしてから、そのコピーを編集してください。`counter.html` はレイアウト、`counter.css` は色や装飾、`counter.js` は値更新やアニメーションを担当します。  
 詳しい説明は [OBS カウンターのカスタマイズ](./how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
+## モデルの更新
+
+判定モデルはアプリとは別に更新版がリリースされることがあります。新しいモデルに更新することで、勝敗判定の精度が向上する場合があります。
+
+### 更新手順
+
+1. [Releases](https://github.com/ow-utils/ow2-victory-counter/releases) から `[モデル]` と付いた最新リリースを探します
+2. `victory-classifier-models.zip` をダウンロードします
+3. ZIPを展開し、中の `models/` フォルダーの内容をツールの `models/` フォルダーに上書きコピーします
+4. ツールを再起動します
+
 ## トラブルシューティング
 
 ### `ow2-victory-detector.exe` をダブルクリックして起動してもすぐに閉じてしまう
