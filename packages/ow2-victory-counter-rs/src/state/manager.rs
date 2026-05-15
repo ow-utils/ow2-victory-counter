@@ -15,8 +15,8 @@ pub enum State {
 pub struct DetectionResult {
     /// イベントがトリガーされたか（カウントが確定したか）
     pub event_triggered: bool,
-    /// 連続検知の最初の1回か（スクリーンショット保存用）
-    pub is_first_detection: bool,
+    /// 現在の連続検知回数（0 = 非検知状態）
+    pub consecutive_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +40,7 @@ pub struct StateManager {
     last_event_time: Option<Instant>,
     none_count_after_cooldown: usize,
     broadcast_tx: broadcast::Sender<CounterUpdate>,
+    last_broadcast: Option<CounterUpdate>,
 }
 
 impl StateManager {
@@ -62,6 +63,7 @@ impl StateManager {
             last_event_time: None,
             none_count_after_cooldown: 0,
             broadcast_tx,
+            last_broadcast: None,
         }
     }
 
@@ -72,18 +74,14 @@ impl StateManager {
     pub fn record_detection(&mut self, outcome: &str) -> DetectionResult {
         let mut result = DetectionResult {
             event_triggered: false,
-            is_first_detection: false,
+            consecutive_count: 0,
         };
 
         match self.state {
             State::Ready => {
                 if outcome != "none" {
                     self.consecutive_detections.push(outcome.to_string());
-
-                    // 連続検知の最初の1回
-                    if self.consecutive_detections.len() == 1 {
-                        result.is_first_detection = true;
-                    }
+                    result.consecutive_count = self.consecutive_detections.len();
 
                     if self.consecutive_detections.len() >= self.required_consecutive {
                         // カウント確定
@@ -151,7 +149,7 @@ impl StateManager {
         self.broadcast_update(Some(outcome.to_string()));
     }
 
-    fn broadcast_update(&self, last_outcome: Option<String>) {
+    fn broadcast_update(&mut self, last_outcome: Option<String>) {
         let update = CounterUpdate {
             victories: self.victories,
             defeats: self.defeats,
@@ -163,11 +161,12 @@ impl StateManager {
                 .as_secs_f64(),
         };
 
+        self.last_broadcast = Some(update.clone());
         let _ = self.broadcast_tx.send(update);
     }
 
     pub fn summary(&self) -> CounterUpdate {
-        CounterUpdate {
+        self.last_broadcast.clone().unwrap_or_else(|| CounterUpdate {
             victories: self.victories,
             defeats: self.defeats,
             draws: self.draws,
@@ -176,7 +175,7 @@ impl StateManager {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs_f64(),
-        }
+        })
     }
 
     fn handle_waiting_for_none(&mut self, outcome: &str) {
