@@ -147,11 +147,11 @@ def main() -> int:
                         # StateManagerに記録（連続検知対応）
                         response = state_manager.record_detection(detection)
 
-                        # 検知時スクリーンショット保存（最初の検知のみ）
-                        if args.save_detections and response.is_first_detection and detection.outcome in ("victory", "defeat", "draw"):
+                        # 検知時スクリーンショット保存
+                        if args.save_detections and response.consecutive_count > 0 and detection.outcome not in ("none", None):
                             timestamp_str = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]  # ミリ秒まで
                             predicted_class = detection.predicted_class or "unknown"
-                            filename = f"{timestamp_str}-{predicted_class}-first.png"
+                            filename = f"{timestamp_str}-{predicted_class}-{response.consecutive_count}.png"
                             filepath = args.save_detections / filename
                             cv2.imwrite(str(filepath), image)
                             print(f"[INFO] スクリーンショット保存: {filename}")
