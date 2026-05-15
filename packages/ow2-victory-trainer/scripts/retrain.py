@@ -170,6 +170,7 @@ def inference_args(args: argparse.Namespace, image_path: Path) -> list[str]:
 def collect_verify_samples(
     samples_root: Path,
     count_per_class: int,
+    shared_root: Path | None = None,
 ) -> list[tuple[str, Path]]:
     if count_per_class < 1:
         raise ValueError("--verify-count-per-class は 1 以上を指定してください。")
@@ -177,6 +178,10 @@ def collect_verify_samples(
     verify_samples: list[tuple[str, Path]] = []
     for label in VERIFY_LABELS:
         label_dir = samples_root / label
+        if not label_dir.is_dir() and shared_root is not None:
+            fallback_dir = shared_root / label
+            if fallback_dir.is_dir():
+                label_dir = fallback_dir
         if not label_dir.is_dir():
             raise FileNotFoundError(
                 f"検証用サンプルディレクトリが見つかりません: {label_dir}"
@@ -196,7 +201,10 @@ def collect_verify_samples(
 
 def verify_predictions(args: argparse.Namespace) -> None:
     samples_root = args.verify_samples if args.verify_samples else args.samples
-    verify_samples = collect_verify_samples(samples_root, args.verify_count_per_class)
+    shared_root = Path("data/samples/shared") if args.lang else None
+    verify_samples = collect_verify_samples(
+        samples_root, args.verify_count_per_class, shared_root
+    )
 
     print("\n[STEP] 推論確認")
     for expected_label, image_path in verify_samples:
