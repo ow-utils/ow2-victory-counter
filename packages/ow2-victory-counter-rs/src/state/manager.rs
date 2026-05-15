@@ -15,8 +15,8 @@ pub enum State {
 pub struct DetectionResult {
     /// イベントがトリガーされたか（カウントが確定したか）
     pub event_triggered: bool,
-    /// 連続検知の最初の1回か（スクリーンショット保存用）
-    pub is_first_detection: bool,
+    /// 現在の連続検知回数（0 = 非検知状態）
+    pub consecutive_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,18 +72,14 @@ impl StateManager {
     pub fn record_detection(&mut self, outcome: &str) -> DetectionResult {
         let mut result = DetectionResult {
             event_triggered: false,
-            is_first_detection: false,
+            consecutive_count: 0,
         };
 
         match self.state {
             State::Ready => {
                 if outcome != "none" {
                     self.consecutive_detections.push(outcome.to_string());
-
-                    // 連続検知の最初の1回
-                    if self.consecutive_detections.len() == 1 {
-                        result.is_first_detection = true;
-                    }
+                    result.consecutive_count = self.consecutive_detections.len();
 
                     if self.consecutive_detections.len() >= self.required_consecutive {
                         // カウント確定

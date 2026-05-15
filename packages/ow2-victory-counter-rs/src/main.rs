@@ -287,13 +287,13 @@ async fn detection_loop(
         let result = manager.record_detection(&detection.outcome);
         drop(manager);
 
-        // 5. スクリーンショット保存（設定で有効 + 最初の検知 + victory/defeat のみ）
+        // 5. スクリーンショット保存（設定で有効 + 検知中 + none以外）
         if config.screenshot.enabled
-            && result.is_first_detection
-            && matches!(detection.outcome.as_str(), "victory" | "defeat")
+            && result.consecutive_count > 0
+            && detection.outcome != "none"
         {
             let timestamp = Local::now().format("%Y%m%d-%H%M%S-%3f").to_string();
-            let filename = format!("{}-{}-first.png", timestamp, detection.predicted_class);
+            let filename = format!("{}-{}-{}.png", timestamp, detection.predicted_class, result.consecutive_count);
             let filepath = config.screenshot.save_dir.join(&filename);
 
             // 元画像（前処理前）を保存
