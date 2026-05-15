@@ -303,7 +303,7 @@ mod tests {
         assert_eq!(config.obs.port, 4455);
         assert_eq!(config.obs.source_name, "OBS Source");
         assert_eq!(config.state.cooldown_seconds, 180);
-        assert_eq!(config.state.required_consecutive, 3);
+        assert_eq!(config.state.required_consecutive, 2);
         assert_eq!(config.state.required_none_after_cooldown, 100);
         assert_eq!(config.server.port, 3000);
     }
