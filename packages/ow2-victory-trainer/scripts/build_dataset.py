@@ -34,6 +34,12 @@ def parse_args() -> argparse.Namespace:
         help="クロップ矩形を 'x,y,width,height' 形式で指定 (値はピクセルまたは 0〜1 の比率、省略時: 42,156,245,108)",
     )
     parser.add_argument("--mask", nargs='?', const='0,534,1920,295', default=None, help="マスク領域 (x,y,width,height)。値を省略した場合はデフォルト: 0,534,1920,295")
+    parser.add_argument(
+        "--shared",
+        type=Path,
+        default=None,
+        help="言語共通サンプルディレクトリ。各ラベルの画像を出力先にマージする。"
+    )
     return parser.parse_args()
 
 
@@ -71,6 +77,12 @@ def main() -> int:
     print(f"[INFO] Mask regions: {mask_regions if mask_regions else 'disabled'}")
 
     _process_structured_samples(args.samples, args.output, args.size, crop_rect, mask_regions)
+    if args.shared is not None:
+        if args.shared.is_dir():
+            print(f"[INFO] Processing shared samples from {args.shared}")
+            _process_structured_samples(args.shared, args.output, args.size, crop_rect, mask_regions)
+        else:
+            print(f"[WARN] Shared directory not found, skipping: {args.shared}")
     return 0
 
 
