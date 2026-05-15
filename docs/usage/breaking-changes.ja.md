@@ -4,7 +4,7 @@
 
 リリースノート（[GitHub Releases](https://github.com/ow-utils/ow2-victory-counter/releases)）と併せて参照してください。新しいバージョンが上にあります。
 
-## 未リリース
+## v0.4.0
 
 ### モデルディレクトリー構造の言語別化
 
@@ -24,3 +24,21 @@
     label_map_path = "models/en/victory_classifier.label_map.json"
     ```
 - **背景**: ゲームの表示言語に応じて最適なモデルを選択できるようにするための変更です。
+
+## v0.1.0
+
+### 画像前処理パラメーターの変更
+
+- **変更内容**: オーバーウォッチの仕様変更に伴い、学習対象が変わったため `config.toml` の `[preprocessing]` セクションの値が変更になりました。
+- **影響**: 旧バージョンの `config.toml` をそのまま使用すると、勝敗判定が正しく動作しません。
+- **対応**: `config.toml` の `[preprocessing]` セクションを以下の値に更新してください。
+  ```toml
+  [preprocessing]
+  # 画像前処理設定
+  # クロップ領域: [x, y, width, height]
+  # 1920x1080 解像度での勝敗表示の標準的な位置
+  crop_rect = [42, 156, 245, 108]
+  # モデル入力サイズ（ONNXエクスポート時の height/width と一致させる）
+  resize_width = 245
+  resize_height = 108
+  ```
