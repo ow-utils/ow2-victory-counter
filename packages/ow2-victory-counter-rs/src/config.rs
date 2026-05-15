@@ -132,7 +132,7 @@ fn default_cooldown_seconds() -> u64 {
 }
 
 fn default_required_consecutive() -> usize {
-    3
+    2
 }
 
 fn default_required_none_after_cooldown() -> usize {

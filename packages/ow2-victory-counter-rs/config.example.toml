@@ -40,7 +40,7 @@ resize_height = 108
 cooldown_seconds = 180
 
 # 連続検知必要回数: 誤検知防止のため、何回連続で同じ結果を検知したらカウントするか
-required_consecutive = 1
+required_consecutive = 2
 # クールダウン明けに Ready に戻すために必要な none の連続回数
 required_none_after_cooldown = 100
 
