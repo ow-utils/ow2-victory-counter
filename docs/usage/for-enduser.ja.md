@@ -141,6 +141,29 @@ OBS Studio が起動していないか、起動していたとしてもWebSocket
 
 **OBS WebSocketの有効化** セクションを参照してください。
 
+### 勝敗が正しく検知されない（ゲーム言語の不一致）
+
+オーバーウォッチを日本語以外の言語で起動している場合、デフォルト設定では勝敗を正しく判定できません。
+
+**英語版を使用している場合:**
+
+`config.toml` の `[model]` セクションを英語版モデルに変更してください:
+
+```toml
+[model]
+model_path = "models/en/victory_classifier.onnx"
+label_map_path = "models/en/victory_classifier.label_map.json"
+```
+
+詳しくは本ドキュメントの「ゲーム言語の設定」セクションを参照してください。
+
+**日本語・英語以外の言語を使用している場合:**
+
+現在、日本語と英語のみ対応しています。その他の言語で利用したい場合は、以下のいずれかの方法で対応できます:
+
+- 自分でスクリーンショットを収集し、モデルを学習させる（開発者向けドキュメントの学習手順を参照）
+- [GitHub Issues](https://github.com/ow-utils/ow2-victory-counter/issues) から言語対応リクエストを送る
+
 ### Failed to capture image: OBS capture error: API error: ResourceNotFound
 
 オーバーウォッチ2をキャプチャーしているソース名の設定が間違っています。
