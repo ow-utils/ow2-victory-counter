@@ -40,6 +40,7 @@ pub struct StateManager {
     last_event_time: Option<Instant>,
     none_count_after_cooldown: usize,
     broadcast_tx: broadcast::Sender<CounterUpdate>,
+    last_broadcast: Option<CounterUpdate>,
 }
 
 impl StateManager {
@@ -62,6 +63,7 @@ impl StateManager {
             last_event_time: None,
             none_count_after_cooldown: 0,
             broadcast_tx,
+            last_broadcast: None,
         }
     }
 
@@ -147,7 +149,7 @@ impl StateManager {
         self.broadcast_update(Some(outcome.to_string()));
     }
 
-    fn broadcast_update(&self, last_outcome: Option<String>) {
+    fn broadcast_update(&mut self, last_outcome: Option<String>) {
         let update = CounterUpdate {
             victories: self.victories,
             defeats: self.defeats,
@@ -159,11 +161,12 @@ impl StateManager {
                 .as_secs_f64(),
         };
 
+        self.last_broadcast = Some(update.clone());
         let _ = self.broadcast_tx.send(update);
     }
 
     pub fn summary(&self) -> CounterUpdate {
-        CounterUpdate {
+        self.last_broadcast.clone().unwrap_or_else(|| CounterUpdate {
             victories: self.victories,
             defeats: self.defeats,
             draws: self.draws,
@@ -172,7 +175,7 @@ impl StateManager {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs_f64(),
-        }
+        })
     }
 
     fn handle_waiting_for_none(&mut self, outcome: &str) {
