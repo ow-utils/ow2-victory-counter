@@ -19,14 +19,18 @@ ow2-victory-trainer/
 │           └── predictor.py
 ├── scripts/                       # 実行可能なスクリプト
 │   ├── retrain.py                # データセット構築・学習・ONNX変換の一括実行
+│   ├── retrain_all.py            # 全言語一括再学習
 │   ├── build_dataset.py          # データセット構築
 │   ├── train_classifier.py       # 学習実行
 │   ├── convert_to_onnx.py        # ONNX変換
 │   ├── inference_pytorch.py      # PyTorchモデルでの推論テスト
 │   └── inference_onnx.py         # ONNXモデルでの推論テスト
 ├── artifacts/
-│   └── models/                   # 学習済みモデル（Gitにコミット）
-│       └── victory_classifier.pth
+│   └── models/                   # 学習済みモデル（言語別）
+│       ├── ja/
+│       │   └── victory_classifier.pth
+│       └── en/
+│           └── victory_classifier.pth
 ├── pyproject.toml
 └── README.md
 ```
@@ -61,8 +65,17 @@ uv run python scripts/retrain.py
 uv run python scripts/retrain.py --clean-dataset
 ```
 
+言語別に再学習する場合は `--lang` を指定します（推奨）。
+
+```bash
+# 言語別に再学習（推奨）
+uv run python scripts/retrain.py --lang ja --clean-dataset --mask
+uv run python scripts/retrain.py --lang en --clean-dataset --mask
+```
+
 **主なオプション:**
 
+- `--lang`: 学習対象の言語コード (例: ja, en)。指定時に samples/dataset/checkpoint/onnx-output パスを `{lang}/` 配下に自動切替し、`data/samples/shared/` を共通サンプルとして併用する
 - `--samples`: サンプル画像のディレクトリ（デフォルト: `data/samples`）
 - `--dataset`: データセットの出力先・学習元ディレクトリ（デフォルト: `dataset`）
 - `--checkpoint`: PyTorch モデル保存先（デフォルト: `artifacts/models/victory_classifier.pth`）
@@ -80,6 +93,17 @@ uv run python scripts/retrain.py --clean-dataset
 - `--width`: ONNX 入力画像の幅（デフォルト: 245）
 - `--opset`: ONNX オペレーターセットのバージョン（デフォルト: 22）
 
+### 全言語一括再学習
+
+`data/samples/` 配下の言語ディレクトリーを自動検出し、各言語に対して `retrain.py --lang {lang}` を順次実行します。
+
+```bash
+uv run python scripts/retrain_all.py --clean-dataset --mask
+```
+
+`retrain.py` で受け付けるオプションはそのまま透過されます (例: `--epochs`, `--batch-size`, `--lr`, `--mask`, `--clean-dataset` 等)。
+途中のいずれかの言語で失敗した場合はそこで停止します。
+
 ### 1. データセット構築
 
 学習用データセットを構築します。元のサンプル画像から、クロップ・リサイズ・マスク処理を行います。
@@ -95,6 +119,7 @@ uv run python scripts/build_dataset.py
 - `--size`: リサイズ後の画像サイズ（長辺、省略時はリサイズしない）
 - `--crop`: クロップ領域 `x,y,width,height`（省略時は推奨値 `42,156,245,108`）
 - `--mask`: マスク領域（省略時はマスクなし、値を省略すると `0,534,1920,295`）
+- `--shared`: 言語共通サンプルディレクトリ (例: `data/samples/shared`)。指定時に各ラベルの画像を `--output` の対応ラベルへマージする
 
 ### 2. モデル学習
 
@@ -211,25 +236,26 @@ uv run python scripts/convert_to_onnx.py \
 
 ## データについて
 
-- 学習データは `data/samples/` に配置されています
-- データセットは `dataset/` に生成されます
+- 学習データは `data/samples/{lang}/` 配下に言語別に配置します (例: `data/samples/ja/victory/`, `data/samples/en/defeat/`)
+- 言語に依存しないサンプル (ゲーム中画面・ロビーなど none クラス) は `data/samples/shared/none/` に配置します
+- データセットは `dataset/{lang}/` に生成されます (build 時に shared の画像が各言語にマージされます)
 - これらは大容量のため `.gitignore` で除外されています
 
 ## ow2-victory-counter-rs との連携
 
 学習したモデルを Rust 実装の推論エンジンで使用するには：
 
-1. ONNX変換を実行
+1. ONNX変換を実行 (言語別)
 
    ```bash
-   uv run python scripts/convert_to_onnx.py
+   uv run python scripts/retrain.py --lang ja --skip-build --skip-verify
    ```
 
 2. 生成されたファイルを確認
-   - `../ow2-victory-counter-rs/models/victory_classifier.onnx`
-   - `../ow2-victory-counter-rs/models/victory_classifier.label_map.json`
+   - `../ow2-victory-counter-rs/models/{lang}/victory_classifier.onnx`
+   - `../ow2-victory-counter-rs/models/{lang}/victory_classifier.label_map.json`
 
-3. Rust プロジェクトでモデルを使用
+3. Rust プロジェクト側で `config.toml` の `[model]` セクションに対応するパスを指定
 
 ## トラブルシューティング
 
