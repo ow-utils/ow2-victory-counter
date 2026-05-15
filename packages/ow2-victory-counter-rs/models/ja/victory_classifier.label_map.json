@@ -1,0 +1,12 @@
+{
+  "label_map": {
+    "defeat": 0,
+    "none": 1,
+    "victory": 2
+  },
+  "idx_to_label": {
+    "0": "defeat",
+    "1": "none",
+    "2": "victory"
+  }
+}

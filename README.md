@@ -18,6 +18,8 @@
 
 OBS に表示するカウンター UI を変更したい場合は、[OBS カウンターのカスタマイズ](docs/usage/how-to-customize-counter.md) を参照。
 
+バージョンアップに伴う非互換変更は [breaking-changes.ja.md](docs/usage/breaking-changes.ja.md) に記録しています。アップデート時はこちらも確認してください。
+
 動作イメージは[こちら](https://www.youtube.com/watch?v=Qja2lJFxZhs):
 
 [![#オーバーウォッチ2 勝敗カウンター](https://img.youtube.com/vi/Qja2lJFxZhs/0.jpg)](https://www.youtube.com/watch?v=Qja2lJFxZhs)

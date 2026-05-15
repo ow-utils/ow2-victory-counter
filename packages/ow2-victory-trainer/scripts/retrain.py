@@ -82,6 +82,13 @@ def parse_args() -> argparse.Namespace:
         help="推論確認で各クラスから使用する画像数。",
     )
 
+    parser.add_argument(
+        "--lang",
+        type=str,
+        default=None,
+        help="学習対象の言語コード (例: ja, en)。指定時はパスに言語を含める。",
+    )
+
     return parser.parse_args()
 
 
@@ -106,6 +113,8 @@ def build_dataset_args(args: argparse.Namespace) -> list[str]:
         command.extend(["--size", str(args.size)])
     if args.mask is not None:
         command.extend(["--mask", args.mask])
+    if args.lang:
+        command.extend(["--shared", "data/samples/shared"])
     return command
 
 
@@ -161,6 +170,7 @@ def inference_args(args: argparse.Namespace, image_path: Path) -> list[str]:
 def collect_verify_samples(
     samples_root: Path,
     count_per_class: int,
+    shared_root: Path | None = None,
 ) -> list[tuple[str, Path]]:
     if count_per_class < 1:
         raise ValueError("--verify-count-per-class は 1 以上を指定してください。")
@@ -168,6 +178,10 @@ def collect_verify_samples(
     verify_samples: list[tuple[str, Path]] = []
     for label in VERIFY_LABELS:
         label_dir = samples_root / label
+        if not label_dir.is_dir() and shared_root is not None:
+            fallback_dir = shared_root / label
+            if fallback_dir.is_dir():
+                label_dir = fallback_dir
         if not label_dir.is_dir():
             raise FileNotFoundError(
                 f"検証用サンプルディレクトリが見つかりません: {label_dir}"
@@ -187,7 +201,10 @@ def collect_verify_samples(
 
 def verify_predictions(args: argparse.Namespace) -> None:
     samples_root = args.verify_samples if args.verify_samples else args.samples
-    verify_samples = collect_verify_samples(samples_root, args.verify_count_per_class)
+    shared_root = Path("data/samples/shared") if args.lang else None
+    verify_samples = collect_verify_samples(
+        samples_root, args.verify_count_per_class, shared_root
+    )
 
     print("\n[STEP] 推論確認")
     for expected_label, image_path in verify_samples:
@@ -222,6 +239,21 @@ def verify_predictions(args: argparse.Namespace) -> None:
 
 def main() -> int:
     args = parse_args()
+
+    if args.lang:
+        lang = args.lang
+        if args.samples == DEFAULT_SAMPLES:
+            args.samples = Path(f"data/samples/{lang}")
+        if args.dataset == DEFAULT_DATASET:
+            args.dataset = Path(f"dataset/{lang}")
+        if args.checkpoint == DEFAULT_CHECKPOINT:
+            args.checkpoint = Path(f"artifacts/models/{lang}/victory_classifier.pth")
+        if args.onnx_output == DEFAULT_ONNX_OUTPUT:
+            args.onnx_output = Path(
+                f"../ow2-victory-counter-rs/models/{lang}/victory_classifier.onnx"
+            )
+        if args.verify_samples is None:
+            args.verify_samples = args.samples
 
     try:
         if not args.skip_build:

@@ -33,6 +33,21 @@ source_name = "ゲームキャプチャ" # OW2をキャプチャしているOBS�
 **"ゲームキャプチャ"** の部分を、あなたのOBS設定に合わせて更新してください。
 なお、ソースは1920x1080など16:9のアスペクト比であることを前提としています。
 
+### ゲーム言語の設定
+
+ゲームの表示言語に対応したモデルを選択します。デフォルトは日本語版です。
+
+**英語版を使用する場合**は、`config.toml` の `[model]` セクションを以下のように変更してください:
+
+```toml
+[model]
+model_path = "models/en/victory_classifier.onnx"
+label_map_path = "models/en/victory_classifier.label_map.json"
+```
+
+利用可能な言語は `models/` ディレクトリーの中身を確認してください。
+ゲーム言語と異なるモデルを使用すると勝敗判定が機能しません。
+
 ### OBS WebSocketの有効化
 
 1. OBS Studio を起動

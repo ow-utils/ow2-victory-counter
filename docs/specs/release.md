@@ -42,6 +42,7 @@ git push origin v0.4.0
 | `debug.bat`                   | デバッグ起動用バッチ                          |
 | `利用方法.html`               | エンドユーザー向けドキュメント                |
 | `how-to-customize-counter.md` | カスタマイズガイド                            |
+| `breaking-changes.ja.md`      | バージョンアップ時の非互換変更一覧            |
 
 ### 確認
 
