@@ -82,6 +82,13 @@ def parse_args() -> argparse.Namespace:
         help="推論確認で各クラスから使用する画像数。",
     )
 
+    parser.add_argument(
+        "--lang",
+        type=str,
+        default=None,
+        help="学習対象の言語コード (例: ja, en)。指定時はパスに言語を含める。",
+    )
+
     return parser.parse_args()
 
 
@@ -106,6 +113,8 @@ def build_dataset_args(args: argparse.Namespace) -> list[str]:
         command.extend(["--size", str(args.size)])
     if args.mask is not None:
         command.extend(["--mask", args.mask])
+    if args.lang:
+        command.extend(["--shared", "data/samples/shared"])
     return command
 
 
@@ -222,6 +231,21 @@ def verify_predictions(args: argparse.Namespace) -> None:
 
 def main() -> int:
     args = parse_args()
+
+    if args.lang:
+        lang = args.lang
+        if args.samples == DEFAULT_SAMPLES:
+            args.samples = Path(f"data/samples/{lang}")
+        if args.dataset == DEFAULT_DATASET:
+            args.dataset = Path(f"dataset/{lang}")
+        if args.checkpoint == DEFAULT_CHECKPOINT:
+            args.checkpoint = Path(f"artifacts/models/{lang}/victory_classifier.pth")
+        if args.onnx_output == DEFAULT_ONNX_OUTPUT:
+            args.onnx_output = Path(
+                f"../ow2-victory-counter-rs/models/{lang}/victory_classifier.onnx"
+            )
+        if args.verify_samples is None:
+            args.verify_samples = args.samples
 
     try:
         if not args.skip_build:
