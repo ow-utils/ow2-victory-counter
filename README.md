@@ -18,6 +18,8 @@
 
 OBS に表示するカウンター UI を変更したい場合は、[OBS カウンターのカスタマイズ](docs/usage/how-to-customize-counter.md) を参照。
 
+他のユーザーが作成したデザインを利用したい場合は、[カウンターデザインギャラリー](https://ow-utils.github.io/ow-counter-gallery/) からダウンロードできます。
+
 バージョンアップに伴う非互換変更は [breaking-changes.ja.md](docs/usage/breaking-changes.ja.md) に記録しています。アップデート時はこちらも確認してください。
 
 動作イメージは[こちら](https://www.youtube.com/watch?v=Qja2lJFxZhs):
