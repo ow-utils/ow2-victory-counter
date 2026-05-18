@@ -126,6 +126,7 @@ fn render_obs_document(body: &str) -> String {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OW2 Victory Counter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/counter.css" />
 </head>
 <body>
@@ -216,6 +217,8 @@ mod tests {
         let html = render_obs_document(r#"<div data-counter="victories">0</div>"#);
 
         assert!(html.contains(r#"<link rel="stylesheet" href="/counter.css" />"#));
+        assert!(html.contains("fonts.googleapis.com"));
+        assert!(html.contains("Bebas+Neue"));
         assert!(html.contains(r#"<script src="/counter.js"></script>"#));
         assert!(html.contains(r#"data-counter="victories""#));
     }
