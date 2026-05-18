@@ -217,13 +217,14 @@ diff rust_result.json poc_result.json
 
 ### HTML / CSS でカスタマイズ
 
-ビルド環境なしで、次の 3 ファイルを編集して OBS 表示をカスタマイズできます。
+ビルド環境なしで、次の 4 ファイルを編集して OBS 表示をカスタマイズできます。
 
 - `assets/counter.html`
 - `assets/counter.css`
 - `assets/counter.js`
+- `assets/preview.html`（ブラウザだけで表示確認するためのファイル）
 
-最初に `templates/counter.html`、`templates/counter.css`、`templates/counter.js` を `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウト、`counter.css` で配色や装飾、`counter.js` で値更新やアニメーションを変更します。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
+最初に `templates/` 配下の 4 ファイルを `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウト、`counter.css` で配色や装飾、`counter.js` で値更新やアニメーションを変更します。`counter.html` の構造を変更したときは、`preview.html` 内の `COUNTER_HTML` 定数も同じ構造に揃える必要があります（プレビューは `counter.html` を読み込めない仕組みのため）。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ### スクリーンショット保存機能
 
