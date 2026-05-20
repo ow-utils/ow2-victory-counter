@@ -30,11 +30,11 @@ jobs:
           version: 10
 
       - name: フロントエンド依存関係をインストール
-        working-directory: packages/ow2-victory-counter-rs/frontend
+        working-directory: ow2-victory-counter-rs/frontend
         run: pnpm install --frozen-lockfile
 
       - name: フロントエンドをビルド
-        working-directory: packages/ow2-victory-counter-rs/frontend
+        working-directory: ow2-victory-counter-rs/frontend
         run: pnpm build
 
       - name: Rustツールチェーンをセットアップ
@@ -43,13 +43,13 @@ jobs:
       - name: Cargoビルドキャッシュを有効化
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: packages/ow2-victory-counter-rs
+          workspaces: ow2-victory-counter-rs
           shared-key: windows-stable
           cache-targets: true
           cache-all-crates: true
 
       - name: リリースビルドを実行
-        working-directory: packages/ow2-victory-counter-rs
+        working-directory: ow2-victory-counter-rs
         run: cargo build --release --locked
 
       - name: pandocをインストール
@@ -58,7 +58,7 @@ jobs:
 
       - name: 配布フォルダーを作成
         shell: pwsh
-        working-directory: packages/ow2-victory-counter-rs
+        working-directory: ow2-victory-counter-rs
         run: |
           $ErrorActionPreference = "Stop"
           $distRoot = Join-Path (Resolve-Path ".") "dist"
@@ -92,18 +92,18 @@ jobs:
           }
 
           Copy-Item "debug.bat" -Destination $packageRoot -Force
-          Copy-Item "..\..\docs\usage\how-to-customize-counter.md" (Join-Path $packageRoot "how-to-customize-counter.md") -Force
-          Copy-Item "..\..\docs\usage\breaking-changes.ja.md" (Join-Path $packageRoot "breaking-changes.ja.md") -Force
+          Copy-Item "..\docs\usage\how-to-customize-counter.md" (Join-Path $packageRoot "how-to-customize-counter.md") -Force
+          Copy-Item "..\docs\usage\breaking-changes.ja.md" (Join-Path $packageRoot "breaking-changes.ja.md") -Force
 
           # MarkdownをHTMLに変換して同梱（GitHub Flavored Markdown）
-          $mdSource = Join-Path (Resolve-Path "..\\..\\docs\\usage") "for-enduser.ja.md"
+          $mdSource = Join-Path (Resolve-Path "..\\docs\\usage") "for-enduser.ja.md"
           $htmlDest = Join-Path $packageRoot "利用方法.html"
-          $header = Join-Path (Resolve-Path "..\\..\\docs\\assets\\pandoc") "header.html"
+          $header = Join-Path (Resolve-Path "..\\docs\\assets\\pandoc") "header.html"
           pandoc $mdSource -f gfm -t html5 -s --include-in-header=$header -o $htmlDest
 
       - name: リリースZIPを作成
         shell: pwsh
-        working-directory: packages/ow2-victory-counter-rs
+        working-directory: ow2-victory-counter-rs
         run: |
           $ErrorActionPreference = "Stop"
           $distRoot = Join-Path (Resolve-Path ".") "dist"
@@ -124,13 +124,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs
+          path: ow2-victory-counter-rs/dist/ow2-victory-counter-rs
           if-no-files-found: error
 
       - name: GitHub Release作成＆アセット添付
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: packages/ow2-victory-counter-rs/dist/ow2-victory-counter-rs.zip
+          files: ow2-victory-counter-rs/dist/ow2-victory-counter-rs.zip
           draft: false
           prerelease: false

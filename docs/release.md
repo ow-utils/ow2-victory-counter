@@ -53,7 +53,7 @@ GitHub Releases ページに `ow2-victory-counter-rs.zip` が添付されたリ�
 ### 前提条件
 
 - 再学習が完了し、ONNX に変換済み
-- `packages/ow2-victory-counter-rs/models/` にモデルファイルを配置済み
+- `ow2-victory-counter-rs/models/` にモデルファイルを配置済み
 - 変更をコミット・push 済み
 
 ### 手順

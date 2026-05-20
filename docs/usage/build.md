@@ -83,7 +83,7 @@ pnpm --version
 
 ```powershell
 git clone https://github.com/your-repo/ow2.git
-cd ow2/packages/ow2-victory-counter-rs
+cd ow2/ow2-victory-counter-rs
 ```
 
 ---
@@ -142,7 +142,7 @@ dir dist
 #### 3.1 プロジェクトルートに戻る
 
 ```powershell
-cd ..  # packages/ow2-victory-counter-rs に戻る
+cd ..  # ow2-victory-counter-rs に戻る
 ```
 
 #### 3.2 開発ビルド（デバッグ用、高速）
@@ -293,7 +293,7 @@ ow2-victory-counter-rs/
 **解決策**:
 
 ```powershell
-cd packages/ow2-victory-counter-rs
+cd ow2-victory-counter-rs
 ```
 
 ---
@@ -346,7 +346,7 @@ pnpm build
 
    ```bash
    # WSL2 または Linux 環境で実行
-   cd packages/ow2-victory-trainer
+   cd ow2-victory-trainer
    uv run python scripts/convert_to_onnx.py \
      --input artifacts/models/victory_classifier.pth \
      --output ../ow2-victory-counter-rs/models/victory_classifier.onnx \

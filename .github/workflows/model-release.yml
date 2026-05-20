@@ -19,8 +19,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: モデルZIPを作成
-        working-directory: packages/ow2-victory-counter-rs
-        run: zip -r ../../victory-classifier-models.zip models/
+        working-directory: ow2-victory-counter-rs
+        run: zip -r ../victory-classifier-models.zip models/
 
       - name: アーティファクト名を設定
         run: |

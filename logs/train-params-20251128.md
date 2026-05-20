@@ -8,7 +8,7 @@
 プログレスバー画面の左上に表示されている「勝利！」「敗北」で勝敗を判断できるだろう、という想定で学習させてみる。
 
 ```bash
-cd packages/ow2-victory-trainer
+cd ow2-victory-trainer
 ```
 
 ```bash

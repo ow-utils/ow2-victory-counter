@@ -45,7 +45,7 @@ ow2-victory-trainer/
 ### インストール
 
 ```bash
-cd packages/ow2-victory-trainer
+cd ow2-victory-trainer
 uv sync
 ```
 
