@@ -189,30 +189,6 @@ ow2-victory-detector.exe predict ^
 
 `--no-crop` オプションを使うと、デバッグモードですでにクロップされた画像をそのまま推論できます。
 
-#### 2.5 使用例: PoCとの比較テスト
-
-同じ画像をPoCとRustで推論して結果を比較：
-
-```bash
-# Rust版で推論
-./ow2-victory-detector predict \
-  --image screenshot.png \
-  --model models/victory_classifier.onnx \
-  --label-map models/victory_classifier.label_map.json \
-  --output rust_result.json
-
-# PoC版で推論（別のディレクトリで実行）
-cd ../obs-victory-counter/victory-detector
-uv run python scripts/inference_single_image.py \
-  --image ../../ow2-victory-counter-rs/screenshot.png \
-  --model artifacts/models/victory_classifier.pth \
-  --output ../../ow2-victory-counter-rs/poc_result.json
-
-# 結果を比較
-cd ../../ow2-victory-counter-rs
-diff rust_result.json poc_result.json
-```
-
 ## カスタマイズ
 
 ### HTML / CSS でカスタマイズ
