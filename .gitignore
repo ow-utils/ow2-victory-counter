@@ -12,6 +12,8 @@ __pycache__/
 
 # Env files
 .env
+.env.*
+!.env.example
 
 /.serena/
 /.codex
