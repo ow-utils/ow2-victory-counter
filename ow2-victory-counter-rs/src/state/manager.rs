@@ -26,6 +26,7 @@ pub struct CounterUpdate {
     pub draws: u32,
     pub last_outcome: Option<String>,
     pub timestamp: f64,
+    pub source: String,
 }
 
 pub struct StateManager {
@@ -95,7 +96,7 @@ impl StateManager {
                         self.consecutive_detections.clear();
 
                         // SSE配信
-                        self.broadcast_update(Some(outcome.to_string()));
+                        self.broadcast_update(Some(outcome.to_string()), "auto");
                         result.event_triggered = true;
                     }
                 } else {
@@ -136,7 +137,7 @@ impl StateManager {
         self.victories = victories;
         self.defeats = defeats;
         self.draws = draws;
-        self.broadcast_update(None);
+        self.broadcast_update(None, "initial");
     }
 
     pub fn adjust(&mut self, outcome: &str, delta: i32) {
@@ -146,10 +147,10 @@ impl StateManager {
             "draw" => self.draws = (self.draws as i32 + delta).max(0) as u32,
             _ => {}
         }
-        self.broadcast_update(Some(outcome.to_string()));
+        self.broadcast_update(Some(outcome.to_string()), "manual");
     }
 
-    fn broadcast_update(&mut self, last_outcome: Option<String>) {
+    fn broadcast_update(&mut self, last_outcome: Option<String>, source: &str) {
         let update = CounterUpdate {
             victories: self.victories,
             defeats: self.defeats,
@@ -159,6 +160,7 @@ impl StateManager {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs_f64(),
+            source: source.to_string(),
         };
 
         self.last_broadcast = Some(update.clone());
@@ -175,6 +177,7 @@ impl StateManager {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs_f64(),
+            source: "initial".to_string(),
         })
     }
 
@@ -224,5 +227,21 @@ mod tests {
         // 2回連続 none で Ready に戻る
         manager.record_detection("none");
         assert_eq!(manager.state, State::Ready);
+    }
+
+    #[test]
+    fn auto_detection_broadcast_has_source_auto() {
+        // required_consecutive=2 で victory 2回確定したとき source == "auto" を確認
+        let mut manager = StateManager::new(60, 2, 1);
+        let mut rx = manager.subscribe();
+
+        manager.record_detection("victory");
+        let result = manager.record_detection("victory");
+
+        assert!(result.event_triggered);
+
+        let update = rx.try_recv().expect("broadcast should have been sent");
+        assert_eq!(update.source, "auto");
+        assert_eq!(update.last_outcome.as_deref(), Some("victory"));
     }
 }
