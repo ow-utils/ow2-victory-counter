@@ -157,8 +157,7 @@ torch.backends.cudnn.benchmark = False
 
 ### 関連ドキュメント
 
-- [ONNX変換スクリプト](../../packages/obs-victory-counter/victory-detector/scripts/convert_to_onnx.py)
-- [推論比較調査計画](../../packages/ow2-victory-counter-rs/docs/plans/inference-comparison-investigation.md)
+- [ONNX変換スクリプト](../packages/ow2-victory-trainer/scripts/convert_to_onnx.py)
 - [ONNXファイル形式](./onnx-file-formats.md)
 
 ### 外部リソース
@@ -179,4 +178,3 @@ torch.backends.cudnn.benchmark = False
 
 **作成日**: 2025-01-22
 **最終更新日**: 2025-01-22
-**関連調査**: [推論比較調査](../../packages/ow2-victory-counter-rs/docs/plans/inference-comparison-investigation.md)
