@@ -157,7 +157,7 @@ torch.backends.cudnn.benchmark = False
 
 ### 関連ドキュメント
 
-- [ONNX変換スクリプト](../packages/ow2-victory-trainer/scripts/convert_to_onnx.py)
+- [ONNX変換スクリプト](../ow2-victory-trainer/scripts/convert_to_onnx.py)
 - [ONNXファイル形式](./onnx-file-formats.md)
 
 ### 外部リソース

@@ -111,7 +111,7 @@ INFO  Starting detection loop (interval: 1000ms, crop: (42, 156, 245, 108))
    - ☑ **ローカルファイル** のチェックを外す
    - ☑ **ソースが表示されたときにブラウザーの表示を更新する**
 
-デフォルトレイアウトを使う場合、ブラウザーソースの内部サイズは `640x400` を推奨します。カウンターを小さく表示したい場合も、プロパティの幅を小さくするのではなく、`640x400` のまま追加してから OBS プレビュー上で赤い枠の角をドラッグして縮小してください。`assets/` 配下のテンプレートをカスタマイズしてレイアウトを大きく変更した場合は、内容に合わせてこの推奨サイズを見直してください（カスタマイズ手順は [docs/usage/how-to-customize-counter.md](../../docs/usage/how-to-customize-counter.md) を参照）。
+デフォルトレイアウトを使う場合、ブラウザーソースの内部サイズは `640x400` を推奨します。カウンターを小さく表示したい場合も、プロパティの幅を小さくするのではなく、`640x400` のまま追加してから OBS プレビュー上で赤い枠の角をドラッグして縮小してください。`assets/` 配下のテンプレートをカスタマイズしてレイアウトを大きく変更した場合は、内容に合わせてこの推奨サイズを見直してください（カスタマイズ手順は [docs/usage/how-to-customize-counter.md](../docs/usage/how-to-customize-counter.md) を参照）。
 
 3. OKをクリック
 
@@ -200,7 +200,7 @@ ow2-victory-detector.exe predict ^
 - `assets/counter.js`
 - `assets/preview.html`（ブラウザだけで表示確認するためのファイル）
 
-最初に `templates/` 配下の 4 ファイルを `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウト、`counter.css` で配色や装飾、`counter.js` で値更新やアニメーションを変更します。`counter.html` の構造を変更したときは、`preview.html` 内の `COUNTER_HTML` 定数も同じ構造に揃える必要があります（プレビューは `counter.html` を読み込めない仕組みのため）。詳しい手順は [OBS カウンターのカスタマイズ](../../docs/usage/how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
+最初に `templates/` 配下の 4 ファイルを `assets/` へコピーし、そのコピーを編集します。`counter.html` でレイアウト、`counter.css` で配色や装飾、`counter.js` で値更新やアニメーションを変更します。`counter.html` の構造を変更したときは、`preview.html` 内の `COUNTER_HTML` 定数も同じ構造に揃える必要があります（プレビューは `counter.html` を読み込めない仕組みのため）。詳しい手順は [OBS カウンターのカスタマイズ](../docs/usage/how-to-customize-counter.md) を参照してください。配布 ZIP 内では `how-to-customize-counter.md` として同梱されます。
 
 ### スクリーンショット保存機能
 

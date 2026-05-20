@@ -45,7 +45,7 @@
 
 ### 2.1 config.toml の確認
 
-`packages/ow2-victory-counter-rs/config.toml` を開き、以下を確認：
+`ow2-victory-counter-rs/config.toml` を開き、以下を確認：
 
 ```toml
 [obs]
@@ -454,6 +454,6 @@ PowerShell で **Ctrl + C** を押すと、アプリケーションが終了し�
 
 ## 次のステップ
 
-- [README](../../packages/ow2-victory-counter-rs/README.md) でさらに詳しい情報を確認
-- [カスタマイズ方法](../../packages/ow2-victory-counter-rs/README.md#カスタマイズ) で UI をカスタマイズ
+- [README](../../ow2-victory-counter-rs/README.md) でさらに詳しい情報を確認
+- [カスタマイズ方法](../../ow2-victory-counter-rs/README.md#カスタマイズ) で UI をカスタマイズ
 - 問題が発生した場合は、[GitHub Issues](https://github.com/your-repo/issues) で報告
