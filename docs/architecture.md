@@ -281,9 +281,18 @@ SSE でリアルタイム通知。
   "defeats": 3,
   "draws": 1,
   "last_outcome": "victory",
-  "timestamp": 1234567890.123
+  "timestamp": 1234567890.123,
+  "source": "auto"
 }
 ```
+
+`source` フィールドはカウント変化の発生元を示す:
+
+- `"auto"`: `record_detection` による連続検知確定（required_consecutive 回の連続検知）で発火
+- `"manual"`: `/api/adjust` による手動補正で発火
+- `"initial"`: `/api/initialize` による初期化、またはサーバー起動直後の初期状態
+
+ow2-victory-notifier などの外部ツールがこのフィールドを参照することで、自動検知イベントのみをフィルタリングして通知・処理できる。手動補正や初期化による意図的な変化を誤検知として扱わないよう、外部ツールは `source === "auto"` を条件に通知を発火させることを推奨。
 
 **Keep-Alive**: 15 秒間隔
 
